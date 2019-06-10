@@ -152,6 +152,7 @@ def generate_pos_table(user, fx, hidesmall):
     df['trade_date'] = pd.to_datetime(df['trade_date'])
     list_of_tickers = df.trade_asset_ticker.unique().tolist()
 
+
     # Create string of tickers and grab all prices in one request
     ticker_str = ""
     for ticker in list_of_tickers:
@@ -171,7 +172,12 @@ def generate_pos_table(user, fx, hidesmall):
         ["cash_value", "trade_fees", "trade_quantity"]].sum()
 
     consol_table['symbol'] = consol_table.index.values
-    consol_table = consol_table.drop('USD')
+    try:
+        consol_table = consol_table.drop('USD')
+    except KeyError:
+        pass
+
+
 
     # Functions to filter and apply to the data
 
