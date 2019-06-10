@@ -106,10 +106,10 @@ function hideandshow() {
                   $('#cash_value').show();
                   $('#submit').show();
                   $('#cash').prop("readonly",true);
-                  $('#BSDW').html(' \
-                    <option value="B">Buy</option> \
-                    <option value="S">Sell</option> \
-                  ');
+                  // $('#BSDW').html(' \
+                  //   <option value="B">Buy</option> \
+                  //   <option value="S">Sell</option> \
+                  // ');
 
                   $('#transdesc').text('You are buying or selling something and withdrawing or depositing cash. \
                   Asset and Cash Transactions have two transactions \
@@ -131,12 +131,12 @@ function hideandshow() {
                   $('#cash_value').hide();
                   $('#submit').show();
                   $('#cash').prop("readonly",true);
-                  $('#BSDW').html(' \
-                    <option value="B">Buy</option> \
-                    <option value="S">Sell</option> \
-                    <option value="D">Deposit</option> \
-                    <option value="W">Withdraw</option> \
-                  ');
+                  // $('#BSDW').html(' \
+                  //   <option value="B">Buy</option> \
+                  //   <option value="S">Sell</option> \
+                  //   <option value="D">Deposit</option> \
+                  //   <option value="W">Withdraw</option> \
+                  // ');
                   $('#transdesc').text('You are buying something but cash is not debited from any account. Only one transaction is included in the database (i.e. Bought 0.05 BTC from account XYZ)');
                   $('#submit_button').show()
 
