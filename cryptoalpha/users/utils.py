@@ -175,7 +175,7 @@ def generate_pos_table(user, fx, hidesmall):
     try:
         consol_table = consol_table.drop('USD')
     except KeyError:
-        pass
+        logging.info("[generate_pos_table] No USD positions found")
 
 
 
