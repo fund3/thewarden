@@ -188,14 +188,39 @@ def portstats():
                                  data['PORT_usd_pos'].min()
                                  ].index.strftime("%B %d, %Y")[0]
     meta['return_SI'] = (meta['end_nav'] / meta['start_nav']) - 1
-    meta['return_1d'] = (meta['end_nav'] / data['NAV'][-2]) - 1
-    meta['return_1wk'] = (meta['end_nav'] / data['NAV'][-7]) - 1
-    meta['return_30d'] = (meta['end_nav'] / data['NAV'][-30]) - 1
-    meta['return_90d'] = (meta['end_nav'] / data['NAV'][-90]) - 1
-    meta['return_ATH'] = (meta['end_nav'] / meta['max_nav']) - 1
-    yr_ago = pd.to_datetime(datetime.today() - relativedelta(years=1))
-    yr_ago_NAV = data.NAV[data.index.get_loc(yr_ago, method='nearest')]
-    meta['return_1yr'] = meta['end_nav'] / yr_ago_NAV - 1
+    # Temporary fix for an issue with portfolios that are just too new
+    # Create a function to handle this
+    try:
+        meta['return_1d'] = (meta['end_nav'] / data['NAV'][-2]) - 1
+    except IndexError:
+        meta['return_1d'] = '-'
+
+    try:
+        meta['return_1wk'] = (meta['end_nav'] / data['NAV'][-7]) - 1
+    except IndexError:
+        meta['return_1wk'] = '-'
+
+    try:
+        meta['return_30d'] = (meta['end_nav'] / data['NAV'][-30]) - 1
+    except IndexError:
+        meta['return_30d'] = '-'
+
+    try:
+        meta['return_90d'] = (meta['end_nav'] / data['NAV'][-90]) - 1
+    except IndexError:
+        meta['return_90d'] = '-'
+
+    try:
+        meta['return_ATH'] = (meta['end_nav'] / meta['max_nav']) - 1
+    except IndexError:
+        meta['return_ATH'] = "-"
+
+    try:
+        yr_ago = pd.to_datetime(datetime.today() - relativedelta(years=1))
+        yr_ago_NAV = data.NAV[data.index.get_loc(yr_ago, method='nearest')]
+        meta['return_1yr'] = meta['end_nav'] / yr_ago_NAV - 1
+    except IndexError:
+        meta['return_1yr'] = '-'
 
     # create chart data for a small NAV chart
 

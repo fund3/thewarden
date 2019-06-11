@@ -1,4 +1,5 @@
 import logging
+from logging.handlers import RotatingFileHandler
 # DEBUG: Detailed information, typically of interest only when diagnosing
 # problems.
 # INFO: Confirmation that things are working as expected.
@@ -15,9 +16,13 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from cryptoalpha.config import Config
 
-
+format_str = '%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s'
 logging.basicConfig(filename='debug.log', level=logging.DEBUG,
-                    format='%(asctime)s:%(levelname)s:%(message)s')
+                    format=format_str)
+
+handler = RotatingFileHandler('debug.log',maxBytes=5*1024*1024,backupCount=1)
+handler.setFormatter(format_str)
+
 
 # Create the DB instance
 logging.info("Initializing Database")
@@ -30,17 +35,36 @@ login_manager.login_view = 'users.login'
 # To display messages - info class (Bootstrap)
 login_manager.login_message_category = 'info'
 logging.info("Starting main program...")
-print("----------------------------------------")
-print("         Welcome to the Matrix")
-print("----------------------------------------")
-print("Application loaded...")
-print("You can access it at your browser")
-print("Just go to:")
-print("http://127.0.0.1:5000/")
-print("----------------------------------------")
-print("And don't forget to take your red pills")
-print("----------------------------------------")
 
+# CLS + Welcome
+print ("\033[1;32;40m")
+for _ in range (50):
+    print ("")
+print ("""
+\033[1;32;40m-----------------------------------------------------------------
+  ____                  _        ____  _       _   _
+ / ___|_ __ _   _ _ __ | |_ ___ | __ )| | ___ | |_| |_ ___ _ __
+| |   | '__| | | | '_ \| __/ _ \|  _ \| |/ _ \| __| __/ _ \ '__|
+| |___| |  | |_| | |_) | || (_) | |_) | | (_) | |_| ||  __/ |
+ \____|_|   \__, | .__/ \__\___/|____/|_|\___/ \__|\__\___|_|
+            |___/|_|
+
+-----------------------------------------------------------------
+               \033[1;37;40mPrivacy Focused Portfolio Tracker
+\033[1;32;40m-----------------------------------------------------------------
+\033[1;37;40m
+Application loaded...
+You can access it at your browser
+Just go to:
+\033[1;32;40mhttp://127.0.0.1:5000/
+\033[1;37;40mTO EXIT HIT CTRL+C a couple of times
+You can minimize this window now...
+
+\033[1;32;40m-----------------------------------------------------------------
+\033[1;31;40m                  Always go for the red pill
+\033[1;32;40m-----------------------------------------------------------------
+\033[1;37;40m
+""")
 
 def create_app(config_class=Config):
     logging.info("[create_app] Started create_app function")

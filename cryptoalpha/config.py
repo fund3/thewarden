@@ -13,3 +13,5 @@ class Config:
     MAIL_USERNAME = os.environ.get('EMAIL_USER')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     ALPHAVANTAGE_API_KEY = os.environ.get('ALPHAVANTAGE_API_KEY')
+    RPCUSER = os.environ.get('RPCUSER')
+    RPCPASSWORD = os.environ.get('RPCPASSWORD')

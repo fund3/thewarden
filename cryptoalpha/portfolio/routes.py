@@ -1,8 +1,7 @@
-import pandas as pd
 import numpy as np
 from flask import render_template, request, Blueprint
 from flask_login import current_user, login_required
-from cryptoalpha import db, mhp as mrh
+from cryptoalpha import mhp as mrh
 from cryptoalpha.models import Trades
 from datetime import datetime
 from cryptoalpha.users.utils import (generatenav, generate_pos_table,
@@ -19,7 +18,6 @@ def portfolio_main():
     transactions = Trades.query.filter_by(user_id=current_user.username)
     if transactions.count() == 0:
         return render_template('empty.html')
-
     portfolio_data, pie_data = generate_pos_table(user, "USD", False)
     if portfolio_data == "ConnectionError":
         return render_template('offline.html', title="Connection Error")
@@ -134,3 +132,29 @@ def pnl():
 def portfolio_compare():
     return render_template('portfolio_compare.html',
                            title="Portfolio Comparison")
+
+
+class Scenarios:
+    # Whatif Scenarios for portfolio
+    def __init__(self, name, description, filter):
+        # name = name of scenario
+
+        self.name = name
+        self.description = description
+        self.filter = filter
+
+    def run_filter(self, ticker):
+        # apply this filter to ticker and return a df
+        pass
+
+
+@portfolio.route("/portfolio_scenarios",  methods=['GET'])
+@login_required
+def portfolio_scenarios():
+    # For now, let's define the scenarios here. Later save at database.
+    # Also, later give the user the ability to create scenarios.
+
+    btc_max = ("Keep Bitcoin Only",
+               "Keeps only Bitcoin transactions. All others are discarded.",
+               "[trade_asset_ticker]='BTC'"
+               )

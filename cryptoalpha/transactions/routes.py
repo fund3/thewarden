@@ -349,9 +349,11 @@ def edittransaction():
                   "danger")
 
     # Pre-populate the form
+    print (trade[0].trade_operation)
     form.trade_date.data = trade[0].trade_date
     form.trade_asset_ticker.data = trade[0].trade_asset_ticker
     form.trade_operation.data = trade[0].trade_operation
+    print (form.trade_operation)
     form.trade_quantity.data = abs(float(trade[0].trade_quantity))
     form.trade_price.data = trade[0].trade_price
     form.trade_fees.data = trade[0].trade_fees
