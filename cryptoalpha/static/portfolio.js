@@ -64,6 +64,8 @@ $(document).ready(function() {
             $("td.redgreen").addClass('green');
             $("td.redgreen:contains('-')").removeClass('green');
             $("td.redgreen:contains('-')").addClass('red');
+            // Hide NaN
+            $("td.redgreen:contains('NaN%')").addClass('text-white');
         }
         });
 
@@ -87,17 +89,18 @@ function getblockheight() {
     // GET latest Bitcoin Block Height
     $.ajax({
         type: 'GET',
-        url: 'https://blockexplorer.com/api/status?q=getBlockCount',
-        dataType: 'jsonp',
+        url: 'https://blockstream.info/api/blocks/tip/height',
+        dataType: 'json',
         timeout: 5000,
         success: function (data) {
-            $('#latest_btc_block').html(data.info.blocks.toLocaleString('en-US', {style: 'decimal', maximumFractionDigits : 0, minimumFractionDigits : 0 }));
+            $('#latest_btc_block').html(data.toLocaleString('en-US', {style: 'decimal', maximumFractionDigits : 0, minimumFractionDigits : 0 }));
         },
         error: function () {
-            getblockheight();
-            }
-            });
-}
+            $('#latest_btc_block').html("------");
+            console.log("Error: failed to download block count from BlockStream.info")
+        }
+        });
+};
 
 // Pie Chart - allocation
 function createcharts() {

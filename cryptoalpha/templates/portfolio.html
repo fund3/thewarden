@@ -1,12 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<!-- JQuery -->
-<script
-  src="https://code.jquery.com/jquery-3.4.1.js"
-  integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
-  crossorigin="anonymous"></script>
-
 <!--  High Charts -->
 <script src="https://code.highcharts.com/stock/highstock.js"></script>
 <!-- <script src="https://code.highcharts.com/highcharts.js"></script> -->
@@ -26,11 +20,11 @@
 
             <tbody>
                 <tr>
-                    <td id="pvalue" class="border-bottom hinumber">
+                    <td id="pvalue" class="border-bottom hinumber" data-toggle="tooltip" data-placement="top" title="Market Value in $">
                         $ {{"{:,.0f}".format(portfolio_data.TOTAL.usd_position)}}
                     </td>
                     <td></td>
-                    <td id="pvaluebtc" class="border-bottom hinumber">
+                    <td id="pvaluebtc" class="border-bottom hinumber" data-toggle="tooltip" data-placement="top" title="Market Value in BTC">
                         &#8383 {{"{:,.4f}".format(portfolio_data.TOTAL.btc_position)}}
                     </td>
                     <td></td>
@@ -55,11 +49,11 @@
                     </td>
                     <td></td>
                     <td class="small text-right">
-                        day change
+                        24hr change
                     </td>
                     <td></td>
                     <td class="small text-right">
-                        day change
+                        24hr change
 
                     </td>
 
@@ -74,7 +68,7 @@
             <tbody>
                 <tr>
 
-                    <td id='latest_btc_block' class="text-left border-bottom hinumbersmall">
+                    <td id='latest_btc_block' class="text-left border-bottom hinumbersmall" data-toggle="tooltip" data-placement="top" title="Bitcoin's Latest Block">
                         <img class="mx-auto d-block" src="static/images/loading3.gif" width="15" height="15"></img>
                     </td>
 
@@ -128,7 +122,7 @@
                                 Ticker
                             </th>
 
-                            <th class="text-right">
+                            <th class="text-right" data-toggle="tooltip" data-placement="top" title="in number of coins">
                                 Quantity
                             </th>
 

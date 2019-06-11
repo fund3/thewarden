@@ -152,7 +152,6 @@ def generate_pos_table(user, fx, hidesmall):
     df['trade_date'] = pd.to_datetime(df['trade_date'])
     list_of_tickers = df.trade_asset_ticker.unique().tolist()
 
-
     # Create string of tickers and grab all prices in one request
     ticker_str = ""
     for ticker in list_of_tickers:
@@ -901,5 +900,3 @@ def daily_maint_scheduler():
     sched.add_job(daily_maint, 'cron', hour='1,3,9,12,14,16,17,19,23')
     sched.start()
     logging.info("[daily_maint_scheduler] Scheduled the daily Maintenance")
-
-# daily_maint_scheduler()

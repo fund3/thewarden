@@ -119,6 +119,9 @@ function createcharts(data) {
                 {
                     type: 'line',
                     name: 'Cost Basis',
+                    color: '#8CADE1', // Cost basis line is orange and thicker
+                    lineWidth: 2,
+                    dashStyle : 'ShortDash',
                     yAxis: 1,
                     // The line below maps the dictionary coming from Python into
                     // the data needed for highcharts. It's weird but the *1 is

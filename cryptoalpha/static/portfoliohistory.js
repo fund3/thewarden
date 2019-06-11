@@ -17,7 +17,6 @@ $(function(){
 })
 
 function test_ajax () {
-console.log("Here");
 $.ajax({
         type: "GET",
         dataType: 'json',

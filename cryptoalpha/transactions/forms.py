@@ -87,9 +87,11 @@ class EditTransaction(FlaskForm):
 
     trade_date = DateField('Trade Date', [DataRequired()])
     trade_asset_ticker = StringField('Crypto Asset', [Optional()])
-    trade_operation = SelectField('Operation',
-                                  choices=[('B', 'Buy'), ('S', 'Sell'), (
-                                      'D', 'Deposit'), ('W', 'Withdraw')])
+
+    trade_operation = SelectField('Operation', [Optional()],
+                                  choices=[('B', 'Buy'), ('S', 'Sell'),
+                                           ('D', 'Deposit'),
+                                           ('W', 'Withdraw')])
     trade_quantity = StringField('Quantity', [DataRequired()])
     trade_price = StringField('Price', [DataRequired()])
     trade_fees = StringField('Fees in USD', default=0)
