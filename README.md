@@ -1,6 +1,7 @@
 # Crypto Blotter
 *Version 0.01 Alpha*
-
+##### Found this project usefull?
+##### Consider supporting it with a [tippin.me](https://tippin.me/@alphaazeta) tip through the Lightning Network.
 
 #### Open Source License: [LICENSE](https://github.com/pxsocs/cryptoblotter/blob/master/LICENSE)
 #### Contributing guidelines: [CONTRIBUTING.MD](https://github.com/pxsocs/cryptoblotter/blob/master/CONTRIBUTING.md)
