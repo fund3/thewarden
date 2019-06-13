@@ -1,0 +1,124 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- http://jquery.com/ -->
+<script
+  src="https://code.jquery.com/jquery-3.3.1.js"
+  integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+  crossorigin="anonymous">
+</script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="static/bootstrap-tagsinput.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+<!--  High Charts -->
+<script src="https://code.highcharts.com/stock/highstock.js"></script>
+<!-- <script src="https://code.highcharts.com/highcharts.js"></script> -->
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="static/highcharts.js"></script>
+
+
+<div class="container">
+    <div class="content-section">
+
+        <div class="row">
+            <div class="col-sm-12">
+
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-8">
+                <div class="lead">Activity Summary</div>
+                <ul class="list-group text-left">
+                    {% for position in portfolio_data %}
+                        {% if position != "TOTAL" %}
+                            <li class="list-group-item list-group-item-dark">{{position}}</li>
+                            <!-- Buy Summary -->
+                            {% if portfolio_data[position]['trade_quantity']['B'] %}
+                                <li class="list-group-item disabled">
+                                        Bought
+                                        <span style="color:blue;">
+                                        {{"{:,.2f}".format(portfolio_data[position]['trade_quantity']['B'])}}
+                                        {{position}} </span>
+                                        at an average price of
+                                        <span style="color:blue;">
+                                        ${{"{:,.0f}".format(portfolio_data[position]['average_price']['B'])}}
+                                        </span>
+                                        in
+                                        {{"{:,.0f}".format(portfolio_data[position]['count']['B'])}}
+                                        transactions
+                                </li>
+                            {% endif%}
+                            <!-- Sell Summary -->
+                            {% if portfolio_data[position]['trade_quantity']['S'] %}
+                                <li class="list-group-item disabled">
+                                        Sold
+                                        <span style="color:blue;">
+                                        {{"{:,.0f}".format(-1*portfolio_data[position]['trade_quantity']['S'])}}
+                                        {{position}} </span>
+                                        at an average price of
+                                        <span style="color:blue;">
+                                        ${{"{:,.0f}".format(portfolio_data[position]['average_price']['S'])}}
+                                        </span>
+                                        in
+                                        {{"{:,.0f}".format(portfolio_data[position]['count']['S'])}}
+                                        transactions
+                                </li>
+                            {% endif%}
+                            {% if portfolio_data[position]['small_pos'] != "True" %}
+                                <li class="list-group-item disabled">
+                                    For {{position}}, the realized pnl is
+                                    <span class='redgreen'>
+                                    ${{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['realized_pnl'])}}
+                                    </span>
+                                    (including
+                                    <span style="color:red;">
+                                    ${{"{:,.0f}".format(portfolio_data[position]['total_fees'])}}
+                                    </span>
+                                    in fees).
+                                </li>
+                                <li class="list-group-item disabled">
+                                    The unrealized Pnl is
+                                    <span class='redgreen'>
+                                    ${{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['unrealized_pnl'])}}
+                                    </span>
+                                    , which means that your breakeven for this position is a {{position}} price of
+                                    <span style="color:blue;">
+                                    ${{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['unrealized_be'])}}
+                                    </span>
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="col-sm-4">
+                <div class="lead">Portfolio Summary</div>
+                <ul class="list-group text-left">
+                    <li class="list-group-item list-group-item-dark">PnL Summary</li>
+                    <li class="list-group-item disabled">
+                        Your total PnL is
+                        <span class="redgreen">
+                        ${{"{:,.0f}".format(portfolio_data['TOTAL']['total_pnl_net_USD'])}}
+                        </span>
+                    </li>
+                    <li class="list-group-item disabled">
+                        Total fees were
+                        <span style="color:red;">
+                        ${{"{:,.0f}".format(portfolio_data['TOTAL']['trade_fees'])}}
+                        </span>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br>
+<br>
+<br>
+<!-- page own JavaScript -->
+<script src="/static/activity_summary.js"></script>
+
+{% endblock content %}

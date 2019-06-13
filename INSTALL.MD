@@ -15,7 +15,7 @@ git clone https://github.com/pxsocs/cryptoblotter.git
 cd cryptoblotter
 virtualenv cb_env
 source cb_env/bin/activate
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 Then setup the environment variables. The ones below are suggestions. You should probably change them (see instructions in the detailed step-by-step installation).
 
@@ -98,7 +98,7 @@ If that still doesn’t allow you to run  `pip`:
 The virtualenv package is required to create virtual environments. You can install it with pip:
 
 ```bash
-$ pip install virtualenv
+$ pip3 install virtualenv
 ```
 
 #### Create the virtual environment
@@ -123,7 +123,7 @@ $ deactivate
 ```
 #### Step 7 - Install the PIP packages
 The list of required packages is stored on a file named `requirements.txt`. To install all the packages just type at the terminal:
-`$ pip install -r requirements.txt`
+`$ pip3 install -r requirements.txt`
 
 #### Step 8 - Declare environment variables
 Cryptoblotter will look for a few environment variables before running. You need to set these up only once. These are:

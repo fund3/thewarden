@@ -176,8 +176,6 @@ def generate_pos_table(user, fx, hidesmall):
     except KeyError:
         logging.info("[generate_pos_table] No USD positions found")
 
-
-
     # Functions to filter and apply to the data
 
     def find_price_data(ticker):
@@ -452,7 +450,7 @@ def generatepnltable(user, ticker, method, start_date=0, end_date=99999):
     return (realpnl, metadata)
 
 
-def generatenav(user, force=False):
+def generatenav(user, force=False, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
     # Variables
     # Portfolios smaller than this size do not account for NAV calculations
@@ -510,6 +508,9 @@ def generatenav(user, force=False):
     # Panda dataframe with transactions
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == user)]
+    # Filter the df acccoring to filter passed as arguments
+    if filter:
+        df = df.query(filter)
     logging.info("[generatenav] Success - read trades from database")
     df['trade_date'] = pd.to_datetime(df['trade_date'])
     start_date = df['trade_date'].min()
@@ -533,7 +534,7 @@ def generatenav(user, force=False):
     for id in tickers:
         if id == "USD":
             continue
-        local_json,_,_ = alphavantage_historical(id)
+        local_json, _, _ = alphavantage_historical(id)
         try:
             prices = pd.DataFrame(local_json)
             prices.reset_index(inplace=True)
@@ -594,9 +595,8 @@ def generatenav(user, force=False):
             logging.info(
                 f"Success: imported prices from file:{filename}")
 
-        except (FileNotFoundError, KeyError):
+        except (FileNotFoundError, KeyError, ValueError):
             logging.error(f"File not Found Error: ID: {id}")
-            # Download it and continue --- IMPLEMENT
 
     # Another loop to sum the portfolio values - maybe there is a way to
     # include this on the loop above. But this is not a huge time drag unless
