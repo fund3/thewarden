@@ -489,24 +489,26 @@ def portfolio_compare_json():
         method = request.args.get('method')
 
         # Check if start and end dates exist, if not assign values
-        if not start_date:
-            try:
-                start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
-            except (ValueError, TypeError) as e:
-                start_date = 0
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(f"[portfolio_compare_json] Error: {e}, " +
+                         "setting start_date to zero")
+            start_date = 0
 
         end_date = request.args.get('end')
-        if not end_date:
-            try:
-                end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-            except (ValueError, TypeError) as e:
-                end_date = datetime.now()
+
+        try:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(f"[portfolio_compare_json] Error: {e}, " +
+                         "setting end_date to now")
+            end_date = datetime.now()
     data = {}
 
     logging.info("[portfolio_compare_json] NAV requested in list of " +
                  "tickers, requesting generatenav.")
     nav = generatenav(current_user.username)
-    # Trim to leave only dates and NAV
     nav_only = nav['NAV']
 
     # Now go over tickers and merge into nav_only df
@@ -541,14 +543,17 @@ def portfolio_compare_json():
         data = data.astype(float)
         # Fill dailyNAV with prices for each ticker
         nav_only = pd.merge(nav_only, data, on='date', how='left')
+        nav_only[ticker+'_price'].fillna(method='bfill', inplace=True)
         messages[ticker] = "ok"
         meta_data[ticker] = meta
         logging.info(f"[portfolio_compare_json] {ticker}: Success - Merged OK")
 
-    nav_only.fillna(method='pad', inplace=True)
+    nav_only.fillna(method='ffill', inplace=True)
+
     # Trim this list only to start_date to end_date:
     mask = ((nav_only.index >= start_date) & (nav_only.index <= end_date))
     nav_only = nav_only.loc[mask]
+
     # Now create the list of normalized Returns for the available period
     # Plus create a table with individual analysis for each ticker and NAV
     nav_only['NAV_norm'] = (nav_only['NAV'] / nav_only['NAV'][0]) * 100

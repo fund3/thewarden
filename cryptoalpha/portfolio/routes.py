@@ -1,11 +1,10 @@
 import numpy as np
-from flask import render_template, request, Blueprint
+from flask import render_template, Blueprint
 from flask_login import current_user, login_required
 from cryptoalpha import mhp as mrh
 from cryptoalpha.models import Trades
 from datetime import datetime
-from cryptoalpha.users.utils import (generatenav, generate_pos_table,
-                                     generatepnltable)
+from cryptoalpha.users.utils import generatenav, generate_pos_table
 
 portfolio = Blueprint('portfolio', __name__)
 
@@ -109,22 +108,23 @@ def volchart():
                            title="Historical Volatility Chart")
 
 
-@portfolio.route("/pnl", methods=['GET', 'POST'])
-@login_required
-# Function to return a table with realized PnL and matching Tables
-# takes ticker, method and dates as arguments
-def pnl():
-    if request.method == 'GET':
-        id = request.args.get('id')
-        method = request.args.get('method')
-        start = request.args.get('start')
-        end = request.args.get('end')
-
-    realpnl, metadata = generatepnltable(current_user.username, id,
-                                         method, start, end)
-    # realpnl = json.dumps(realpnl, indent=4)
-    return render_template('pnl.html', realpnl=realpnl, metadata=metadata,
-                           title="PnL History")
+# MARKED FOR DELETE
+# @portfolio.route("/pnl", methods=['GET', 'POST'])
+# @login_required
+# # Function to return a table with realized PnL and matching Tables
+# # takes ticker, method and dates as arguments
+# def pnl():
+#     if request.method == 'GET':
+#         id = request.args.get('id')
+#         method = request.args.get('method')
+#         start = request.args.get('start')
+#         end = request.args.get('end')
+#
+#     realpnl, metadata = generatepnltable(current_user.username, id,
+#                                          method, start, end)
+#     # realpnl = json.dumps(realpnl, indent=4)
+#     return render_template('pnl.html', realpnl=realpnl, metadata=metadata,
+#                            title="PnL History")
 
 
 @portfolio.route("/portfolio_compare",  methods=['GET'])
@@ -134,27 +134,15 @@ def portfolio_compare():
                            title="Portfolio Comparison")
 
 
-class Scenarios:
-    # Whatif Scenarios for portfolio
-    def __init__(self, name, description, filter):
-        # name = name of scenario
-
-        self.name = name
-        self.description = description
-        self.filter = filter
-
-    def run_filter(self, ticker):
-        # apply this filter to ticker and return a df
-        pass
-
-
-@portfolio.route("/portfolio_scenarios",  methods=['GET'])
+@portfolio.route("/activity_summary",  methods=['GET'])
 @login_required
-def portfolio_scenarios():
-    # For now, let's define the scenarios here. Later save at database.
-    # Also, later give the user the ability to create scenarios.
-
-    btc_max = ("Keep Bitcoin Only",
-               "Keeps only Bitcoin transactions. All others are discarded.",
-               "[trade_asset_ticker]='BTC'"
-               )
+def activity_summary():
+    user = current_user.username
+    transactions = Trades.query.filter_by(user_id=current_user.username)
+    if transactions.count() == 0:
+        return render_template('empty.html')
+    portfolio_data, pie_data = generate_pos_table(user, "USD", False)
+    if portfolio_data == "ConnectionError":
+        return render_template('offline.html', title="Connection Error")
+    return render_template('activity_summary.html', title="Activity Summary",
+                           portfolio_data=portfolio_data, pie_data=pie_data)
