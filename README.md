@@ -1,12 +1,12 @@
-# Crypto Blotter
-*Version 0.01 Alpha*
+# CryptoBlotter
+*Version 0.02 Alpha*
 ###### __Found this project useful?__ _Consider tipping the developer: [tippin.me](https://tippin.me/@alphaazeta)_.
 
 #### Open Source License: [LICENSE](https://github.com/pxsocs/cryptoblotter/blob/master/LICENSE)
 #### Contributing guidelines: [CONTRIBUTING.MD](https://github.com/pxsocs/cryptoblotter/blob/master/CONTRIBUTING.md)
 #### Installation instructions: [INSTALL.MD](https://github.com/pxsocs/cryptoblotter/blob/master/INSTALL.MD)
 
-Crypto Blotter (CB) is a portfolio tracking tool. It includes position monitoring and other analytics. The main reason that led me to develop this tool is to better manage cash inflows and outflows from digital positions while maintaining my data locally.
+CryptoBlotter (CB) is a portfolio tracking tool. It includes position monitoring and other analytics. The main reason that led me to develop this tool is to better manage cash inflows and outflows from digital positions while maintaining my data locally.
 
 CB monitors daily _Net Asset Value (NAV)_. Similar to how a fund calculates performance. __So it's always tracking performance relative to current exposure.__
 

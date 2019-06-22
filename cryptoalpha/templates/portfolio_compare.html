@@ -1,11 +1,9 @@
 {% extends "layout.html" %}
 {% block content %}
 <!-- http://jquery.com/ -->
-<script
-  src="https://code.jquery.com/jquery-3.3.1.js"
-  integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
-  crossorigin="anonymous">
-</script>
+<script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous">
+    </script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="static/bootstrap-tagsinput.js"></script>
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
@@ -43,17 +41,18 @@
             <div class="content-section">
 
                 <div class="input-group input-group-sm mb-3">
-                  <div class="input-group-prepend">
-                    <span class="input-group-text" id="start-addon1">Start Date</span>
-                  </div>
-                  <input id="start_date" type="date" class="form-control change_monitor" aria-describedby="start-addon1">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="start-addon1">Start Date</span>
+                    </div>
+                    <input id="start_date" type="date" class="form-control change_monitor"
+                        aria-describedby="start-addon1">
                 </div>
 
                 <div class="input-group input-group-sm mb-3">
-                  <div class="input-group-prepend">
-                    <span class="input-group-text" id="end-addon1">End Date&nbsp;&nbsp;</span>
-                  </div>
-                  <input id="end_date" type="date" class="form-control change_monitor" aria-describedby="end-addon1">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="end-addon1">End Date&nbsp;&nbsp;</span>
+                    </div>
+                    <input id="end_date" type="date" class="form-control change_monitor" aria-describedby="end-addon1">
                 </div>
             </div>
         </div>
@@ -113,29 +112,29 @@
 
         <div class="row">
 
-                <!-- Start Date -->
-                <div class="col-sm-4">
-                    <ul class="list-group small text-center">
-                        <li class="list-group-item list-group-item-dark">Start Date</li>
-                        <li class="list-group-item disabled" id="table_start"></li>
-                    </ul>
-                </div>
-                <!-- End Date -->
-                <div class="col-sm-4">
-                    <ul class="list-group small text-center">
-                        <li class="list-group-item list-group-item-dark">End Date</li>
-                        <li class="list-group-item disabled" id="table_end"></li>
-                    </ul>
-                </div>
-                <!-- Days (data points) -->
-                <div class="col-sm-4">
-                    <ul class="list-group small text-center">
-                        <li class="list-group-item list-group-item-dark"># of days (datapoints)</li>
-                        <li class="list-group-item disabled" id="table_days"></li>
-                    </ul>
-                </div>
-
+            <!-- Start Date -->
+            <div class="col-sm-4">
+                <ul class="list-group small text-center">
+                    <li class="list-group-item list-group-item-dark">Start Date</li>
+                    <li class="list-group-item disabled" id="table_start"></li>
+                </ul>
             </div>
+            <!-- End Date -->
+            <div class="col-sm-4">
+                <ul class="list-group small text-center">
+                    <li class="list-group-item list-group-item-dark">End Date</li>
+                    <li class="list-group-item disabled" id="table_end"></li>
+                </ul>
+            </div>
+            <!-- Days (data points) -->
+            <div class="col-sm-4">
+                <ul class="list-group small text-center">
+                    <li class="list-group-item list-group-item-dark"># of days (datapoints)</li>
+                    <li class="list-group-item disabled" id="table_days"></li>
+                </ul>
+            </div>
+
+        </div>
 
 
     </div>
@@ -158,7 +157,8 @@
         <div class="col-lg-12">
             <br><br><br>
             <small>
-                Prices provided by <a href="https://www.alphavantage.co/">Alphavantage</a> API. Pricing data available from 2014 forward.
+                Prices provided by <a href="https://www.alphavantage.co/">Alphavantage</a> API. Pricing data available
+                from 2014 forward.
             </small>
         </div>
     </div>

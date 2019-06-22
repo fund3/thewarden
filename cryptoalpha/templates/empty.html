@@ -5,13 +5,19 @@
     <div class="row">
         <div class="col-sm-8">
             <h4>
-                Your portfolio appears to be empty and no transactions were found </br>
-                </h4>
-                Maybe you are new here?</br>
-                You can start by including some <a href="{{url_for('transactions.newtrade')}}">transactions</a>.
+                Your portfolio does not appear to have any crypto positions. </br>
+            </h4><br>
+            <h5>Portfolio may still have some fiat transactions. You can see a list of your transactions <a
+                    href="{{url_for('transactions.list_transactions')}}">here.</a></h5>
+            <br>
+            <h5>Or maybe you are new here?</br>
+                You can start by including some <a href="{{url_for('transactions.newtrade')}}">transactions</a>.</h5>
             </br>
             <hr>
-                You may also choose to <a href="/importcsv">upload a csv file</a> with existing transactions. Instructions can be found <a href="/csvtemplate">here</a>.
+            <h5>
+                You may also choose to <a href="/importcsv">upload a csv file</a> with existing transactions.
+                Instructions
+                can be found <a href="/csvtemplate">here</a>. </h5>
 
         </div>
         <div class="col-sm-4">

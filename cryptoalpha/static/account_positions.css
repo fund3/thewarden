@@ -105,11 +105,11 @@ a.article-title:hover {
     font-size: 14px;
 
 }
-td.red {
+td.red_negpos {
   color: red;
 }
 
-td.green {
+td.green_negpos {
   color: green;
 }
 

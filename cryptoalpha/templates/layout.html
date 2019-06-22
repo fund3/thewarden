@@ -1,160 +1,262 @@
 <!DOCTYPE html>
 <html lang="en">
-    <link rel="icon" href="static/images/favicon-bitcoin.ico" class="invert">
+<link rel="icon" href="static/images/favicon-bitcoin.ico" class="invert">
+
 <head>
     <!-- Style Sheets -->
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+        integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+    {% if current_user.is_authenticated %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='layout.css') }}">
+    {%endif%}
     <!-- End Style Sheets -->
 
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     {% if title %}
-        <title>CryptoBlotter | {{ title }}</title>
+    <title>CryptoBlotter | {{ title }}</title>
     {% else %}
-        <title>CryptoBlotter</title>
+    <title>CryptoBlotter</title>
     {% endif %}
 </head>
 
 <body>
-    <!-- JavaScript Loaders -->
+    <!-- MAIN PAGE WRAPPER -->
+    <div id="wrapper">
+        <!-- JavaScript Loaders -->
         <!-- JQuery -->
-            <script
-              src="https://code.jquery.com/jquery-3.4.1.js"
-              integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
-              crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.4.1.js"
+            integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
         <!-- Popper -->
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-                    integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-                    crossorigin="anonymous">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous">
             </script>
         <!-- Bootstrap -->
-            <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
         <!-- JQuery UI -->
-            <link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/flick/jquery-ui.css">
+        <link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/flick/jquery-ui.css">
         <!-- Now that JS is loaded, initialize the tooltips -->
-            <script>
-            $( document ).ready(function() {
-                $('[data-toggle="tooltip"]').tooltip({'placement': 'top'});
+        <script>
+            $(document).ready(function () {
+                $('[data-toggle="tooltip"]').tooltip({ 'placement': 'top' });
+                $("#menu-toggle").click(function (e) {
+                    e.preventDefault();
+                    $("#wrapper").toggleClass("toggled");
+                    $("#btn_tgl").toggleClass("down");
+                    // $(this).toggleClass("down");
+                });
             });
-            </script>
-    <!-- END JavaScript Loaders -->
-
-    <header class="site-header">
-      <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
-        <div class="container max-width">
-          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
 
 
-        <div class="collapse navbar-collapse" id="navbarToggle">
-            <div class="navbar-nav mr-auto">
+        </script>
+        <!-- END JavaScript Loaders -->
 
-                <li class="nav-item dropdown">
-                    <a class="navbar-brand" href="/">
-                        <i class="fas fa-home"></i>
-                    </a>
-                </li>
+
+        <header class="site-header">
+            <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top nav-fill w-100 justify-content-center">
 
                 {% if current_user.is_authenticated %}
-
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Account Tools</a>
-                    <div class="dropdown-menu">
-                         <a class="dropdown-item" href="{{ url_for('main.importcsv') }}"><i class="fas fa-file-import"></i>&nbsp;&nbsp;Import CSV file</a>
-                         <a class="dropdown-item" href="{{ url_for('main.csvtemplate') }}"><i class="fas fa-book"></i>&nbsp;&nbsp;CSV file instructions</a>
-                         <a class="dropdown-item" id="downloadcsv" href="{{ url_for('main.exportcsv') }}"><i class="fas fa-download"></i>&nbsp;&nbsp;Download all your transactions in CSV</a>
-                         <div class="dropdown-divider"></div>
-                         <a class="dropdown-item" href="{{ url_for('users.account') }}"><i class="fas fa-users-cog"></i>&nbsp;&nbsp;Manage User Account</a>
-                         <div class="dropdown-divider"></div>
-                         <a class="dropdown-item" href="{{ url_for('main.about') }}"><i class="fab fa-bitcoin"></i>&nbsp;&nbsp;About CryptoBlotter</a>
-                   </div>
-                 </li>
-                 <li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</li>
-
-                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Portfolio Actions</a>
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" href="{{ url_for('transactions.list_transactions') }}"><i class="fas fa-list"></i>&nbsp;&nbsp;List Transactions</a>
-                        <a class="dropdown-item" href="{{ url_for('transactions.newtrade') }}"><i class="fas fa-plus-square"></i>&nbsp;&nbsp;Include New Transaction</a>
-                        <a class="dropdown-item" href="{{ url_for('transactions.account_positions') }}"><i class="fas fa-key"></i>&nbsp;&nbsp;Custody List</a>
-                    </div>
-                </li>
-                <li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</li>
-
-
-                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Portfolio Analysis</a>
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" href="{{ url_for('portfolio.portfolio_compare') }}"><i class="fas fa-check-double"></i>&nbsp;&nbsp;Compare Performance</a>
-                        <a class="dropdown-item" href="{{ url_for('portfolio.navchart') }}"><i class="fas fa-chart-area"></i>&nbsp;&nbsp;NAV and Cost Chart</a>
-                        <a class="dropdown-item" href="{{ url_for('portfolio.volchart') }}"><i class="fas fa-cloud-sun-rain"></i>&nbsp;&nbsp;Volatility Chart</a>
-                        <a class="dropdown-item" href="{{ url_for('portfolio.heatmap') }}"><i class="fas fa-fire-extinguisher"></i>&nbsp;&nbsp;HeatMap</a>
-                        <a class="dropdown-item" href="{{ url_for('portfolio.activity_summary') }}"><i class="fas fa-exchange-alt"></i>&nbsp;&nbsp;Activity Summary</a>
-                    </div>
-                </li>
-                <li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</li>
-
-                <li class="nav-item dropdown">
-                   <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Other Tools</a>
-                   <div class="dropdown-menu">
-                       <a class="dropdown-item" href="https://hodlcalculator.herokuapp.com/" target="_blank"><i class="fas fa-calculator"></i>&nbsp;&nbsp;HODL Calulator&nbsp;<i class="fas  fa-xs fa-external-link-alt"></i></a>
-                   </div>
-               </li>
-
-            {% endif %}
-
-            </div>
-        </div>
-
-            <!-- Navbar Right Side -->
-            <div class="navbar-nav">
-                {% if current_user.is_authenticated %}
-                <a class="nav-item nav-link" href="{{ url_for('users.account') }}">
-                    <i class="fas fa-users-cog"></i>
+                <a href="#menu-toggle" id="menu-toggle">
+                    <div id="btn_tgl" class="fa fa-bars rotate text-white"></div>
                 </a>
+                {%endif%}
+                <!-- <a href="#menu-toggle" class="btn btn-light" id="menu-toggle">
+                    <i class="fas fa-bars rotate"></i>
+                </a> -->
+                <div class="container max-width">
+                    {% if current_user.is_authenticated %}
+                    {% else %}
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle"
+                        aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    {% endif %}
 
-                    <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">
-                        <i class="fas fa-sign-out-alt"></i>
+                    <!-- Navbar Right Side -->
+                    <div class="navbar-nav">
+                        {% if current_user.is_authenticated %}
+                        {% else %}
+                        <a class="nav-item nav-link" href="{{ url_for('users.login') }}">Login</a>
+                        <a class="nav-item nav-link" href="{{ url_for('users.register') }}">Register</a>
+                        {% endif %}
+                    </div>
+
+
+
+                </div>
+
+
+            </nav>
+        </header>
+
+
+
+
+        <!-- Sidebar -->
+        {% if current_user.is_authenticated %}
+        <div id="sidebar-wrapper">
+            <ul class="sidebar-nav small">
+                <li class="text-left">
+                    <a href="/">
+                        <i class="fas fa-tachometer-alt fa-lg"></i> &nbsp;&nbsp;&nbsp; Dashboard
                     </a>
-                {% else %}
-                    <a class="nav-item nav-link" href="{{ url_for('users.login') }}">Login</a>
-                    <a class="nav-item nav-link" href="{{ url_for('users.register') }}">Register</a>
-                {% endif %}
-            </div>
+                </li>
 
+                <!-- ACCOUNT TOOLS MENU + SUBMENUS -->
+                <li>
+                    <a data-toggle="collapse" href="#collapse_actools" role="button" aria-expanded="true"
+                        aria-controls="collapse_actools">
+                        <i class="fas fa-tools fa-lg"></i>
+                        &nbsp;&nbsp;&nbsp;&nbsp;Account & Tools
+                        <i class="fas fa-caret-down"></i></a>
+                </li>
+                <div class="collapse show" id="collapse_actools">
+                    <div class="list-group bg-transparent text-white">
+                        <a class="sidebar-subitem" href="{{ url_for('users.account') }}"><i
+                                class="fas fa-users-cog fa-lg"></i>&nbsp;&nbsp;Manage User Account</a>
+                        <a class="sidebar-subitem" href="{{ url_for('main.importcsv') }}"><i
+                                class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;Import CSV file</a>
+                        <a class="sidebar-subitem fa-lg" href="{{ url_for('main.csvtemplate') }}"><i
+                                class="fas fa-book fa-lg"></i>&nbsp;&nbsp;CSV file instructions</a>
+                        <a class="sidebar-subitem" id="downloadcsv" href="{{ url_for('main.exportcsv') }}"><i
+                                class="fas fa-download fa-lg"></i>&nbsp;&nbsp;Download transactions</a>
+
+                    </div>
+                </div>
+
+
+
+                <!-- TRANSACTIONS MENU + SUBMENUS -->
+                <li>
+                    <a data-toggle="collapse" href="#collapse_transactions" role="button" aria-expanded="true"
+                        aria-controls="collapse_transactions">
+                        <i class="fas fa-coins fa-lg"></i>
+                        &nbsp;&nbsp;&nbsp;&nbsp;Transactions
+                        <i class="fas fa-caret-down"></i></a>
+                </li>
+                <div class="collapse show" id="collapse_transactions"">
+                    <div class=" list-group bg-transparent text-white">
+                    <a class="sidebar-subitem" href="{{ url_for('transactions.list_transactions') }}"><i
+                            class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List Transactions</a>
+                    <a class="sidebar-subitem" href="{{ url_for('transactions.newtrade') }}"><i
+                            class="fas fa-plus-square fa-lg"></i>&nbsp;&nbsp;Include New Transaction</a>
+                    <a class="sidebar-subitem" href="{{ url_for('transactions.account_positions') }}"><i
+                            class="fas fa-key fa-lg"></i>&nbsp;&nbsp;Custody List</a>
+
+                </div>
         </div>
 
-      </nav>
-    </header>
 
-    <main role="main" class="container max-width">
+        <!-- CHARTS AND ANALYSIS MENU -->
+        <li>
+            <a data-toggle="collapse" href="#collapse_charts" role="button" aria-expanded="false"
+                aria-controls="collapse_charts">
+                <i class="fas fa-chart-area fa-lg"></i>
+                &nbsp;&nbsp;&nbsp;&nbsp;Charts & Analysis
+                <i class="fas fa-caret-down"></i></a>
+        </li>
+        <div class="collapse show" id="collapse_charts">
+            <div class="list-group bg-transparent text-white">
+                <a class="sidebar-subitem" href="{{ url_for('portfolio.navchart') }}"><i
+                        class="fas fa-chart-area fa-lg"></i>&nbsp;&nbsp;NAV and Cost Chart</a>
+                <a class="sidebar-subitem" href="{{ url_for('portfolio.portfolio_compare') }}"><i
+                        class="fas fa-check-double fa-lg"></i>&nbsp;&nbsp;Compare Performance</a>
+                <a class="sidebar-subitem" href="{{ url_for('portfolio.scatter') }}"><i
+                        class="fas fa-braille fa-lg"></i>&nbsp;&nbsp;Scatter Plot</a>
+                <a class="sidebar-subitem" href="{{ url_for('portfolio.volchart') }}"><i
+                        class="fas fa-cloud-sun-rain fa-lg"></i>&nbsp;&nbsp;Volatility Chart</a>
+                <a class="sidebar-subitem" href="{{ url_for('portfolio.heatmap') }}"><i
+                        class="fas fa-fire-extinguisher fa-lg"></i>&nbsp;&nbsp;HeatMap</a>
+                <a class="sidebar-subitem" href="{{ url_for('portfolio.activity_summary') }}"><i
+                        class="fas fa-exchange-alt fa-lg"></i>&nbsp;&nbsp;Activity Summary</a>
+                <a class="sidebar-subitem" href="{{ url_for('portfolio.allocation_history') }}"><i
+                        class="fas fa-chart-pie fa-lg"></i>&nbsp;&nbsp;Allocation History</a>
+                <a class="sidebar-subitem" href="https://hodlcalculator.herokuapp.com/" target="_blank"><i
+                        class="fas fa-calculator fa-lg"></i>&nbsp;&nbsp;HODL
+                    Calculator&nbsp;<i class="fas  fa-xs fa-external-link-alt"></i></a>
 
-    <br><br>
-          {% with messages = get_flashed_messages(with_categories=true) %}
+            </div>
+        </div>
+
+        <br><br>
+        <li>
+            <a href="{{ url_for('main.about') }}"><i class="fab fa-bitcoin fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;About
+                CryptoBlotter</a>
+        </li>
+
+        <li>
+            <a href="{{ url_for('users.logout') }}">
+                <i class="fas fa-sign-out-alt fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;Logout
+            </a>
+        </li>
+
+
+
+
+        </ul>
+    </div>
+    {% endif %}
+    <!-- /#sidebar-wrapper -->
+
+
+
+    <!-- Main Content -->
+    <div id="page-content-wrapper">
+        <main role=" main">
+            {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-              {% for category, message in messages %}
-                <div id="messagealert" class="alert alert-{{ category }}">
-                  {{ message }}
-                </div>
-              {% endfor %}
+            {% for category, message in messages %}
+            <div id="messagealert" class="alert alert-{{ category }}">
+                {{ message }}
+            </div>
+            {% endfor %}
             {% endif %}
-          {% endwith %}
-    <br>
-          {% block content %}{% endblock %}
-    <br>
+            {% endwith %}
+            <br>
+            {% block content %}{% endblock %}
+            <br>
+        </main>
+
+    </div>
+    <!-- END MAIN CONTENT -->
+
     <!-- Footer -->
     <footer class="site-footer bg-steel small fixed-bottom">
         <div class="container text-right text-light align-middle">
-        </br>
-        <i class="fab fa-bitcoin fa-2x"></i> #StackingSats #NotYourKeysNotYourCoins&nbsp;&nbsp;&nbsp;
-        <i class="fab fa-github-square fa-2x"></i>&nbsp;Open Source code available at <a href='https://github.com/pxsocs/cryptoblotter' class='text-white'>GitHub</a>
-    </br></br>
+
+            <div class="row" style="vertical-align: bottom;">
+                <div class="col-sm-6 text-left">
+                    <span class="text-white">
+                        <br>
+                        <i class="fab fa-github fa-2x" style="vertical-align: middle;"></i>
+                        &nbsp;&nbsp;Open Source code available at <a href='https://github.com/pxsocs/cryptoblotter'
+                            class='text-white'>
+                            GitHub</a>
+                    </span>
+                </div>
+
+                <div class="col-sm-6 text-right">
+                    <a href="https://twitter.com/alphaazeta"> <i class="text-white fab fa-twitter fa-xlg"></i>
+                        <span class="text-white">@AlphaaZeta&nbsp;</span></a><br>
+                    <i class="fab fa-bitcoin fa-xlg"></i> #StackingSats
+                    #NotYourKeysNotYourCoins
+                    <br><br>
+                </div>
+            </div>
+
         </div>
     </footer>
-  </main>
+    </div>
+    <!-- END OF WRAPPER -->
+
 </body>
+
+
+
 </html>

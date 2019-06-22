@@ -59,18 +59,18 @@ Highcharts.theme = {
 		candlestick: {
 			lineColor: '#404048'
 		},
-    legend: {
-        layout: 'horizontal',
-        floating: true,
-        align: 'center',
-        verticalAlign: 'top'
-     }
+		legend: {
+			layout: 'horizontal',
+			floating: true,
+			align: 'center',
+			verticalAlign: 'top'
+		}
 
 	},
 
 
 	// General
-	background2: '#FAFAFA'
+	background2: '#FFFFFF'
 
 };
 

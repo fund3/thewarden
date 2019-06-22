@@ -1,33 +1,33 @@
-$(document).ready(function() {
+$(document).ready(function () {
     // Format Red and Green Numbers (negative / positive)
-    $("td.redgreen").removeClass('red');
-    $("td.redgreen").addClass('green');
-    $("td.redgreen:contains('-')").removeClass('green');
-    $("td.redgreen:contains('-')").addClass('red');
+    $("td.redgreen").removeClass('red_negpos');
+    $("td.redgreen").addClass('green_negpos');
+    $("td.redgreen:contains('-')").removeClass('green_negpos');
+    $("td.redgreen:contains('-')").addClass('red_negpos');
 
     // Let's create a heatmap on all heatmap values
     // Function to get the max value in an Array
-    Array.max = function(array){
-        return Math.max.apply(Math,array);
+    Array.max = function (array) {
+        return Math.max.apply(Math, array);
     };
 
     // Function to get the min value in an Array
-    Array.min = function(array){
-        return Math.min.apply(Math,array);
+    Array.min = function (array) {
+        return Math.min.apply(Math, array);
     };
 
     // Get all data values from our table cells making sure to ignore the first column of text
     // Use the parseInt function to convert the text string to a number
 
-    var counts_positive= $('.heatmap').map(function() {
+    var counts_positive = $('.heatmap').map(function () {
         if (parseInt($(this).text()) > 0) {
-        return parseInt($(this).text());
+            return parseInt($(this).text());
         };
     }).get();
 
-    var counts_negative= $('.heatmap').map(function() {
+    var counts_negative = $('.heatmap').map(function () {
         if (parseInt($(this).text()) < 0) {
-        return parseInt($(this).text());
+            return parseInt($(this).text());
         };
     }).get();
 
@@ -53,24 +53,24 @@ $(document).ready(function() {
     nb = 0; // Blue value 117
 
     // Loop through each data point and calculate its % value
-    $('.heatmap').each(function(){
+    $('.heatmap').each(function () {
         if (parseInt($(this).text()) > 0) {
             var val = parseInt($(this).text());
-            var pos = parseInt((Math.round((val/max)*100)).toFixed(0));
-            red = parseInt((xr + (( pos * (yr - xr)) / (n-1))).toFixed(0));
-            green = parseInt((xg + (( pos * (yg - xg)) / (n-1))).toFixed(0));
-            blue = parseInt((xb + (( pos * (yb - xb)) / (n-1))).toFixed(0));
-            clr = 'rgb('+red+','+green+','+blue+')';
-            $(this).css({backgroundColor:clr});
+            var pos = parseInt((Math.round((val / max) * 100)).toFixed(0));
+            red = parseInt((xr + ((pos * (yr - xr)) / (n - 1))).toFixed(0));
+            green = parseInt((xg + ((pos * (yg - xg)) / (n - 1))).toFixed(0));
+            blue = parseInt((xb + ((pos * (yb - xb)) / (n - 1))).toFixed(0));
+            clr = 'rgb(' + red + ',' + green + ',' + blue + ')';
+            $(this).css({ backgroundColor: clr });
         }
         else {
             var val = parseInt($(this).text()) * (-1);
-            var pos = parseInt((Math.round((val/max)*100)).toFixed(0));
-            red = parseInt((xr + (( pos * (nr - xr)) / (n-1))).toFixed(0));
-            green = parseInt((xg + (( pos * (ng - xg)) / (n-1))).toFixed(0));
-            blue = parseInt((xb + (( pos * (nb - xb)) / (n-1))).toFixed(0));
-            clr = 'rgb('+red+','+green+','+blue+')';
-            $(this).css({backgroundColor:clr});
+            var pos = parseInt((Math.round((val / max) * 100)).toFixed(0));
+            red = parseInt((xr + ((pos * (nr - xr)) / (n - 1))).toFixed(0));
+            green = parseInt((xg + ((pos * (ng - xg)) / (n - 1))).toFixed(0));
+            blue = parseInt((xb + ((pos * (nb - xb)) / (n - 1))).toFixed(0));
+            clr = 'rgb(' + red + ',' + green + ',' + blue + ')';
+            $(this).css({ backgroundColor: clr });
         }
     });
 });
