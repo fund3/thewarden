@@ -69,7 +69,7 @@
                                 <li class="list-group-item disabled">
                                     For {{position}}, the realized pnl is
                                     <span class='redgreen'>
-                                    ${{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['realized_pnl'])}}
+                                    ${{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['FIFO']['realized_pnl'])}}
                                     </span>
                                     (including
                                     <span style="color:red;">
@@ -80,11 +80,11 @@
                                 <li class="list-group-item disabled">
                                     The unrealized Pnl is
                                     <span class='redgreen'>
-                                    ${{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['unrealized_pnl'])}}
+                                    ${{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['FIFO']['unrealized_pnl'])}}
                                     </span>
                                     , which means that your breakeven for this position is a {{position}} price of
                                     <span style="color:blue;">
-                                    ${{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['unrealized_be'])}}
+                                    ${{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['FIFO']['unrealized_be'])}}
                                     </span>
                                 </li>
                             {% endif %}

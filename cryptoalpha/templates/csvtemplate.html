@@ -13,8 +13,9 @@
             The template below summarizes the expected file format for
             .csv files being imported into a portfolio. </br></br>
 
-            A sample csv file can be downloaded <a href='static/downloads/sample.csv'>here</a>.</br></br>
+            A sample csv file can be downloaded <a href="{{ url_for('static', filename='downloads/sample.csv') }}">here</a>.</br></br>
 
+    
             Although transactions can be included on a one-by-one
             basis throught the <a href="{{url_for('transactions.newtrade')}}">
             transactions</a> page, we recommend importing .csv files

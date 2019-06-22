@@ -10,6 +10,10 @@ h1, h2, h3, h4, h5, h6 {
   color: #444444;
 }
 
+/* Only for snippet */
+.double-nav .breadcrumb-dn {
+  color: #fff;
+}
 
 .bg-steel {
   background-color: #515151;
@@ -106,25 +110,21 @@ a.article-title:hover {
     font-size: 14px;
 
 }
-td.red {
+td.red_negpos {
   color: red;
 }
 
-td.green {
+td.green_negpos {
   color: green;
 }
 
 .hinumber {
     color: #1F5168;
-    font-family: 'Allerta';
-    font-size: 20px;
 }
 
 
 .hinumbersmall {
-    color: #1F5168;
-    font-family: 'Allerta';
-    font-size: 18px;
+    color: #1F5168;;
 }
 
 h6 {

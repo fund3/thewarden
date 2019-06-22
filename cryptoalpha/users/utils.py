@@ -111,7 +111,7 @@ def cost_calculation(user, ticker):
     cost_matrix['FIFO']['cash'] = fifo_df['adjusted_cv'].sum()
 
     cost_matrix['FIFO']['quantity'] = open_position
-    cost_matrix['FIFO']['count'] = fifo_df['trade_operation'].count()
+    cost_matrix['FIFO']['count'] = int(fifo_df['trade_operation'].count())
     cost_matrix['FIFO']['average_cost'] = fifo_df['adjusted_cv'].sum()\
         / open_position
 
@@ -137,7 +137,7 @@ def cost_calculation(user, ticker):
     cost_matrix['LIFO']['cash'] = lifo_df['adjusted_cv'].sum()
 
     cost_matrix['LIFO']['quantity'] = open_position
-    cost_matrix['LIFO']['count'] = lifo_df['trade_operation'].count()
+    cost_matrix['LIFO']['count'] = int(lifo_df['trade_operation'].count())
     cost_matrix['LIFO']['average_cost'] = lifo_df['adjusted_cv'].sum()\
         / open_position
 
@@ -173,6 +173,9 @@ def generate_pos_table(user, fx, hidesmall):
     consol_table['symbol'] = consol_table.index.values
     try:
         consol_table = consol_table.drop('USD')
+        if consol_table.empty:
+            return ("empty", "empty")
+
     except KeyError:
         logging.info("[generate_pos_table] No USD positions found")
 
@@ -321,6 +324,28 @@ def generate_pos_table(user, fx, hidesmall):
         table[ticker]['count'] = summary_table['count'][ticker].to_dict()
         table[ticker]['average_price'] = \
             summary_table['average_price'][ticker].to_dict()
+
+        # # Need to clean up Numpy NaN and Infinity as they trigger errors 
+        # # with JSON returns to AJAX
+        # for key, value in table[ticker]['cost_matrix']['FIFO'].items():
+        #     print (f"Key: {key}")
+        #     print (f"Value: {value}")
+        #     print ("----")
+        #     if np.isnan(table[ticker]['cost_matrix']['FIFO'][key]):
+        #         print ("NA")
+        #         table[ticker]['cost_matrix']['FIFO'][key] == "NaN"
+        #     if np.isinf(table[ticker]['cost_matrix']['FIFO'][key]):
+        #         table[ticker]['cost_matrix']['FIFO'][key] == "Infinity"
+        
+        # for key, value in table[ticker]['cost_matrix']['FIFO']:
+        #     print (f"Key: {key}")
+        #     print (f"Value: {value} Type: {type(value)}")
+        #     print ("----")
+        #     if np.isnan(table[ticker]['cost_matrix']['LIFO'][key]):
+        #         table[ticker]['cost_matrix']['LIFO'][key] == "NaN"
+        #     if np.isinf(table[ticker]['cost_matrix']['LIFO'][key]):
+        #         table[ticker]['cost_matrix']['LIFO'][key] == "Infinity"
+        
 
     return(table, pie_data)
 
@@ -584,10 +609,9 @@ def generatenav(user, force=False, filter=None):
             # unless there's no previous
             dailynav[id+'_pos'].fillna(method='ffill', inplace=True)
             dailynav[id+'_pos'].fillna(0, inplace=True)
-            # Calculate USD position
+            # Calculate USD position and % of portfolio at date
             dailynav[id+'_usd_pos'] = dailynav[id+'_price'].astype(
                 float) * dailynav[id+'_pos'].astype(float)
-
             # Before calculating NAV, clean the df for small
             # dust positions. Otherwise, a portfolio close to zero but with
             # 10 sats for example, would still have NAV changes
@@ -612,19 +636,31 @@ def generatenav(user, force=False, filter=None):
                 dailynav[id+'_usd_pos']
         except KeyError:
             logging.warning(f"[GENERATENAV] Ticker {id} was not found " +
-                            "on NAV Table - continuing but this is not good.")
+                            "on NAV Table - continuing but this is not good." +
+                            " NAV calculations will be erroneous.")
             continue
         dailynav['PORT_cash_value'] = dailynav['PORT_cash_value'] +\
             dailynav[id+'_cash_value']
 
-    # Now, finally, let's calculate NAV and return on period
+    # Now that we have the full portfolio value each day, calculate alloc %
+    for id in tickers:
+        if id == "USD":
+            continue
+        try:
+            dailynav[id+"_usd_perc"] = dailynav[id+'_usd_pos'] /\
+                dailynav['PORT_usd_pos']
+            dailynav[id+"_usd_perc"].fillna(0, inplace=True)
+        except KeyError:
+            logging.warning(f"[GENERATENAV] Ticker {id} was not found " +
+                            "on NAV Table - continuing but this is not good." +
+                            " NAV calculations will be erroneous.")
+            continue
 
     # Create a new column with the portfolio change only due to market move
     # discounting all cash flows for that day
     dailynav['adj_portfolio'] = dailynav['PORT_usd_pos'] -\
         dailynav['PORT_cash_value']
-    # dailynav['adj_portfolio'] = dailynav['adj_portfolio'].clip(lower=0)
-    # dailynav['adj_portfolio'] = dailynav['adj_portfolio'].round(0)
+
     # For the period return let's use the Modified Dietz Rate of return method
     # more info here: https://tinyurl.com/y474gy36
     # There is one caveat here. If end value is zero (i.e. portfolio fully
@@ -659,7 +695,6 @@ def generatenav(user, force=False, filter=None):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     dailynav.to_pickle(filename)
     logging.info(f"[generatenav] NAV saved to {filename}")
-
     return dailynav
 
 
@@ -702,9 +737,6 @@ def alphavantage_historical(id):
     # Alphavantage Keys can be generated free at
     # https://www.alphavantage.co/support/#api-key
 
-    # try:
-    #     ALPHAVANTAGE_API_KEY = config['API_KEYS']['ALPHAVANTAGE_API_KEY']
-    # except KeyError:
     if ALPHAVANTAGE_API_KEY == "":
         logging.error("Cannot read Alphavantage API Key from environment")
 
@@ -815,88 +847,3 @@ def send_reset_email(user):
                  and no changes will be made.
                 '''
     mail.send(msg)
-
-
-def daily_maint():
-    # -------------------------------------------------
-    # Daily task to import prices from Alphavantage
-    # loops through all tickers in database and downloads
-    # then creates a txt file with the last update date
-    # This is done to reduce number of API calls and
-    # to speed up historical data usage
-    # -------------------------------------------------
-    logging.info("Starting Maintenance Routine")
-    # For info on how the below was setup refer to:
-    # https://flask-sqlalchemy.palletsprojects.com/en/2.x/contexts/
-    from cryptoalpha import db, create_app
-    app = create_app()
-    app.app_context().push()
-    # Daily Maintenance Job
-    with app.app_context():
-        df = pd.read_sql_table('trades', db.engine)
-    # ------ end of context -----
-
-    tickers = df.trade_asset_ticker.unique()
-    for id in tickers:
-        if id == "USD":
-            continue
-        filename = 'cryptoalpha/historical_data/'+id+'.json'
-
-        try:
-            with open(filename) as data_file:
-                local_json = json.loads(data_file.read())
-                data_file.close()
-                lstup = ((local_json['Meta Data']['6. Last Refreshed']))
-                # leave only numerical values on the Meta Data
-                lstup = re.sub('[^0-9]', '', lstup)
-                lstup = datetime.strptime(lstup, '%Y%m%d')
-                ytday = (datetime.today().date())
-                ytday -= timedelta(days=1)
-                if lstup.date() == ytday:
-                    logging.info(f"Ticker: {id} ---- " +
-                                 "No need to update - local file is fresh")
-                    continue
-
-        except FileNotFoundError:
-            logging.info(f"No json found for ticker {id}." +
-                         " Downloading a new one")
-
-        except TypeError:
-            logging.error("File found but with invalid data")
-
-        except KeyError:
-            logging.error("Invalid Metadata")
-
-        logging.info("Grabbing data from Alphavantage.")
-        baseURL = "https://www.alphavantage.co/query?"
-        func = "DIGITAL_CURRENCY_DAILY"
-        market = "USD"
-        globalURL = baseURL + "function=" + func + "&symbol=" + id +\
-            "&market=" + market + "&apikey=" + ALPHAVANTAGE_API_KEY
-        logging.info(f" URL = {globalURL}")
-
-        try:
-            request = requests.get(globalURL, timeout=2)
-            data = request.json()
-        except:
-            data = 0
-
-        with open(filename, 'w') as outfile:
-            json.dump(data, outfile)
-
-        logging.info(f"Done with {filename}")
-
-
-def daily_maint_scheduler():
-    # TIMERS for Maintenance Routine
-    # daily_maint()  # Run at start and then wait xxx minutes to re-run
-    try:
-        daily_maint()
-        logging.info("Daily Maintenance executed ok at launch")
-    except ImportError:
-        pass
-    sched = BackgroundScheduler(daemon=False)
-    # sched.remove_job('sched')
-    sched.add_job(daily_maint, 'cron', hour='1,3,9,12,14,16,17,19,23')
-    sched.start()
-    logging.info("[daily_maint_scheduler] Scheduled the daily Maintenance")
