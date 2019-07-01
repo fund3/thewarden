@@ -146,17 +146,17 @@ function createcharts() {
             name: 'Allocation',
             colorByPoint: true,
             data: chartdata,
-            size: '70%',
-            innerSize: '50%',
+            size: '90%',
+            innerSize: '60%',
             dataLabels: {
                 enabled: true,
-                align: 'left',
-                allowOverlap: true,
+                align: 'center',
+                allowOverlap: false,
                 format: '{point.name} {point.y:.0f}%',
                 connectorPadding: 1,
-                distance: 1,
+                distance: 10,
                 softConnector: true,
-                crookDistance: '20%'
+                crookDistance: '10%'
             },
         }]
     });
@@ -188,7 +188,7 @@ function navChart(data) {
             selected: 0
         },
         chart: {
-            zoomType: 'x',
+            zoomType: 'xy',
             backgroundColor: "#FAFAFA",
         },
         title: {
@@ -204,7 +204,9 @@ function navChart(data) {
         yAxis: {
             title: {
                 text: 'NAV'
-            }
+            },
+            startOnTick: false,
+            endOnTick: false
         },
         legend: {
             enabled: false

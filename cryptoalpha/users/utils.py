@@ -15,6 +15,8 @@ from flask_mail import Message
 from flask_login import current_user
 from cryptoalpha import db, mail
 from cryptoalpha.config import Config
+from cryptoalpha.models import Trades
+from cryptoalpha import mhp as mrh
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -847,3 +849,68 @@ def send_reset_email(user):
                  and no changes will be made.
                 '''
     mail.send(msg)
+
+
+def heatmap_generator():
+     # If no Transactions for this user, return empty.html
+    transactions = Trades.query.filter_by(user_id=current_user.username).order_by(
+        Trades.trade_date
+    )
+    if transactions.count() == 0:
+        return None, None, None, None
+
+    # Generate NAV Table first
+    data = generatenav(current_user.username)
+    data["navpchange"] = (data["NAV"] / data["NAV"].shift(1)) - 1
+    returns = data["navpchange"].copy()
+    # Run the mrh function to generate heapmap table
+    heatmap = mrh.get(returns, eoy=True)
+
+    heatmap_stats = heatmap.copy()
+    cols = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+        "eoy",
+    ]
+    cols_months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    years = heatmap.index.to_list()
+    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(axis=1)
+    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(axis=1)
+    heatmap_stats["POSITIVES"] = heatmap_stats[heatmap_stats[cols_months] > 0].count(
+        axis=1
+    )
+    heatmap_stats["NEGATIVES"] = heatmap_stats[heatmap_stats[cols_months] < 0].count(
+        axis=1
+    )
+    heatmap_stats["POS_MEAN"] = heatmap_stats[heatmap_stats[cols_months] > 0].mean(
+        axis=1
+    )
+    heatmap_stats["NEG_MEAN"] = heatmap_stats[heatmap_stats[cols_months] < 0].mean(
+        axis=1
+    )
+    heatmap_stats["MEAN"] = heatmap_stats[heatmap_stats[cols_months] != 0].mean(axis=1)
+
+    return (heatmap, heatmap_stats, years, cols)

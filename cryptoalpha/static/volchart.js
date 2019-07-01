@@ -63,6 +63,7 @@ function createcharts(datachart) {
 
     data = datachart;
 
+
     var myChart = Highcharts.chart('volchart', {
         credits: {
             text: "",
@@ -91,7 +92,9 @@ function createcharts(datachart) {
             },
             labels: {
                 align: 'left'
-            }
+            },
+            startOnTick: false,
+            endOnTick: false
         },
 
         legend: {

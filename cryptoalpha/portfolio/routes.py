@@ -4,7 +4,7 @@ from flask_login import current_user, login_required
 from cryptoalpha import mhp as mrh
 from cryptoalpha.models import Trades
 from datetime import datetime
-from cryptoalpha.users.utils import generatenav, generate_pos_table
+from cryptoalpha.users.utils import generatenav, generate_pos_table, heatmap_generator
 
 portfolio = Blueprint("portfolio", __name__)
 
@@ -68,71 +68,15 @@ def navchart():
 @login_required
 # Returns a monthly heatmap of returns and statistics
 def heatmap():
-    # If no Transactions for this user, return empty.html
-    transactions = Trades.query.filter_by(user_id=current_user.username).order_by(
-        Trades.trade_date
-    )
-    if transactions.count() == 0:
+    heatmap_gen, heatmap_stats, years, cols = heatmap_generator()
+
+    if not years:
         return render_template("empty.html")
-
-    # Generate NAV Table first
-    data = generatenav(current_user.username)
-    data["navpchange"] = (data["NAV"] / data["NAV"].shift(1)) - 1
-    returns = data["navpchange"].copy()
-    # Run the mrh function to generate heapmap table
-    heatmap = mrh.get(returns, eoy=True)
-
-    heatmap_stats = heatmap.copy()
-    cols = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-        "eoy",
-    ]
-    cols_months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-    ]
-    years = heatmap.index.to_list()
-    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(axis=1)
-    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(axis=1)
-    heatmap_stats["POSITIVES"] = heatmap_stats[heatmap_stats[cols_months] > 0].count(
-        axis=1
-    )
-    heatmap_stats["NEGATIVES"] = heatmap_stats[heatmap_stats[cols_months] < 0].count(
-        axis=1
-    )
-    heatmap_stats["POS_MEAN"] = heatmap_stats[heatmap_stats[cols_months] > 0].mean(
-        axis=1
-    )
-    heatmap_stats["NEG_MEAN"] = heatmap_stats[heatmap_stats[cols_months] < 0].mean(
-        axis=1
-    )
-    heatmap_stats["MEAN"] = heatmap_stats[heatmap_stats[cols_months] != 0].mean(axis=1)
 
     return render_template(
         "heatmap.html",
         title="Monthly Returns HeatMap",
-        heatmap=heatmap,
+        heatmap=heatmap_gen,
         heatmap_stats=heatmap_stats,
         years=years,
         cols=cols,
@@ -201,4 +145,16 @@ def allocation_history():
 @login_required
 def scatter():
     return render_template("scatter.html", title="Scatter Plot of Returns")
+
+
+@portfolio.route("/stack_analysis", methods=["GET"])
+@login_required
+def stack_analysis():
+    return render_template("stack_analysis.html", title="Stack & Cost Analysis")
+
+
+@portfolio.route("/drawdown", methods=["GET"])
+@login_required
+def drawdown():
+    return render_template("drawdown.html", title="Drawdown Analysis")
 
