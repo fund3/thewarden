@@ -2,7 +2,7 @@ import json
 import logging
 import math
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import simplejson
 import numpy as np
@@ -12,9 +12,11 @@ from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user, login_required
 
 from cryptoalpha import db
+from cryptoalpha import mhp as mrh
 from cryptoalpha.models import Trades, listofcrypto
 from cryptoalpha.users.utils import (alphavantage_historical,
-                                     generate_pos_table, generatenav)
+                                     generate_pos_table, generatenav,
+                                     heatmap_generator, rt_price_grab)
 
 api = Blueprint("api", __name__)
 
@@ -872,3 +874,483 @@ def scatter_json():
         }
     )
 
+
+
+@api.route("/transactionsandcost_json", methods=["GET"])
+@login_required
+# Return daily data on transactions and cost for a single ticker
+# Takes arguments:
+# ticker   - single ticker for filter
+# start    - start date in the format YYMMDD (defaults to 1st transaction on ticker)
+# end      - end date in the format YYMMDD (defaults to today)
+def transactionsandcost_json():
+    # Get arguments and assign values if needed
+    if request.method == "GET":    
+        start_date = request.args.get("start")
+        ticker = request.args.get("ticker")
+
+        # Check if start and end dates exist, if not assign values
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(
+                f"[transactionsandcost_json] Warning: {e}, " + "setting start_date to zero"
+            )
+            start_date = datetime(2000, 1, 1)
+
+        end_date = request.args.get("end")
+
+        try:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(
+                f"[transactionsandcost_json] Warning: {e}, " + "setting end_date to now"
+            )
+            end_date = datetime.now()
+   
+    # Get Transaction List
+    df = pd.read_sql_table("trades", db.engine)
+    # Filter only the trades for current user
+    df = df[(df.user_id == current_user.username)]
+    # Filter only to requested ticker
+    # if no ticker, use BTC as default, if not BTC then the 1st in list
+    tickers = df.trade_asset_ticker.unique().tolist()
+    tickers.remove('USD')
+
+    if not ticker:
+        if 'BTC'in tickers:
+            ticker = 'BTC'
+        else:
+            ticker = tickers[0]
+    df = df[(df.trade_asset_ticker == ticker)]
+    # Filter only buy and sells, ignore deposit / withdraw
+    # For now, including Deposits and Withdrawns as well but
+    # may consider only B and S as line below. 
+    # df = df[(df.trade_operation == "B") | (df.trade_operation == "S")]
+    df.drop("user_id", axis=1, inplace=True)
+    # Create a cash_flow column - so we can calculate
+    # average price for days with multiple buys and/or sells
+    df['cash_flow'] = df['trade_quantity'] * df['trade_price'] +df['trade_fees']
+    df['trade_date'] = pd.to_datetime(df['trade_date'])
+
+    # Consolidate all transactions from a single day by grouping
+    df = df.groupby(['trade_date'])[
+        ["cash_value", "trade_fees", "trade_quantity"]].agg(['sum','count'])
+    df.index.names = ['date']
+    # Remove the double index for column and consolidate under one row
+    df.columns = ['_'.join(col).strip() for col in df.columns.values]
+    
+    # Filter to Start and End Dates passed as arguments
+    mask = (df.index >= start_date) & (df.index <= end_date)
+    df = df.loc[mask]
+
+    # ---------------------------------------------------------
+    # Get price of ticker passed as argument and merge into df
+    message = {}
+    data, notification, meta = alphavantage_historical(ticker)
+    # If notification is an error, skip this ticker
+    if notification == "error":
+        message = data
+        return(message)
+    data.reset_index(inplace=True)
+    data = data.set_index(list(data.columns[[0]]))
+    try:
+        data = data["4a. close (USD)"]
+    except KeyError:
+        try:
+            data = data["4. close"]
+        except KeyError:
+            message = "Key Error on Data"
+            return(message)
+    # convert string date to datetime
+    data.index = pd.to_datetime(data.index)
+    # rename index to date to match dailynav name
+    data.index.rename("date", inplace=True)
+    data.rename(ticker, inplace=True)
+    data = data.astype(float)
+    
+    # Create a DF, fill with dates and fill with operation and prices
+    start_date = df.index.min()
+    daily_df = pd.DataFrame(columns=['date'])
+    daily_df['date'] = pd.date_range(start=start_date, end=end_date)
+    daily_df = daily_df.set_index('date')
+    # Fill dailyNAV with prices for each ticker
+    daily_df = pd.merge(daily_df, df, on="date", how="left")
+    daily_df.fillna(0, inplace=True)
+    daily_df = pd.merge(daily_df, data, on="date", how="left")
+    daily_df[ticker].fillna(method="ffill", inplace=True)
+    message = "ok"
+    logging.info(f"[transactionandcost_json] {ticker}: Success - Merged OK")
+    # ---------------------------------------------------------
+    # Create additional columns on df
+    # ---------------------------------------------------------
+    # daily_df['transaction_boolean'] = daily_df.loc[daily_df.trade_quantity_sum > 0] = 'True'
+    daily_df.loc[daily_df.trade_quantity_sum > 0, 'traded'] = 1
+    daily_df.loc[daily_df.trade_quantity_sum <= 0, 'traded'] = 0
+    daily_df['q_cum_sum'] = daily_df['trade_quantity_sum'].cumsum()
+    daily_df['cv_cum_sum'] = daily_df['cash_value_sum'].cumsum()
+    daily_df['avg_cost'] = daily_df['cv_cum_sum'] / daily_df['q_cum_sum'] 
+    daily_df['price_over_cost_usd'] =  daily_df[ticker] - daily_df['avg_cost']
+    daily_df['price_over_cost_perc'] =  (daily_df[ticker] / daily_df['avg_cost']) - 1
+    daily_df['impact_on_cost_usd'] = (daily_df['avg_cost'].diff())
+    daily_df['impact_on_cost_per'] = daily_df['impact_on_cost_usd'] / daily_df[ticker] 
+    # Remove cost if position is too small - this avoids large numbers
+    # Also, remove cost calculation if positions are open (from zero)
+    daily_df.loc[daily_df.q_cum_sum <= 0.009, 'price_over_cost_usd'] = np.NaN
+    daily_df.loc[daily_df.q_cum_sum <= 0.009, 'avg_cost'] = np.NaN
+    daily_df.loc[daily_df.q_cum_sum.shift(1) <= 0.009, 'impact_on_cost_usd'] = np.NaN
+    daily_df.loc[daily_df.q_cum_sum <= 0.009, 'impact_on_cost_usd'] = np.NaN
+    daily_df.loc[daily_df.q_cum_sum <= 0.009, 'impact_on_cost_per'] = np.NaN
+
+    return_dict = {}
+    return_dict['data'] = daily_df.to_json()
+    return_dict['meta_data'] = meta
+    return_dict['message'] = message
+    logging.info(f"[transactionandcost_json] Success generating data")
+    
+    return jsonify(return_dict)
+
+
+
+@api.route("/heatmapbenchmark_json", methods=["GET"])
+@login_required
+# Return Monthly returns for Benchmark and Benchmark difference from NAV
+# Takes arguments:
+# ticker   - single ticker for filter
+def heatmapbenchmark_json():
+
+    # Get portfolio data first
+    heatmap_gen, heatmap_stats, years, cols = heatmap_generator()
+
+    # Now get the ticker information and run comparison
+    if request.method == "GET":    
+        ticker = request.args.get("ticker")
+        # Defaults to king BTC
+        if not ticker:
+            ticker = "BTC"
+
+    # Gather the first trade date in portfolio and store 
+    # used to match the matrixes later
+    # Panda dataframe with transactions
+    df = pd.read_sql_table('trades', db.engine)
+    df = df[(df.user_id == current_user.username)]
+    # Filter the df acccoring to filter passed as arguments
+    df['trade_date'] = pd.to_datetime(df['trade_date'])
+    start_date = df['trade_date'].min()
+    start_date -= timedelta(days=1)  # start on t-1 of first trade
+
+    # Generate price Table now for the ticker and trim to match portfolio
+    data, notification, meta = alphavantage_historical(ticker)
+    # Trim this list only to start_date to end_date:
+    try:
+        data.index = pd.to_datetime(data.index)
+    except TypeError:
+        return ("Connection Error")
+  
+    data.index.names = ['date']
+    mask = (data.index >= start_date)
+    data = data.loc[mask]
+
+    # If notification is an error, skip this ticker
+    if notification == "error":
+        messages = data
+        return jsonify(messages)
+    data.reset_index(inplace=True)
+    data = data.set_index(list(data.columns[[0]]))
+    try:
+        data = data["4a. close (USD)"]
+    except KeyError:
+        try:
+            data = data["4. close"]
+        except KeyError:
+            messages = "Key Error on Data"
+            return jsonify(messages)
+
+    # convert string date to datetime
+    data.index = pd.to_datetime(data.index)
+    # rename index to date to match dailynav name
+    data.index.rename("date", inplace=True)
+    data.rename(ticker + "_price", inplace=True)
+    data = data.astype(float)
+    # Include the last price of ticker in the df
+    try:
+        data[pd.to_datetime(datetime.today())] = rt_price_grab(ticker)['USD']
+    except KeyError:
+        logging.warn(f"Could not get realtime price for {ticker}. Last price defaulted to previous close price.")
+    data["pchange"] = (data / data.shift(1)) - 1
+    returns = data["pchange"].copy()
+    # Run the mrh function to generate heapmap table
+    heatmap = mrh.get(returns, eoy=True)
+
+    heatmap_stats = heatmap.copy()
+    cols = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+        "eoy",
+    ]
+    cols_months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    years = heatmap.index.to_list()
+    # Create summary stats for the Ticker
+    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(axis=1)
+    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(axis=1)
+    heatmap_stats["POSITIVES"] = heatmap_stats[heatmap_stats[cols_months] > 0].count(
+        axis=1
+    )
+    heatmap_stats["NEGATIVES"] = heatmap_stats[heatmap_stats[cols_months] < 0].count(
+        axis=1
+    )
+    heatmap_stats["POS_MEAN"] = heatmap_stats[heatmap_stats[cols_months] > 0].mean(
+        axis=1
+    )
+    heatmap_stats["NEG_MEAN"] = heatmap_stats[heatmap_stats[cols_months] < 0].mean(
+        axis=1
+    )
+    heatmap_stats["MEAN"] = heatmap_stats[heatmap_stats[cols_months] != 0].mean(axis=1)
+
+    # Create the difference between the 2 df - Pandas is cool!
+    heatmap_difference = heatmap_gen - heatmap
+
+    # return (heatmap, heatmap_stats, years, cols, ticker, heatmap_diff)
+    return simplejson.dumps({
+                "heatmap": heatmap.to_dict(),
+                "heatmap_stats": heatmap_stats.to_dict(),
+                "cols": cols,
+                "years": years,
+                "ticker": ticker,
+                "heatmap_diff" : heatmap_difference.to_dict()
+            }, ignore_nan=True, default=datetime.isoformat)
+    
+
+
+@api.route("/drawdown_json", methods=["GET"])
+@login_required
+# Return the largest drawdowns in a time period
+# Takes arguments:
+# ticker:       Single ticker for filter (default = NAV)
+# start_date:   If none, defaults to all available
+# end_date:     If none, defaults to today
+# n_dd:         Top n drawdowns to be calculated
+# chart:        Boolean - return data for chart
+def drawdown_json():
+    
+    # Get the arguments and store
+    if request.method == "GET":    
+        start_date = request.args.get("start")
+        ticker = request.args.get("ticker")
+        n_dd = request.args.get("n_dd")
+        chart = request.args.get("chart")
+        if not ticker:
+            ticker = "NAV"
+        ticker = ticker.upper()
+        if n_dd:
+            try: 
+                n_dd = int(n_dd)
+            except TypeError:
+                n_dd = 2
+        if not n_dd:
+            n_dd = 2
+        # Check if start and end dates exist, if not assign values
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(
+                f"Warning: {e}, " + "setting start_date to zero"
+            )
+            start_date = datetime(2000, 1, 1)
+
+        end_date = request.args.get("end")
+        try:
+            end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        except (ValueError, TypeError) as e:
+            logging.info(
+                f"Warning: {e}, " + "setting end_date to now"
+            )
+            end_date = datetime.now()
+
+    # Create a df with either NAV or ticker prices
+    if ticker=="NAV":
+        data = generatenav(current_user.username)
+        data = data['NAV']
+    else:
+        # Get price of ticker passed as argument
+        message = {}
+        data, notification, meta = alphavantage_historical(ticker)
+        # If notification is an error, return error
+        if notification == "error":
+            message = data
+            return(message)
+        data.reset_index(inplace=True)
+        data = data.set_index(list(data.columns[[0]]))
+        try:
+            data = data["4a. close (USD)"]
+        except KeyError:
+            try:
+                data = data["4. close"]
+            except KeyError:
+                message = "Key Error on Data"
+                return(message)
+        # convert string date to datetime
+        data.index = pd.to_datetime(data.index)
+        # rename index to date to match dailynav name
+        data.index.rename("date", inplace=True)
+        data.rename(ticker, inplace=True)
+        data = data.astype(float)
+
+    # Trim the df only to start_date to end_date:
+    mask = (data.index >= start_date) & (data.index <= end_date)
+    data = data.loc[mask]
+    # # Rename columns
+    data.index.rename("date", inplace=True)
+    data.columns = [ticker]
+    
+    # # Calculate drawdowns    
+    df = 100 * (1 + data/100).cumprod()
+    df = pd.DataFrame(data)
+    df.columns = ['close']
+    df['ret'] = df.close/df.close[0]
+    df['modMax'] = df.ret.cummax()
+    df['modDD'] = (df.ret/df['modMax']) - 1
+    # Starting date of the currency modMax
+    df['end_date'] = df.index
+    # is this the first occurence of this modMax?
+    df['dup'] = df.duplicated(['modMax'])
+
+    # Now, exclude the drawdowns that have overlapping data, keep only highest
+    df_group = df.groupby(['modMax']).min().sort_values(by='modDD', ascending=True)
+    # Trim to fit n_dd
+    df_group = (df_group.head(n_dd))
+    # Format a dict for return
+    return_list = []
+    for index, row in df_group.iterrows():
+        # access data using column names
+        tmp_dict = {}
+        tmp_dict['dd'] = row['modDD']
+        tmp_dict['start_date'] = row['end_date'].strftime('%Y-%m-%d')
+        tmp_dict['end_value'] = row['close']
+        tmp_dict['recovery_date'] = df[df.modMax == index].tail(1).end_date[0].strftime('%Y-%m-%d')
+        tmp_dict['end_date'] = df[df.close == row['close']].tail(1).end_date[0].strftime('%Y-%m-%d')
+        tmp_dict['start_value'] = df[df.index == row['end_date']].tail(1).close[0]
+        tmp_dict['days_to_recovery'] = (df[df.modMax == index].tail(1).end_date[0] - row['end_date']).days
+        tmp_dict['days_to_bottom'] = (df[df.close == row['close']].tail(1).end_date[0] - row['end_date']).days
+        tmp_dict['days_bottom_to_recovery'] = (df[df.modMax == index].tail(1).end_date[0] -
+                                                df[df.close == row['close']].tail(1).end_date[0]).days
+        return_list.append(tmp_dict)
+
+    if chart:
+        start_date = data.index.min()
+        total_days = (end_date - start_date).days
+        # dates need to be in Epoch time for Highcharts
+        data.index = (data.index - datetime(1970, 1, 1)).total_seconds()
+        data.index = data.index * 1000
+        data.index = data.index.astype(np.int64)
+        data = data.to_dict()
+        # Generate the flags for the chart
+        # {
+        #         x: 1500076800000,
+        #         title: 'TEST',
+        #         text: 'TEST text'
+        # }
+        flags = []
+        plot_bands = []
+        # Create a dict for flags and plotBands on chart
+        total_recovery_days = 0
+        total_drawdown_days = 0
+        for item in return_list:
+        # First the start date for all dd
+            tmp_dict = {}
+            start_date = datetime.strptime(item['start_date'], '%Y-%m-%d')
+            start_date = ((start_date - datetime(1970, 1, 1)).total_seconds() * 1000)
+            tmp_dict['x'] = start_date
+            tmp_dict['title'] = 'TOP'
+            tmp_dict['text'] = 'Start of drawdown'         
+            flags.append(tmp_dict)
+        # Now the bottom for all dd
+            tmp_dict = {}
+            end_date = datetime.strptime(item['end_date'], '%Y-%m-%d')
+            end_date = ((end_date - datetime(1970, 1, 1)).total_seconds() * 1000)
+            tmp_dict['x'] = end_date
+            tmp_dict['title'] = 'BOTTOM'
+            tmp_dict['text'] = 'Bottom of drawdown'
+            flags.append(tmp_dict)
+        # Now the bottom for all dd
+            tmp_dict = {}
+            recovery_date = datetime.strptime(item['recovery_date'], '%Y-%m-%d')
+            recovery_date = ((recovery_date - datetime(1970, 1, 1)).total_seconds() * 1000)
+            tmp_dict['x'] = recovery_date
+            tmp_dict['title'] = 'RECOVERED'
+            tmp_dict['text'] = 'End of drawdown Cycle'
+            flags.append(tmp_dict)
+        # Now create the plot bands
+            drop_days = (end_date - start_date) / 1000 / 60 / 60 / 24
+            recovery_days = (recovery_date - end_date) / 1000 / 60 / 60 / 24
+            total_drawdown_days += round(drop_days, 0)
+            total_recovery_days += round(recovery_days, 0)
+            tmp_dict = {}
+            tmp_dict['label'] = {}
+            tmp_dict['label']['align'] = 'center'
+            tmp_dict['label']['textAlign'] = 'left'
+            tmp_dict['label']['rotation'] = 90
+            tmp_dict['label']['text'] = 'Lasted ' + str(round(drop_days,0)) + ' days'
+            tmp_dict['label']['style'] = {}
+            tmp_dict['label']['style']['color'] = 'white'
+            tmp_dict['label']['style']['fontWeight'] = 'bold'
+            tmp_dict['color'] = '#E6A68E'
+            tmp_dict['from'] = start_date
+            tmp_dict['to'] = end_date
+            plot_bands.append(tmp_dict)
+            tmp_dict = {}
+            tmp_dict['label'] = {}
+            tmp_dict['label']['rotation'] = 90
+            tmp_dict['label']['align'] = 'center'
+            tmp_dict['label']['textAlign'] = 'left'
+            tmp_dict['label']['text'] = 'Lasted ' + str(round(recovery_days,0)) + ' days'
+            tmp_dict['label']['style'] = {}
+            tmp_dict['label']['style']['color'] = 'white'
+            tmp_dict['label']['style']['fontWeight'] = 'bold'
+            tmp_dict['color'] = '#8CADE1'
+            tmp_dict['from'] = end_date
+            tmp_dict['to'] = recovery_date
+            plot_bands.append(tmp_dict)
+
+
+        return jsonify(
+            {
+                "chart_data": data,
+                "messages": "OK",
+                "chart_flags": flags,
+                "plot_bands": plot_bands,
+                "days": {
+                    "recovery": total_recovery_days,
+                    "drawdown": total_drawdown_days,
+                    "trending": total_days - total_drawdown_days - total_recovery_days,
+                    "non_trending": total_drawdown_days + total_recovery_days,
+                    "total": total_days
+                } 
+            }
+        )
+
+    return (simplejson.dumps(return_list))
+    

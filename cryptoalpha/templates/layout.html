@@ -4,8 +4,8 @@
 
 <head>
     <!-- Style Sheets -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css"
+        href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
         integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
@@ -102,10 +102,10 @@
         {% if current_user.is_authenticated %}
         <div id="sidebar-wrapper">
             <ul class="sidebar-nav small">
-                <li class="text-left">
-                    <a href="/">
-                        <i class="fas fa-tachometer-alt fa-lg"></i> &nbsp;&nbsp;&nbsp; Dashboard
-                    </a>
+                <li>
+                    <strong><a href="/" class="text-white">
+                            <i class="fas fa-tachometer-alt fa-lg"></i> &nbsp;&nbsp;&nbsp; Home
+                        </a></strong>
                 </li>
 
                 <!-- ACCOUNT TOOLS MENU + SUBMENUS -->
@@ -165,14 +165,18 @@
             <div class="list-group bg-transparent text-white">
                 <a class="sidebar-subitem" href="{{ url_for('portfolio.navchart') }}"><i
                         class="fas fa-chart-area fa-lg"></i>&nbsp;&nbsp;NAV and Cost Chart</a>
+                <a class="sidebar-subitem" href="{{ url_for('portfolio.stack_analysis') }}"><i
+                        class="fas fa-layer-group fa-lg"></i>&nbsp;&nbsp;Stack Analysis</a>
                 <a class="sidebar-subitem" href="{{ url_for('portfolio.portfolio_compare') }}"><i
                         class="fas fa-check-double fa-lg"></i>&nbsp;&nbsp;Compare Performance</a>
                 <a class="sidebar-subitem" href="{{ url_for('portfolio.scatter') }}"><i
                         class="fas fa-braille fa-lg"></i>&nbsp;&nbsp;Scatter Plot</a>
+                <a class="sidebar-subitem" href="{{ url_for('portfolio.drawdown') }}"><i
+                        class="fas fa-skull fa-lg"></i>&nbsp;&nbsp;Top Draw Downs</a>
                 <a class="sidebar-subitem" href="{{ url_for('portfolio.volchart') }}"><i
                         class="fas fa-cloud-sun-rain fa-lg"></i>&nbsp;&nbsp;Volatility Chart</a>
                 <a class="sidebar-subitem" href="{{ url_for('portfolio.heatmap') }}"><i
-                        class="fas fa-fire-extinguisher fa-lg"></i>&nbsp;&nbsp;HeatMap</a>
+                        class="fas fa-fire fa-lg"></i>&nbsp;&nbsp;Monthly HeatMap</a>
                 <a class="sidebar-subitem" href="{{ url_for('portfolio.activity_summary') }}"><i
                         class="fas fa-exchange-alt fa-lg"></i>&nbsp;&nbsp;Activity Summary</a>
                 <a class="sidebar-subitem" href="{{ url_for('portfolio.allocation_history') }}"><i
@@ -186,20 +190,19 @@
 
         <br><br>
         <li>
-            <a href="{{ url_for('main.about') }}"><i class="fab fa-bitcoin fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;About
+            <a href="{{ url_for('main.about') }}" class="text-muted"><i
+                    class="fab fa-bitcoin fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;About
                 CryptoBlotter</a>
         </li>
 
         <li>
-            <a href="{{ url_for('users.logout') }}">
+            <a href="{{ url_for('users.logout') }}" class="text-muted">
                 <i class="fas fa-sign-out-alt fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;Logout
             </a>
         </li>
-
-
-
-
+        <br><br><br><br>
         </ul>
+
     </div>
     {% endif %}
     <!-- /#sidebar-wrapper -->

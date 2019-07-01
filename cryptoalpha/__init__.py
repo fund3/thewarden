@@ -1,5 +1,8 @@
 import logging
+import os
+import datetime
 from logging.handlers import RotatingFileHandler
+
 # DEBUG: Detailed information, typically of interest only when diagnosing
 # problems.
 # INFO: Confirmation that things are working as expected.
@@ -16,12 +19,28 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from cryptoalpha.config import Config
 
-format_str = '%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s'
-logging.basicConfig(filename='debug.log', level=logging.DEBUG,
-                    format=format_str)
+# Check size of debug.log file if it exists
+try:
+    debugfile = os.stat("debug.log")
+    maxsize = 1 * 1024 * 1024  # 1MB max size - increase if needed more history
+    if debugfile.st_size > maxsize:
+        print("Startup message: Debug File size is larger than maxsize")
+        print("Moving into archive")
+        # rename file to include archive time and date
+        archive_file = (
+            "debug_" + datetime.datetime.now().strftime("%I%M%p_on_%B_%d_%Y") + ".log"
+        )
+        archive_file = os.path.join("./debug_archive/", archive_file)
+        os.rename("debug.log", archive_file)
+except FileNotFoundError:
+    pass
 
-handler = RotatingFileHandler('debug.log',maxBytes=5*1024*1024,backupCount=1)
+
+format_str = "%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s"
+handler = RotatingFileHandler("debug.log", maxBytes=1 * 1024 * 1024, backupCount=2)
+logging.basicConfig(filename="debug.log", level=logging.DEBUG, format=format_str)
 handler.setFormatter(format_str)
+logging.captureWarnings(True)
 
 
 # Create the DB instance
@@ -31,16 +50,17 @@ mail = Mail()
 login_manager = LoginManager()
 
 # If login required - go to login:
-login_manager.login_view = 'users.login'
+login_manager.login_view = "users.login"
 # To display messages - info class (Bootstrap)
-login_manager.login_message_category = 'info'
+login_manager.login_message_category = "info"
 logging.info("Starting main program...")
 
 # CLS + Welcome
-print ("\033[1;32;40m")
-for _ in range (50):
-    print ("")
-print ("""
+print("\033[1;32;40m")
+for _ in range(50):
+    print("")
+print(
+    """
 \033[1;32;40m-----------------------------------------------------------------
   ____                  _        ____  _       _   _
  / ___|_ __ _   _ _ __ | |_ ___ | __ )| | ___ | |_| |_ ___ _ __
@@ -64,7 +84,9 @@ You can minimize this window now...
 \033[1;31;40m                  Always go for the red pill
 \033[1;32;40m-----------------------------------------------------------------
 \033[1;37;40m
-""")
+"""
+)
+
 
 def create_app(config_class=Config):
     logging.info("[create_app] Started create_app function")

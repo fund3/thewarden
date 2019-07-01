@@ -15,9 +15,7 @@ $(document).ready(function () {
 function change_refresh() {
     $('#alerts').html("<div class='small alert alert-info alert-dismissible fade show' role='alert'>Please wait... Refreshing data." +
         "</div>")
-
     setTimeout(function () { run_ajax(); }, 1000)
-    console.log("Change")
 };
 
 function run_ajax() {
@@ -177,6 +175,7 @@ function handle_ajax_data(data) {
 
 //  CHART
 function createChart(data) {
+    console.log(data)
     var myChart = Highcharts.stockChart('compchart', {
         credits: {
             enabled: false
@@ -202,6 +201,8 @@ function createChart(data) {
             type: 'datetime'
         },
         yAxis: {
+            startOnTick: false,
+            endOnTick: false
         },
         legend: {
             enabled: true,

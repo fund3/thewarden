@@ -1,6 +1,18 @@
 # Release History
 
-## v.02 alpha
+## v.03 alpha (released on 7/1/2019)
+
+- Fixed an issue where some charts were aggregating data when zoomed in
+- Implemented new chart - average cost over time. Showing impact of transactions on average cost. 
+- Created new error page when internet connection is not detected
+- Fixed charts to have better scale on y Axis - better visibility
+- Fixed an issue where debug.log size was not limited. Old files are now archived under `\debug_archive`.
+- Included a new table on HeatMap page with a benchmark. Now portfolio performance can be compared to a benchmark.
+- Included a handler for scalar errors as described in [issue #2](https://github.com/pxsocs/cryptoblotter/issues/2) 
+- Implemented a new chart and table to calculate top drawdowns
+
+
+## v.02 alpha (released on 6/22/2019)
 
 - Fixed [issue #7](https://github.com/pxsocs/cryptoblotter/issues/7) that led to an error when a new portfolio is created and the first transaction was an __ASSET ONLY__ transaction.
 - Related to [issue #7](https://github.com/pxsocs/cryptoblotter/issues/7) - fixed an issue with portfolios just created where return_1wk, etc would return error
@@ -18,3 +30,4 @@
 - Redesigned the Navigation Menu for a sidenav
 - Included Attribution Chart
 - Created Historical Allocation Chart
+- Created new Scatter Plot Chart
