@@ -1583,7 +1583,11 @@ def import_transaction():
             continue
 
         try:
-            price = float(jsonData[item]['trade_price'].replace(',',''))
+            try:
+                price = float(jsonData[item]['trade_price'].replace(',',''))
+            except KeyError:
+                flash(f"Error: No price found when importing transaction {jsonData[item]['trade_blockchain_id'][0:6]}", "danger")
+                continue
             quant = (jsonData[item]['trade_quantity'])
             cv = price * quant
         except (AttributeError, ValueError):
