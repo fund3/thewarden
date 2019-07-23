@@ -1,11 +1,9 @@
 {% extends "layout.html" %}
 {% block content %}
 <!-- http://jquery.com/ -->
-<script
-  src="https://code.jquery.com/jquery-3.3.1.js"
-  integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
-  crossorigin="anonymous">
-</script>
+<script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous">
+    </script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
@@ -13,68 +11,136 @@
 
     <div class="content-section">
 
-      <div class="media">
-        <img class="rounded-circle account-img" src={{ image_file }}>
-        <div class="media-body">
-          <h2 class="account-heading">{{ current_user.username }}</h2>
-          <p class="text-secondary">{{ current_user.email }}</p>
+        <div class="media">
+            <div class="media-body">
+                <h2 class="account-heading">{{ current_user.username }}</h2>
+                <p class="text-secondary">{{ current_user.email }}</p>
+            </div>
         </div>
-      </div>
 
 
-              <form method="POST" action="" enctype="multipart/form-data">
-                  {{ form.hidden_tag() }}
-                  <fieldset class ="form-group">
+        <form method="POST" action="" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
 
-                <legend class ="border-bottom mb-4">Account Info | CryptoBlotter</legend>
-
-
-                      <div class="form-group">
-                          {{ form.email.label(class="form-control-label") }}
-                          {% if form.email.errors %}
-                              {{ form.email(class="form-control form-control-lg is-invalid") }}
-                              <div class="invalid-feedback">
-                                  {% for error in form.email.errors %}
-                                      <span>{{ error }}</span>
-                                  {% endfor %}
-                              </div>
-                          {% else %}
-                              {{ form.email(class="form-control form-control-lg") }}
-                          {% endif %}
-                      </div>
+                <legend class="border-bottom mb-4">User Info</legend>
 
 
-                      <div class="form-group">
-                          {{ form.picture.label() }}
-                          {{ form.picture(class="form-control-file") }}
-                          {% if form.picture.errors %}
-                            {% for error in form.picture.errors %}
-                             <span class="text-danger">{{ error }}</span></br>
-                             {% endfor %}
-                          {% endif %}
-                      </div>
+                <div class="form-group">
+                    {{ form.email.label(class="form-control-label") }}
+                    {% if form.email.errors %}
+                    {{ form.email(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.email.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    {{ form.email(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
 
-                      <div class="form-group">
-                          {{ form.submit(class="btn btn-outline-info")}}
-                      </div>
 
-                  </fieldset>
-              </form>
+
+
+                <legend class="border-bottom mb-4">Setup Variables</legend>
+
+                <div class="form-group">
+
+                    {{ form.alphavantage_apikey.label(class="form-control-label") }}<br>
+                    <span class='text-info'>Need to get a free Alphavantage API Key? <a
+                            href="https://www.alphavantage.co/support/#api-key" target='new_page'>Click here</a>.</span>
+                    {%if form.alphavantage_apikey.data == None%}
+                    <div class="invalid-feedback">
+                        <span>API KEY is REQUIRED!</span>
+                    </div>
+                    {%endif%}
+                    {% if form.alphavantage_apikey.errors %}
+                    {{ form.alphavantage_apikey(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.alphavantage_apikey.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    {{ form.alphavantage_apikey(class="form-control form-control-lg disabled") }}
+                    {% endif %}
+                </div>
+
+                <div class="form-group" disabled="true">
+                    {{ form.sql_uri.label(class="form-control-label") }}
+                    {% if form.sql_uri.errors %}
+                    {{ form.sql_uri(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.sql_uri.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    {{ form.sql_uri(class="form-control form-control-lg") }}
+
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.dojo_onion.label(class="form-control-label") }}
+                    {% if form.dojo_onion.errors %}
+                    {{ form.dojo_onion(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.dojo_onion.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    {{ form.dojo_onion(class="form-control form-control-lg") }}
+                    {% endif %}
+                    <small class="text-muted ml-2">
+                        Your Dojo onion address can be found by running the command <code>./dojo.sh onion</code>
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    {{ form.dojo_apikey.label(class="form-control-label") }}
+                    {% if form.dojo_apikey.errors %}
+                    {{ form.dojo_apikey(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.dojo_apikey.errors %}
+                        <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    {{ form.dojo_apikey(class="form-control form-control-lg") }}
+                    {% endif %}
+                    <small class="text-muted ml-2">
+                        This is the API Key you created when setting up your Dojo (at the
+                        <code>docker-node.conf</code> file)
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    {{ form.submit(class="btn btn-outline-info")}}
+                </div>
+
+            </fieldset>
+        </form>
+
 
 
 
 
     </div>
 
+
+
     <div class="content-section">
         <span class="text-danger">Delete all transactions from Database (no UNDO)</span></br>
         <div class="input-group mb-3">
-          <input type="text" class="form-control" placeholder="type DELETE to confirm" id="DELETE">
+            <input type="text" class="form-control" placeholder="type DELETE to confirm" id="DELETE">
         </div>
 
         <a href="\delalltrades">
-        <button type="button" id="DELETEBUTTON" class="btn btn-outline-danger" disabled="true">
-            DELETE ALL TRADES</button>
+            <button type="button" id="DELETEBUTTON" class="btn btn-outline-danger" disabled="true">
+                DELETE ALL TRADES</button>
         </a>
     </div>
 

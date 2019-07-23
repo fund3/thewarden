@@ -1,38 +1,40 @@
-from flask import (render_template, url_for, flash, redirect, request, abort,
-                   Blueprint)
+import os
+from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
 from flask_login import login_user, logout_user, current_user, login_required
-from cryptoalpha import db
-from cryptoalpha.users.forms import (RegistrationForm, LoginForm,
-                                     UpdateAccountForm, RequestResetForm,
-                                     ResetPasswordForm)
+from cryptoalpha import db, Config
+from cryptoalpha.users.forms import (
+    RegistrationForm,
+    LoginForm,
+    UpdateAccountForm,
+    RequestResetForm,
+    ResetPasswordForm,
+)
 from werkzeug.security import check_password_hash, generate_password_hash
 from cryptoalpha.models import User, Trades, AccountInfo
 from cryptoalpha.users.utils import save_picture, send_reset_email
 
-users = Blueprint('users', __name__)
+users = Blueprint("users", __name__)
 
 
-@users.route("/register", methods=['GET', 'POST'])
+@users.route("/register", methods=["GET", "POST"])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("main.home"))
     form = RegistrationForm()
     if form.validate_on_submit():
         hash = generate_password_hash(form.password.data)
-        user = User(username=form.username.data,
-                    email=form.email.data, password=hash)
+        user = User(username=form.username.data, email=form.email.data, password=hash)
         db.session.add(user)
         db.session.commit()
-        flash(f'Account created for {form.username.data}. You can now Login.',
-              'success')
-        return redirect(url_for('users.login'))
-    return render_template('register.html', title='Register', form=form)
+        flash(f"Account created for {form.username.data}.", "success")
+        return redirect(url_for("users.login"))
+    return render_template("register.html", title="Register", form=form)
 
 
-@users.route("/login", methods=['GET', 'POST'])
+@users.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('main.home'))
+        return redirect(url_for("main.home"))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
@@ -40,15 +42,15 @@ def login():
             login_user(user, remember=form.remember.data)
             # The get method below is actually very helpful
             # it returns None if empty. Better than using [] for a dictionary.
-            next_page = request.args.get('next')  # get the original page
+            next_page = request.args.get("next")  # get the original page
             if next_page:
                 return redirect(next_page)
             else:
-                return redirect(url_for('main.home'))
+                return redirect(url_for("main.home"))
         else:
             flash("Login failed. Please check e-mail and password", "danger")
 
-    return render_template('login.html', title='Login', form=form)
+    return render_template("login.html", title="Login", form=form)
 
 
 @users.route("/logout")
@@ -57,78 +59,86 @@ def logout():
     return redirect(url_for("main.home"))
 
 
-@users.route("/account", methods=['GET', 'POST'])
+@users.route("/account", methods=["GET", "POST"])
 @login_required
 def account():
     form = UpdateAccountForm()
     if form.validate_on_submit():
-        if form.picture.data:
-            # NEED TO INCLUDE SOME CODE TO DELETE OLD IMAGE BEING REPLACED
-            picture_file = save_picture(form.picture.data)
-            current_user.image_file = picture_file
-        # current_user.username = form.username.data
         current_user.email = form.email.data
+        current_user.aa_apikey = form.alphavantage_apikey.data
+        current_user.dojo_apikey = form.dojo_apikey.data
+        current_user.dojo_onion = form.dojo_onion.data
         db.session.commit()
-        flash('Your account has been updated', 'success')
-        return redirect(url_for('users.account'))
-    elif request.method == 'GET':
-        # form.username.data = current_user.username
+        flash("Your account has been updated", "success")
+        return redirect(url_for("users.account"))
+
+    elif request.method == "GET":
         form.email.data = current_user.email
-    image_file = url_for('static',
-                         filename='images/' + current_user.image_file)
-    return render_template('account.html', title='Account',
-                           image_file=image_file, form=form)
+        form.alphavantage_apikey.data = current_user.aa_apikey
+        form.sql_uri.data = Config.SQLALCHEMY_DATABASE_URI
+        form.sql_uri.render_kw = {"disabled": "disabled"}
+        form.dojo_onion.data = current_user.dojo_onion
+        form.dojo_apikey.data = current_user.dojo_apikey
+    image_file = url_for("static", filename="images/" + current_user.image_file)
+    return render_template(
+        "account.html", title="Account", image_file=image_file, form=form
+    )
 
 
-@users.route("/delacc", methods=['GET'])
+@users.route("/delacc", methods=["GET"])
 @login_required
 # Takes one argument {id} - user id for deletion
 def delacc():
-    if request.method == 'GET':
-        id = request.args.get('id')
+    if request.method == "GET":
+        id = request.args.get("id")
         trade = Trades.query.filter_by(id=id)
         if trade[0].user_id != current_user.username:
             abort(403)
 
         AccountInfo.query.filter_by(account_id=id).delete()
         db.session.commit()
-        flash('Account deleted', 'danger')
-        return redirect(url_for('transactions.tradeaccounts'))
+        flash("Account deleted", "danger")
+        return redirect(url_for("transactions.tradeaccounts"))
 
     else:
-        return redirect(url_for('transactions.tradeaccounts'))
+        return redirect(url_for("transactions.tradeaccounts"))
 
 
-@users.route("/reset_password", methods=['GET', 'POST'])
+@users.route("/reset_password", methods=["GET", "POST"])
 def reset_request():
     if current_user.is_authenticated:
-        return redirect(url_for('main.home'))
+        return redirect(url_for("main.home"))
     form = RequestResetForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         send_reset_email(user)
-        flash('An email has been sent with instructions to reset your' +
-              ' password.', 'info')
-        return redirect(url_for('users.login'))
-    return render_template('reset_request.html', title='Reset Password',
-                           form=form)
+        flash(
+            "An email has been sent with instructions to reset your" + " password.",
+            "info",
+        )
+        return redirect(url_for("users.login"))
+    return render_template("reset_request.html", title="Reset Password", form=form)
 
 
-@users.route("/reset_password/<token>", methods=['GET', 'POST'])
+@users.route("/reset_password/<token>", methods=["GET", "POST"])
 def reset_token(token):
     if current_user.is_authenticated:
-        return redirect(url_for('main.home'))
+        return redirect(url_for("main.home"))
     user = User.verify_reset_token(token)
     if user is None:
-        flash('That is an invalid or expired token', 'warning')
-        return redirect(url_for('users.reset_request'))
+        flash("That is an invalid or expired token", "warning")
+        return redirect(url_for("users.reset_request"))
     form = ResetPasswordForm()
     if form.validate_on_submit():
         hash = generate_password_hash(form.password.data)
         user.password = hash
         db.session.commit()
-        flash('Your password has been updated! You are now able to log in',
-              'success')
-        return redirect(url_for('users.login'))
-    return render_template('reset_token.html', title='Reset Password',
-                           form=form)
+        flash("Your password has been updated! You are now able to log in", "success")
+        return redirect(url_for("users.login"))
+    return render_template("reset_token.html", title="Reset Password", form=form)
+
+
+@users.route("/services", methods=["GET"])
+def services():
+    return render_template("services.html", title="Services Available")
+

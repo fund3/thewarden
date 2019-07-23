@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- http://jquery.com/ -->
+<script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous">
+    </script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="/static/bootstrap-tagsinput.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<!-- Basic Style for Tags Input -->
+<link rel="stylesheet" type="text/css" href="/static/tagsinput.css">
+<!-- Suggest Tags Js -->
+<script type="text/javascript" src="/static/tagsinput.js"></script>
+<div id="alerts" class="container">
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <p>
+                <h1>Bitcoin WARden</h1>
+                <a href="https://samouraiwallet.com/" target="new" class="badge badge-pill badge-dark text-right"
+                    style="background-color:  rgb(170,44,44); color: white; font-size: 18px; width: 320px;">
+                    Powered by Samourai
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+<div class="container" id='ticker_list'>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="content-section">
+                <h4>List of Bitcoin Addresses to import</h4>
+                <h6>
+                    <div class="input-group mb-3">
+                        <label for="tickers">
+                            List of addresses (separate by comma or [ENTER]). Public addresses
+                            and deterministic addresses (XPUB, YPUB, ZPUB) are accepted.</label> <br>
+                        <input id="tickers" type="text" class="" data-role="tagsinput">
+                    </div>
+                </h6>
+                <p><span class='text-info'>Please note that only the first 50 transactions in these addresses
+                        will be imported.</span></p>
+                <p><span class='text-muted small'>
+                        If you believe there are more than 50 transactions in the addresses, we recommend importing
+                        a limited number of addresses. You can always return to this page to import more addresses.
+                    </span></p>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="input-group  mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="start-addon1">Name of the account to store these
+                        addresses <span class='text-info'>&nbsp;[required]</span>:</span>
+                </div>
+                <input id="tradeaccount" type="text" class="form-control" aria-describedby="start-addon1"
+                    autocomplete="">
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <button type="button" id="import" class="btn btn-secondary btn-lg btn-block">Check Addresses</button>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row" id="scan_section" style="display:none;">
+        <div class="col-sm-12">
+            <div class="content-section">
+                <div id="scan_title">Scanning the Blockchain for addresses and transactions. Please hold...</div>
+
+            </div>
+            <div id="status_all" class="content-section">
+                <h5>Latest Status</h5>
+                <code id="status_bar">Loading addresses...</code>
+            </div>
+        </div>
+    </div>
+    <div class="row" id="scan_section_done" style="display:none;">
+        <div class="col-sm-12">
+            <div class="content-section text-center">
+                <h6> Finished Importing </h6>
+            </div>
+        </div>
+    </div>
+    <div class="row" id="table_section" style="display:none;">
+        <div class="col-sm-12">
+            <div class="content-section text-left">
+                <h5 class="text-success">Addresses found in the blockchain</h5>
+                <table id="address_table" class="table table-sm align-middle table-striped">
+                    <thead class='thead-light'>
+                        <th class="text-left" scope="col">
+                            Address
+                        </th>
+                        <th class="text-center" scope="col">
+                            Type
+                        </th>
+                        <th class="text-center" class="" scope="col">
+                            Linked Account
+                        </th>
+                        <th class="text-right" scope="row">
+                            Balance
+                        </th>
+                        <th class="text-right" scope="row">
+                            Transactions
+                        </th>
+                        <th class="text-right" scope="row">
+                            Imported
+                        </th>
+                    </thead>
+                    <tbody id="table_body">
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="content-section text-left" id="not_found" style="display:none;">
+                <h5 class="text-danger">Addresses NOT found in the blockchain</h5>
+                These addresses were not imported. Check the values and try again.
+                <table id="address_table" class="table table-sm align-middle table-striped">
+                    <thead class='thead-light'>
+                        <th class="text-left" scope="col">
+                            Address
+                        </th>
+                    </thead>
+                    <tbody id="not_found_body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/import_addresses.js"></script>
+
+    {% endblock content %}

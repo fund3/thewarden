@@ -21,14 +21,7 @@ virtualenv cb_env
 source cb_env/bin/activate
 pip3 install -r requirements.txt
 ```
-Then setup the environment variables. The ones below are suggestions. You should probably change them (see instructions in the detailed step-by-step installation).
 
-Still at the terminal window type:
-```bash
-export ALPHAVANTAGE_API_KEY=YUI9BS0MIBOPWRVR
-export SECRET_KEY=44600d69123eb71e1338e47587fec5fb
-export SQLALCHEMY_DATABASE_URI=sqlite:///alpha.db
-```
 To start the application just execute:
 ```bash
 python3 run.py
@@ -128,40 +121,7 @@ $ deactivate
 The list of required packages is stored on a file named `requirements.txt`. To install all the packages just type at the terminal:
 `$ pip3 install -r requirements.txt`
 
-#### Step 8 - Declare environment variables
-Cryptoblotter will look for a few environment variables before running. You need to set these up only once. These are:
-
-__Database Location__
-This is default and no need to change unless you want to use a different database than the one already provided. Type:
-`$ export SQLALCHEMY_DATABASE_URI=sqlite:///alpha.db`
-
-__Alphavantage API Key__
-Cryptoblotter uses Alphavantage to download pricing data. An API key is needed to use Alphavantage - [get one here](https://www.alphavantage.co/support/#api-key). It's super easy and quick.
-When done, you can replace the _YUI9BS0MIBOPWRVR_ key below with your own and type at Terminal:
-`$ export ALPHAVANTAGE_API_KEY=YUI9BS0MIBOPWRVR`
-
-__Secret Key__
-You should generate your own key. This is used to encrypt your data.
-To generate a random key:
-```bash
-$ python3
-```
-	Python 3.7.3 (v3.7.3:ef4ec6ed12, Mar 25 2019, 16:39:00)**
-	[GCC 4.2.1 (Apple Inc. build 5666) (dot 3)] on darwin**
-	Type "help", "copyright", "credits" or "license" for more
-	information.
-
-```bash
->>> import secrets
->>> secrets.token_hex(16)
-   44600d69123eb71e1338e47587fec5fb
->>> exit()
-```
-Then copy the generated secret above and type at the Terminal, replacing with your own secret key:
-
-`$ export SECRET_KEY=44600d69123eb71e1338e47587fec5fb`
-
-#### Step 9 - Start the application
+#### Step 8 - Start the application
 To start the application just execute:
 ```bash
 python3 run.py
@@ -188,12 +148,6 @@ c:\[dir]\> pip3 install -r requirements.txt
 ```
 Then setup the environment variables. The ones below are suggestions. You should probably change them (see instructions in the detailed step-by-step installation).
 
-Still at the terminal window type:
-```bash
-c:\[dir]\> SET ALPHAVANTAGE_API_KEY=YUI9BS0MIBOPWRVR
-c:\[dir]\> SET  SECRET_KEY=44600d69123eb71e1338e47587fec5fb
-c:\[dir]\> SET  SQLALCHEMY_DATABASE_URI=sqlite:///alpha.db
-```
 To start the application just execute:
 ```bash
 py run.py
@@ -297,40 +251,7 @@ c:\> deactivate
 The list of required packages is stored on a file named `requirements.txt`. To install all the packages just type at the terminal:
 `(cb_env) c:\git_clones\cryptoblotter> pip3 install -r requirements.txt`
 
-#### Step 8 - Declare environment variables
-Cryptoblotter will look for a few environment variables before running. You need to set these up only once. These are:
-
-__Database Location__
-This is default and no need to change unless you want to use a different database than the one already provided. Type:
-`(cb_env) c:\git_clones\cryptoblotter>` `SET SQLALCHEMY_DATABASE_URI=sqlite:///alpha.db`
-
-__Alphavantage API Key__
-Cryptoblotter uses Alphavantage to download pricing data. An API key is needed to use Alphavantage - [get one here](https://www.alphavantage.co/support/#api-key). It's super easy and quick.
-When done, you can replace the _YUI9BS0MIBOPWRVR_ key below with your own and type at Terminal:
-`(cb_env) c:\git_clones\cryptoblotter> SET ALPHAVANTAGE_API_KEY=YUI9BS0MIBOPWRVR`
-
-__Secret Key__
-You should generate your own key. This is used to encrypt your data.
-To generate a random key:
-```bash
-c:> py
-```
-	Python 3.7.3 (v3.7.3:ef4ec6ed12, Mar 25 2019, 16:39:00)**
-	[GCC 4.2.1 (Apple Inc. build 5666) (dot 3)] on darwin**
-	Type "help", "copyright", "credits" or "license" for more
-	information.
-
-```bash
->>> import secrets
->>> secrets.token_hex(16)
-   44600d69123eb71e1338e47587fec5fb
->>> exit()
-```
-Then copy the generated secret above and type at the Terminal, replacing with your own secret key:
-
-`(cb_env) c:\git_clones\cryptoblotter> SET SECRET_KEY=44600d69123eb71e1338e47587fec5fb`
-
-#### Step 9 - Start the application
+#### Step 8 - Start the application
 To start the application just execute:
 ```bash
 (cb_env) c:\git_clones\cryptoblotter> py run.py

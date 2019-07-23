@@ -1,0 +1,121 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- http://jquery.com/ -->
+<script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous">
+    </script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+<div class="content-section">
+
+    <form method="POST" action="" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <fieldset class="form-group">
+
+            <legend class="border-bottom mb-4">{{form_title}}</legend>
+
+
+            <div class="form-group">
+                {{ form.account_longname.label(class="form-control-label") }}
+                {% if form.account_longname.errors %}
+                {{ form.account_longname(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.account_longname.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.account_longname(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.check_method.label(class="form-control-label") }}
+                {% if form.check_method.errors %}
+                {{ form.check_method(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.check_method.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.check_method(class="form-control form-control-lg") }}
+                {% endif %}
+                <small class="text-muted ml-2">
+                    DOJO will use your node for requests. OXT, when selected, will be reached through Tor but relying on
+                    their database.
+                </small>
+            </div>
+
+            <div class="form-group">
+                <p>
+                    {{ form.auto_check(class_="checkbox")}}
+                    <span class="form-control-label text-info">
+                        Automatically monitor balance
+                    </span>
+                </p>
+            </div>
+
+
+
+            <div class="form-group">
+                {{ form.account_blockchain_id.label(class="form-control-label") }}
+                {% if form.account_blockchain_id.errors %}
+                {{ form.account_blockchain_id(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.account_blockchain_id.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.account_blockchain_id(class="form-control form-control-lg") }}
+                {% endif %}
+                <small class="text-muted ml-2">
+                    Enter the address of deterministic address for this account (XPUB, YPUB, etc) if any. If included,
+                    you may be able to track and monitor balances through the blockchain.
+                </small>
+            </div>
+
+            <div class="form-group">
+                {{ form.notes.label(class="form-control-label") }}
+                {% if form.notes.errors %}
+                {{ form.notes(class="form-control form-control-lg is-invalid") }}
+                <div class="invalid-feedback">
+                    {% for error in form.notes.errors %}
+                    <span>{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                {{ form.notes(class="form-control form-control-lg") }}
+                {% endif %}
+                <small class="text-muted ml-2">
+                    Include any notes related to this address
+                </small>
+            </div>
+
+
+        </fieldset>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-outline-info", id="submit_button")}}
+        </div>
+    </form>
+
+    <div class="row">
+        <div class="col-sm-12">
+            <div id="alerts" class="container"></div>
+        </div>
+    </div>
+
+    {% for field in form.errors %}
+    {% for error in form.errors[field] %}
+    <div class="error text-danger">FORM ERROR: {{ error }} on field: {{field}}</div>
+    {% endfor %}
+    {% endfor %}
+
+
+</div>
+<br><br><br><br><br><br><br>
+<script src="/static/new_address.js"></script>
+
+{% endblock content %}

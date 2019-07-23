@@ -1,53 +1,67 @@
-# CryptoBlotter
-*Version 0.02 Alpha*
+# The WARden
+*Version 0.10 Alpha*
 ###### __Found this project useful?__ _Consider tipping the developer: [tippin.me](https://tippin.me/@alphaazeta)_.
 
-#### Open Source License: [LICENSE](https://github.com/pxsocs/cryptoblotter/blob/master/LICENSE)
-#### Contributing guidelines: [CONTRIBUTING.MD](https://github.com/pxsocs/cryptoblotter/blob/master/CONTRIBUTING.md)
-#### Installation instructions: [INSTALL.MD](https://github.com/pxsocs/cryptoblotter/blob/master/INSTALL.MD)
+##### Open Source License: [LICENSE](https://github.com/pxsocs/cryptoblotter/blob/master/LICENSE)
+##### Contributing guidelines: [CONTRIBUTING.MD](https://github.com/pxsocs/cryptoblotter/blob/master/CONTRIBUTING.md)
+##### Installation instructions: [INSTALL.MD](https://github.com/pxsocs/cryptoblotter/blob/master/INSTALL.MD)
 
-CryptoBlotter (CB) is a portfolio tracking tool. It includes position monitoring and other analytics. The main reason that led me to develop this tool is to better manage cash inflows and outflows from digital positions while maintaining my data locally.
+### Important Note for users upgrading from CryptoBlotter - do this before upgrading
 
-CB monitors daily _Net Asset Value (NAV)_. Similar to how a fund calculates performance. __So it's always tracking performance relative to current exposure.__
+The new version does not offer backward compatibility with previous versions. If you are running an older version and have transactions, make sure to __export the transactions as CSV and save them somewhere safe__. You can later import these into the new version. This is experimental and errors may occur. 
+
+## About
+
+The WARden is a portfolio tracking tool. It includes position monitoring and other analytics. One of the reasons that led me to develop this tool is to better manage cash inflows and outflows from digital positions while maintaining my data locally.
+
+The app monitors daily _Net Asset Value (NAV)_. Similar to how a fund calculates performance. __So it's always tracking performance relative to current exposure.__
+
+Furthermore, using my own node to verify and import transactions was a cumbersome process. By pairing with a __Samourai Dojo__, you can easily track addresses and import transactions from the blockchain while using your own full node. 
 
 ### Sample Portfolio View:
 
+#### All trades, bitcoin addresses and other information below are hypothetical only
+
 ![Front Page](https://github.com/pxsocs/cryptoblotter/blob/master/cryptoalpha/static/images/github_images/portfolio.png)
 
+
 ### Why NAV is important?
+
 NAV is particularly important to anyone #stackingsats since it tracks performance relative to current capital allocated.
 For example, a portfolio going from $100 to $200 may seem like it 2x but the performance really depends if any new capital was invested or divested during this period. __NAV adjusts for cash inflows and outflows.__
 
+### Using a Bitcoin Full Node
+
+You can now use a full node to monitor addresses and import transactions. This process is done using the Samourai Dojo platform. After researching the different options available, I decided the Dojo was best suited to integrate with the WARden. 
+
 ### Trade Pairs
-Cryptoblotter is structured so that, by default, trades are included in pairs. This is similar to accounting entries where a credit and a debit are included as separate entries.
+
+The app is structured so that, by default, trades are included in pairs. This is similar to accounting entries where a credit and a debit are included as separate entries.
 This is helpful so you can track your positions (assets) and your cash flows.
 By doing this, it's easier to see how much fiat was deployed. It's particularly helpful in determining your historical average cost.
-More info on how to import transactions can be found here: [CSV import details](http://www.cryptoblotter.io/csvtemplate). You may also open the database and just paste the transactions.
+More info on how to import transactions can be found here: [CSV import details](http://www.thewarden.io/csvtemplate). You may also open the database and just paste the transactions.
 
 Readme.1st
 -----------
-**Please note that this is a "hobby project". There is no guarantee that the
-information and analytics are correct. Also expect no customer support. Issues
-are encouraged to be raised through GitHub but they will be answered on a best
-efforts basis.**
+**Please note that this is ALPHA software. There is no guarantee that the
+information and analytics are correct. Also expect no customer support. Issues are encouraged to be raised through GitHub but they will be answered on a best efforts basis.**
+
+All data is saved locally. __Consider a disk encryption__. Even though only public addresses and transactions are saved in the database, it's a good idea to password protect your computer and encrypt the hard drive containing the data. 
 
 Any issues, suggestions or comments should be done at Github [ISSUES page](https://github.com/issues).
-
-Disclaimer: I am not a developer. Code is not optimal. Will probably run slower than potentially possible. Code enhancements and suggestions are welcome! I am also a beginner on GitHub so I may deviate from what is standard. __If you see potential for improvement, please let me know.__
 
 
 [Installation](https://github.com/pxsocs/cryptoblotter/blob/master/INSTALL.MD) instructions
 ----------------------------
-Although Crypto Blotter can be accessed at cryptoblotter.io, we highly encourage users to run locally. This would give the user control over database (stored locally) and on whether on not to upgrade to new versions. When using the
-online version, feel free to use a random username for privacy. Use the online version for testing and install locally later as recommended.
+Although Crypto Blotter can still be accessed at cryptoblotter.io, this will be discontinued soon. Users are expected to run this software locally. This option gives the user control over database (stored locally) and on whether or not to upgrade to new versions. 
+
 [Click here](https://github.com/pxsocs/cryptoblotter/blob/master/INSTALL.MD) for installation instructions.
 
 
 Privacy
 -------
-Most portfolio tracking tools ask for personal information and may track your IP and other information. My experience is that even those who say they don't, may have log files at their systems that do track your IP and could be linked to your data.
-_By cloning CB and running locally you reduce
-the risk of linkage of your IP, portfolio info and other information._
+Most portfolio tracking tools ask for personal information and may track your IP and other information. My experience is that even those who say they don't, may have log files at their systems that do track your IP and could be easily linked to your data.
+_By cloning CB and running locally you reduce the risk of linkage of your IP, portfolio info and other information._
 
 Asset and Liability tracking
 -----------------------------
@@ -87,7 +101,12 @@ It takes into account deposits and withdraws. See table at NAV Tracking for more
 Not at this time.
 
 #### - Do I need to run it locally or is there a website I can use?
-Cryptoblotter.io has a running version but we encourage users to run locally on their machines to better control their data.
+Cryptoblotter.io has a running copy of version 0.02 but will be discontinued soon.
 
 #### - On the remote version at cryptoblotter.io, what kind of information is gathered?
 The debug.log file at the host we are using (Heroku) logs the IP addresses accessing the website. Also, username is stored at the database. __Use the website just for testing.__ We encourage users of the website to not use their real e-mail address (use a burner only for password recovery). __This software is designed to be ran locally at your machine.__
+
+#### - Why the DOJO and not other available options?
+First and foremost, the Samourai team has shown continued support for open source. 
+Second, our opinion is that they share values very similar to ours in terms of Bitcoin security and its future. 
+Finally, the Dojo seemed like the best suited option for a fairly easy install and back-end integration with this project. 

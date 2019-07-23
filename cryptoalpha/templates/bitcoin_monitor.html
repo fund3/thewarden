@@ -1,0 +1,277 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<div class="row">
+    <div class="col-sm-12">
+        <div id="alerts" class="container"></div>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-sm-5">
+        <p>
+            <h1>Bitcoin Warden</h1>
+            <a href="https://samouraiwallet.com/" target="new" class="badge badge-pill badge-dark text-right"
+                style="background-color:  rgb(170,44,44); color: white; font-size: 18px; width: 300px;">
+                Powered by Samourai
+            </a>
+        </p>
+    </div>
+    <div class="col-sm-7 text-right">
+        <p>
+            <a href="/custody_account">
+                <button type="button" id="Add_new_account" class="btn btn-outline-secondary btn xbuttons">Add New
+                    Account</button>
+            </a>
+
+            <a href="/bitcoin_address">
+                <button type="button" id="Add_new" class="btn btn-outline-secondary btn xbuttons">Add New
+                    Address</button>
+            </a>
+        </p>
+        <p>
+
+            <button type="button" name="masscheck" id="selectAllButton"
+                class="btn btn-outline-secondary btn xbuttons">Select
+                all</button>
+
+            <button type="button" name="masscheck" id="selectNoneButton"
+                class="btn btn-outline-secondary btn xbuttons">Select
+                none</button>
+
+            <button type="button" id="check_selected" class="btn btn-outline-info btn xbuttons">Check Selected</button>
+        </p>
+
+    </div>
+</div>
+
+<div class="row" id="scan_section" style="display:none;">
+    <div class="col-sm-12">
+        <div class="content-section">
+            <div id="scan_title">Scanning the Blockchain for selected Addresses. Please hold...</div>
+            <div class="progress">
+                <div id="progress-bar" data-prog="0" class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+            </div>
+        </div>
+        <div id="status_all" class="content-section">
+            <h5>Latest Status</h5>
+            <code id="status_bar">Loading addresses...</code>
+        </div>
+
+    </div>
+</div>
+
+<div class="row" id="scan_section_done" style="display:none;">
+    <div class="col-sm-12">
+        <div class="content-section text-center">
+            <h6>
+                <button class="btn btn-clean text-info" onClick="window.location.reload();">
+                    Refresh page&nbsp;&nbsp;<i class="fas fa-sync-alt" onClick="window.location.reload();"></i>
+                </button> </h6>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+
+    <div class="col-sm-12">
+        {%for account in accounts%}
+        <div class="content-section">
+            <div class='row'>
+                <div style="width: 30%; padding-left: 1%">
+                    <legend class="mb-4">
+                        {% if acc_dict[account] == 0%}
+                        {%if account == None%}
+                        <p class="text-muted">Unlinked Addresses</p>
+                        <h6>Click addresses to link to an account</h6>
+                        {%else%}
+                        {{account}}
+                        {%endif%}
+                        {% else %}
+                        <a href="\custody_account?id={{acc_dict[account]}}" data-toggle="tooltip" title="Edit Account"
+                            data-placement="top">{{account}}</a>
+                        <h6 style='font:6px; padding-left: 1%'>
+                            {{account_info.filter_by(account_id = acc_dict[account]).first().account_blockchain_id[0:12]}}..
+                            {{account_info.filter_by(account_id = acc_dict[account]).first().account_blockchain_id[-8:]}}
+                            {%if account_info.filter_by(account_id = acc_dict[account]).first().xpub_derivation != None%}
+                            <br>
+                            <span style='font-size: 22px;'>
+                                <span class="badge badge-info" style:"padding-bottom: 0%;">
+                                    {{account_info.filter_by(account_id = acc_dict[account]).first().xpub_derivation}}
+                                </span>
+
+                            </span>
+                            {%endif%}
+                        </h6>
+                        {%endif%}
+                    </legend>
+                </div>
+                <div style="width: 70%; padding-right: 1%">
+                    {% if acc_dict[account] != 0%}
+                    <table id="transactionstable" class="table table-sm align-middle">
+                        <thead class='thead-light'>
+                            <th class="align-middle text-left" scope="col" style="width: 20%">
+                                Balance
+                            </th>
+                            <th class="align-middle text-left" class="" scope="col" style="width: 30%">
+                                Last check
+                            </th>
+
+                            <th class="align-middle text-center" scope="row" style="width: 10%">
+
+                            </th>
+
+                            <th class="align-middle text-right" class="" scope="col" style="width: 10%">
+
+                            </th>
+
+                        </thead>
+
+                        <tbody style="font-size: 16px; font-weight: bold; ">
+
+                            <tr>
+                                <td class="align-middle text-left" scope="row" id="balance">
+                                    {% if (account_info.filter_by(account_id = acc_dict[account]).first().last_balance == None)%}
+                                    Never Checked
+                                    {% else %}
+                                    {{account_info.filter_by(account_id = acc_dict[account]).first().last_balance}}
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle text-left" scope="col" style="width: 30%" id="check">
+                                    {% if (account_info.filter_by(account_id = acc_dict[account]).first().last_check == None)%}
+                                    Never
+                                    {% else %}
+                                    {{account_info.filter_by(account_id = acc_dict[account]).first().last_check | time_ago}}
+                                    {% endif %}
+                                </td>
+
+                                <td class="align-middle text-center" scope="row" style="width: 10%" id="method">
+                                    <label class="label_check sub_label">
+                                        <input type="checkbox"
+                                            class="form-check-input import_check_{{account}} text-center checkbox address_check"
+                                            id="{{account_info.filter_by(account_id = acc_dict[account]).first().account_blockchain_id}}">
+                                    </label>
+                                </td>
+
+                                <td class="align-middle text-right" class="" scope="col" style="width: 10%"
+                                    id="transactions">
+                                    <a
+                                        href="\bitcoin_transactions\{{account_info.filter_by(account_id = acc_dict[account]).first().account_blockchain_id}}">
+                                        <button type="button" class="btn btn-sm btn-outline-dark" data-toggle="tooltip"
+                                            title="List Transactions" data-placement="top">
+                                            <i class="fas fa-list"></i>
+                                        </button>
+                                    </a>
+                                    <a href="\delete_baccount\{{acc_dict[account]}}?type=account">
+                                        <button type="button" class="btn btn-sm btn-outline-dark" data-toggle="tooltip"
+                                            title="Delete this Account" data-placement="top">
+                                            <i class="far fa-trash-alt"></i>
+                                        </button>
+                                    </a>
+                                </td>
+
+                        </tbody>
+                    </table>
+                    {%endif%}
+                </div>
+
+            </div>
+
+
+
+            <!-- START ADDRESS TABLE -->
+            {%if (addresses.filter_by(account_id=account).count() > 0)%}
+            <h5 style="font-size: 20px">Public Addresses</h5>
+            <div class="section">
+                <table id="transactionstable" class="table table-sm align-middle table-striped">
+                    <thead class='thead-light'>
+
+                        <th class="" scope="col" style="width: 30%">
+                            Address
+                        </th>
+
+                        <th class=" text-left" scope="col" style="width: 20%">
+                            Balance
+                        </th>
+                        <th class=" text-left" class="" scope="col" style="width: 30%">
+                            Last check
+                        </th>
+
+                        <th class="align-middle text-center" scope="row" style="width: 10%">
+                            <label class="label_check section_label" data-toggle="tooltip"
+                                title="Select all addresses in this account" data-placement="top">
+                                <input type="checkbox" class="form-check-input account-check text-center checkbox"
+                                    id="{{account}}">
+                            </label>
+                        </th>
+
+                        <th class="text-right" class="" scope="col" style="width: 10%">
+
+                        </th>
+
+                    </thead>
+
+                    <tbody>
+                        {% for address in addresses%}
+                        {% if (address.account_id == account)%}
+                        <tr>
+                            <td class="align-middle text-left" scope="row">
+
+                                <a href="\bitcoin_address?id={{address.address_id}}" data-toggle="tooltip"
+                                    title="Edit Address" data-placement="top">
+                                    {{address.address_hash[0:4]}}...{{address.address_hash[-4:]}}</a>
+                            </td>
+                            <td class="align-middle text-left" id="balance" data-balance="{{address.last_balance}}">
+                                {{address.last_balance | jformat(2, 100000000)}}
+                            </td>
+                            <td class=" text-left" id='check'>
+                                {% if (address.last_check == None)%}
+                                Never
+                                {% else %}
+                                {{address.last_check | time_ago}}
+                                {% endif %}
+                            </td>
+
+                            <td class="align-middle text-center" id="method" scope="row">
+                                <label class="label_check sub_label">
+                                    <input type="checkbox"
+                                        class="form-check-input import_check_{{account}} text-center checkbox address_check"
+                                        id="{{address.address_hash}}">
+                                </label>
+                            </td>
+
+                            <td class="align-middle text-right" id="transactions">
+                                <a href="\bitcoin_transactions\{{address.address_hash}}">
+                                    <button type="button" class="btn btn-sm btn-outline-dark" data-toggle="tooltip"
+                                        title="List Transactions" data-placement="top">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                </a>
+                                <a href="\delete_baccount\{{address.address_id}}?type=address">
+                                    <button type="button" class="btn btn-sm btn-outline-dark" data-toggle="tooltip"
+                                        title="Delete this address" data-placement="top">
+                                        <i class="far fa-trash-alt"></i>
+                                    </button>
+                                </a>
+                            </td>
+
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <!-- END ADDRESS TABLE -->
+            </div>
+            {%endif%}
+        </div>
+        {%endfor%}
+    </div>
+</div>
+
+
+<script src="/static/bitcoin_monitor.js"></script>
+
+
+{% endblock content %}

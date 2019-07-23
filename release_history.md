@@ -1,5 +1,17 @@
 # Release History
 
+## v.10 alpha
+
+- Implemented TOR for anonymous requests
+- Implemented TOR Status page and status bar display
+- Included a check to see if TOR is running
+- Included a page to check Dojo installation status + instructions
+- Included Dojo status bar display
+- Implemented method to read transactions from OXT using Tor
+- Implemented Privacy Services Page
+- Fixed an error on export CSV where folder was not being created (H/T: Nicholas)
+- Fixed an error on export CSV where filename was not being generated (H/T: Nicholas)
+
 ## v.03 alpha (released on 7/1/2019)
 
 - Fixed an issue where some charts were aggregating data when zoomed in
@@ -10,7 +22,6 @@
 - Included a new table on HeatMap page with a benchmark. Now portfolio performance can be compared to a benchmark.
 - Included a handler for scalar errors as described in [issue #2](https://github.com/pxsocs/cryptoblotter/issues/2) 
 - Implemented a new chart and table to calculate top drawdowns
-
 
 ## v.02 alpha (released on 6/22/2019)
 

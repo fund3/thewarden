@@ -19,7 +19,7 @@ db = SQLAlchemy(app)
 globalURL = "https://api.coinmarketcap.com/v2/listings/"
 
 # get data from globalURL
-request = requests.get(globalURL)
+request = tor_request(globalURL)
 data = request.json()
 fulllist = data['data']
 cryptolist = []

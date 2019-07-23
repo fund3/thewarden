@@ -206,7 +206,7 @@ def edittransaction():
     form = EditTransaction()
     id = request.args.get("id")
     tmp = str(int(id) + 1)
-    trade = Trades.query.filter_by(id=id)
+    trade = Trades.query.filter_by(user_id=current_user.username).filter_by(id=id)
     trade_type = 0
 
     if trade.first() is None:
@@ -376,11 +376,9 @@ def edittransaction():
             flash("Trade edit failed. Something went wrong. Try Again.", "danger")
 
     # Pre-populate the form
-    print(trade[0].trade_operation)
     form.trade_date.data = trade[0].trade_date
     form.trade_asset_ticker.data = trade[0].trade_asset_ticker
     form.trade_operation.data = trade[0].trade_operation
-    print(form.trade_operation)
     form.trade_quantity.data = abs(float(trade[0].trade_quantity))
     form.trade_price.data = trade[0].trade_price
     form.trade_fees.data = trade[0].trade_fees

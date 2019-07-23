@@ -36,7 +36,7 @@ $(function () {
 
       });
     },
-    minLength: 2
+    minLength: 0
   });
 });
 
@@ -106,10 +106,7 @@ function hideandshow() {
     $('#cash_value').show();
     $('#submit').show();
     $('#cash').prop("readonly", true);
-    // $('#BSDW').html(' \
-    //   <option value="B">Buy</option> \
-    //   <option value="S">Sell</option> \
-    // ');
+
 
     $('#transdesc').text('You are buying or selling something and withdrawing or depositing cash. \
                   Asset and Cash Transactions have two transactions \

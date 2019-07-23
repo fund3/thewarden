@@ -93,7 +93,7 @@ function createChart(data, ticker) {
 
     var myChart = Highcharts.stockChart('compchart', {
         credits: {
-            text: "CryptoBlotter | Stacking Analysis"
+            text: "Stacking Analysis"
         },
         chart: {
             zoomType: 'x',

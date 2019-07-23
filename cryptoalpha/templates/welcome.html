@@ -1,0 +1,197 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+  body {
+    background-color: #333333;
+    background-size: cover;
+  }
+
+  .section-center__full {
+    height: 45vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
+<br>
+<div class='container-fluid'>
+  <div class='row'>
+    <div class='col-lg-12'>
+      <div class="jumbotron-fluid">
+        <h1 class="display-4 text-white">The WARden v.10α</h1>
+        <hr style="border-top: 1px solid white;">
+
+
+      </div>
+    </div>
+  </div>
+
+
+  <div class="row">
+    <div class='col-lg-12'>
+      <h1 class="text-white">Getting Started</h1>
+
+      <br>
+    </div>
+  </div>
+
+  <div class="row">
+
+    <div class='col-lg-12 d-flex align-items-stretch'>
+
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>1.</span><span style='font-size: 24px;'> Get an Alphavantage API
+            Key&nbsp;&nbsp;</span><strong>[Required]</strong>
+        </div>
+        <div class="card-body text-white">
+          <p class="card-text text-white text-justify">An Alphavantage API key is required to download historical
+            prices.
+            <span class='text-white'>
+              <a href='https://www.alphavantage.co/support/#api-key' target='new_page' style='font-size: 26px;'
+                class='text-white'><br>Click here</a> to get a free API key. Then input it below to test.</p>
+
+          <div class="input-group mb-3">
+            <input id='api_txt' type="text" class="form-control" placeholder="ex: YUI9BS0MIBOPWRVR"
+              aria-label="Recipient's username" aria-describedby="basic-addon2">
+            <div class="input-group-append">
+              <button id='api_key' class="btn btn-outline-secondary text-white" type="button">Test Key</button>
+            </div>
+          </div>
+          <p class='small text-right'>
+            Tor can be setup later for more private price requests
+            </span></p>
+          <div class='content-section' id='api_status' style="display:none; background: white;">
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  </br></br>
+
+  <div class="row">
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>2.</span><span style='font-size: 24px;'> Download
+            Tor&nbsp;&nbsp;</span><strong>[Optional]&nbsp;&nbsp;[Required with the Dojo]</strong>
+        </div>
+        <div class="card-body text-white">
+          <p>
+            When using Tor, traffic is routed through multiple servers and encypted in each step.</p>
+          <p>If enabled, the application will use Tor to send price requests using onion routing.</p>
+          <p><strong>Please note that using Tor will slow down the application. </br></br></strong></p>
+          <p>
+            <div class="text-left text-white">
+              <a class="btn btn-outline-secondary text-white btn-block" target="new_page"
+                href="https://www.torproject.org/download/" role="button">Download
+                Tor</a>
+            </div>
+          </p>
+
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+  </br></br>
+  <div class="row">
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>3.</span><span style='font-size: 24px;'> Step into the Dojo
+            &nbsp;&nbsp;</span><strong>[Optional]&nbsp;&nbsp;</strong>
+        </div>
+        <div class="card-body text-white">
+          <p>
+            Use your own Bitcoin Node to track wallet and address balances.</p>
+          <p>Import transactions straight from the blockchain into your portfolio.</p>
+
+          <p>
+            <div class="text-left text-white">
+              <a class="btn btn-outline-secondary text-white btn-block" target="new_page"
+                href="https://github.com/Samourai-Wallet/samourai-dojo" role="button">Install the
+                Dojo</a>
+            </div>
+          </p>
+          <h3 class='text-white'>Already running a Dojo?</h3>
+          <p>Awesome! Just enter your Dojo configuration below. </p>
+          <div class="input-group mb-3">
+            <input id='dojo_onion' type="text" class="form-control" placeholder="address.onion">
+
+
+            <input id='dojo_api' type="text" class="form-control" placeholder="Your API Key">
+
+
+            <div class='row'>
+              <div class='col-6'>
+                <small class="text-white ml-2">
+                  Your Dojo onion address can be found by running the command <code>./dojo.sh onion</code>
+                </small>
+              </div>
+              <div class='col-6'>
+                <small class="text-white ml-2">
+                  The API Key was created at the Dojo initial setup (at the
+                  <code>docker-node.conf</code> file)
+                </small>
+              </div>
+            </div>
+          </div>
+          <div class="text-left text-white">
+            <button id='dojo' class="btn btn-outline-secondary text-white btn-block" type="button">Save Config
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  </br></br>
+
+  <div class="row">
+    <div class='col-lg-12 d-flex align-items-stretch'>
+      <div class="card bg-transparent text-white border-light w-100" id='starter_api_key'>
+        <div class="card-header text-white" style="border-bottom: 1px solid white;">
+          <span style='font-size: 32px;'>4.</span><span style='font-size: 24px;'> Import Transactions&nbsp;&nbsp;
+          </span><strong>[Optional]&nbsp;&nbsp;</strong>
+        </div>
+        <div class="card-body text-white">
+          <p>
+            You may enter your transactions: </p>
+          <p>
+            1. <strong>Manually</strong>: Click <img src="static/images/new_transaction_icon.png" width="200"
+              height="40"> at
+            the
+            sidebar.
+          </p>
+          <p>
+            2. <strong>Import a CSV file</strong>: Click <img src="static/images/import_csv_icon.png" width="150"
+              height="40">
+            at
+            the
+            sidebar.
+          </p>
+          <p>
+            3. <strong>Import from your Node with the Dojo:</strong> If you have a Dojo setup, <strong><a
+                class='text-white' href='/bitcoin_monitor'> click here<a></strong>.
+          </p>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+</div>
+</div>
+<br><br>
+<script src="/static/welcome.js"></script>
+
+{% endblock content %}

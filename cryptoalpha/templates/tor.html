@@ -1,0 +1,154 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- http://jquery.com/ -->
+<script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous">
+    </script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+<body class="bg-main">
+
+    <div id="status" class="content-section">
+
+        <div class="row">
+            <div class="col-12">
+                <table class="table table-borderless">
+                    <legend class="border-bottom mb-4">Tor Settings Check</legend>
+
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                Status
+                            </th>
+                            <td class="text-right">
+                                {%if tor_enabled.status%}
+                                <span style="color: rgb(42, 255, 42);">
+                                    <i class="fas fa-bolt"></i></span>
+                                <span>&nbsp;&nbsp;Tor enabled and running
+                                </span>
+                                {%else%}
+                                <span style="color: rgb(255, 217, 0);">
+                                    <i class="fas fa-bolt"></i></span>
+                                <span>&nbsp;&nbsp;Tor not enabled
+                                </span>
+                                {%endif%}
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                IP Address without Tor
+                            </th>
+
+                            <td class="text-right">
+                                {%if tor_enabled.status%}
+                                <span class="text-disabled">
+                                    {{tor_enabled.pre_proxy.origin.split(',')[0]}}
+                                </span>
+                                {%else%}
+                                <span class="text-disabled">
+                                    {{tor_enabled.pre_proxy}}
+                                </span>
+                                {%endif%}
+                            </td>
+                        </tr>
+
+                        <tr class="small">
+                            <td scope="row">
+                                Ping time without Tor
+                            </td>
+
+                            <td class="text-right">
+                                <span class="text-disabled">
+                                    {{tor_enabled.pre_proxy_ping}}
+                                </span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th scope="row">
+                                IP Address with Tor
+                            </th>
+
+                            <td class="text-right">
+                                {%if tor_enabled.status%}
+                                <span class="text-disabled">
+                                    {{tor_enabled.post_proxy.origin.split(',')[0]}}
+                                </span>
+                                {%else%}
+                                <span class="text-disabled">
+                                    {{tor_enabled.post_proxy}}
+                                </span>
+                                {%endif%}
+                            </td>
+                        </tr>
+
+                        <tr class="small">
+                            <td scope="row">
+                                Ping time with Tor
+                            </td>
+
+                            <td class="text-right">
+                                <p><span class="text-disabled">
+                                        {{tor_enabled.post_proxy_ping}}</p>
+                                <p><span class="text-warning">
+                                        {{tor_enabled.difference}}x slower
+                                    </span></p>
+                                </span>
+                            </td>
+                        </tr>
+
+
+
+                    </tbody>
+                </table>
+            </div>
+
+
+
+        </div>
+
+
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        Setting up Tor
+                    </h5>
+                </div>
+
+                <div class="card-body">
+                    <p>
+                        When using Tor, traffic is routed through multiple servers and encypted in each step.</p>
+                    <p>If enabled, the application will use Tor to send price requests using onion routing.</p>
+                    <p><strong>Please note that using Tor will slow down the application. </br></br></strong></p>
+                    <p>When large price sets are downloaded, like when an NAV is being re-created, the response time
+                        will be slower. Extra privacy comes at a cost. Choose
+                        wisely. </strong></p>
+                    <p>
+                        Consider installing the Tor browser on your host machine. </p>
+                    <p>
+                        <div class="text-left">
+                            <a class="btn btn-secondary" target="new_page" href="https://www.torproject.org/download/"
+                                role="button">Download
+                                Tor</a>
+                        </div>
+                    </p>
+
+                </div>
+
+            </div>
+
+
+        </div>
+    </div>
+
+
+</body>
+
+{% endblock content %}

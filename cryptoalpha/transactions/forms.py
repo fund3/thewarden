@@ -49,10 +49,6 @@ class NewTrade(FlaskForm):
                 found = True
         if ticker.upper() == "USD":
             found = True
-
-        print(ticker)
-        print(found)
-
         if not found:
             raise ValidationError("Ticker not found")
         if ticker == "":
@@ -77,20 +73,6 @@ class NewTrade(FlaskForm):
             raise ValidationError("Quantity has to be a positive number")
         if quant is "":
             raise ValidationError("Quantity can't be empty")
-
-
-class NewAccount(FlaskForm):
-    account_name = StringField("Account Name", [DataRequired()])
-    submit = SubmitField("Insert New Account")
-
-    def validate_account_name(self, account_name):
-        account = (
-            AccountInfo.query.filter_by(account_longname=account_name.data)
-            .filter_by(user_id=current_user.username)
-            .first()
-        )
-        if account:
-            raise ValidationError("Account already exists")
 
 
 class EditTransaction(FlaskForm):

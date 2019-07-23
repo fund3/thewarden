@@ -7,7 +7,7 @@ function createcharts(data) {
 
     var myChart = Highcharts.stockChart('portchart', {
         credits: {
-            text: "CryptoBlotter | Historical Portfolio Chart"
+            text: "Historical Portfolio Chart"
         },
         chart: {
             zoomType: 'x',

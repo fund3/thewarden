@@ -10,12 +10,13 @@ import pickle
 import pandas as pd
 import numpy as np
 from PIL import Image
-from flask import url_for, current_app
+from flask import url_for, current_app, flash
 from flask_mail import Message
 from flask_login import current_user
 from cryptoalpha import db, mail
 from cryptoalpha.config import Config
-from cryptoalpha.models import Trades
+from cryptoalpha.models import Trades, User
+from cryptoalpha.node.utils import tor_request
 from cryptoalpha import mhp as mrh
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -28,7 +29,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # Read Global Variables from config(s)
 # Include global variables and error handling
 # --------------------------------------------
-ALPHAVANTAGE_API_KEY = Config.ALPHAVANTAGE_API_KEY
 config = configparser.ConfigParser()
 config.read('config.ini')
 
@@ -51,11 +51,13 @@ def multiple_price_grab(tickers, fx):
         "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="\
         + tickers+"&tsyms="+fx+",BTC"
     try:
-        request = requests.get(baseURL)
+        request = tor_request(baseURL)
     except requests.exceptions.ConnectionError:
         return ("ConnectionError")
-
-    data = request.json()
+    try:
+        data = request.json()
+    except AttributeError:
+        data = "ConnectionError"
     return (data)
 
 
@@ -63,8 +65,11 @@ def rt_price_grab(ticker):
     baseURL =\
         "https://min-api.cryptocompare.com/data/price?fsym="+ticker +\
         "&tsyms=USD,BTC"
-    request = requests.get(baseURL)
-    data = request.json()
+    request = tor_request(baseURL)
+    try:
+        data = request.json()
+    except AttributeError:
+        data = "ConnectionError"
     return (data)
 
 
@@ -148,7 +153,6 @@ def cost_calculation(user, ticker):
 
 def generate_pos_table(user, fx, hidesmall):
     # New version to generate the front page position summary
-
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == user)]
     df['trade_date'] = pd.to_datetime(df['trade_date'])
@@ -325,29 +329,7 @@ def generate_pos_table(user, fx, hidesmall):
             summary_table['trade_quantity'][ticker].to_dict()
         table[ticker]['count'] = summary_table['count'][ticker].to_dict()
         table[ticker]['average_price'] = \
-            summary_table['average_price'][ticker].to_dict()
-
-        # # Need to clean up Numpy NaN and Infinity as they trigger errors 
-        # # with JSON returns to AJAX
-        # for key, value in table[ticker]['cost_matrix']['FIFO'].items():
-        #     print (f"Key: {key}")
-        #     print (f"Value: {value}")
-        #     print ("----")
-        #     if np.isnan(table[ticker]['cost_matrix']['FIFO'][key]):
-        #         print ("NA")
-        #         table[ticker]['cost_matrix']['FIFO'][key] == "NaN"
-        #     if np.isinf(table[ticker]['cost_matrix']['FIFO'][key]):
-        #         table[ticker]['cost_matrix']['FIFO'][key] == "Infinity"
-        
-        # for key, value in table[ticker]['cost_matrix']['FIFO']:
-        #     print (f"Key: {key}")
-        #     print (f"Value: {value} Type: {type(value)}")
-        #     print ("----")
-        #     if np.isnan(table[ticker]['cost_matrix']['LIFO'][key]):
-        #         table[ticker]['cost_matrix']['LIFO'][key] == "NaN"
-        #     if np.isinf(table[ticker]['cost_matrix']['LIFO'][key]):
-        #         table[ticker]['cost_matrix']['LIFO'][key] == "Infinity"
-        
+            summary_table['average_price'][ticker].to_dict()        
 
     return(table, pie_data)
 
@@ -739,9 +721,12 @@ def alphavantage_historical(id):
     # Alphavantage Keys can be generated free at
     # https://www.alphavantage.co/support/#api-key
 
-    if ALPHAVANTAGE_API_KEY == "":
-        logging.error("Cannot read Alphavantage API Key from environment")
-
+    user_info = User.query.filter_by(username=current_user.username).first()
+    api_key = user_info.aa_apikey
+    if api_key is None:
+        return("API Key is empty", "error", "empty")
+    
+    id = id.upper()
     filename = "cryptoalpha/alphavantage_data/" + id + ".aap"
     meta_filename = "cryptoalpha/alphavantage_data/" + id + "_meta.aap"
     try:
@@ -768,12 +753,12 @@ def alphavantage_historical(id):
     func = "DIGITAL_CURRENCY_DAILY"
     market = "USD"
     globalURL = baseURL + "function=" + func + "&symbol=" + id +\
-        "&market=" + market + "&apikey=" + ALPHAVANTAGE_API_KEY
+        "&market=" + market + "&apikey=" + api_key
     logging.info(f"[ALPHAVANTAGE] {id}: Downloading data")
     logging.info(f"[ALPHAVANTAGE] Fetching URL: {globalURL}")
     try:
         logging.info(f"[ALPHAVANTAGE] Requesting URL: {globalURL}")
-        request = requests.get(globalURL, timeout=10)
+        request = tor_request(globalURL)
     except requests.exceptions.ConnectionError:
         logging.error("[ALPHAVANTAGE] Connection ERROR " +
                       "while trying to download prices")
@@ -803,9 +788,9 @@ def alphavantage_historical(id):
         func = "TIME_SERIES_DAILY_ADJUSTED"
         globalURL = baseURL + "function=" + func + "&symbol=" + id +\
             "&market=" + market + "&outputsize=full&apikey=" +\
-            ALPHAVANTAGE_API_KEY
+            api_key
         try:
-            request = requests.get(globalURL, timeout=10)
+            request = tor_request(globalURL)
         except requests.exceptions.ConnectionError:
             logging.error("[ALPHAVANTAGE] Connection ERROR while" +
                           " trying to download prices")
@@ -914,3 +899,27 @@ def heatmap_generator():
     heatmap_stats["MEAN"] = heatmap_stats[heatmap_stats[cols_months] != 0].mean(axis=1)
 
     return (heatmap, heatmap_stats, years, cols)
+
+
+def price_ondate(ticker, date_input):
+    # Returns the price of a ticker on a given date
+    local_json, message, error = alphavantage_historical(ticker)
+    if message == 'error':
+        return local_json
+    try:
+        prices = pd.DataFrame(local_json)
+        prices.reset_index(inplace=True)
+        # Reassign index to the date column
+        prices = prices.set_index(
+            list(prices.columns[[0]]))
+        prices = prices['4a. close (USD)']
+        # convert string date to datetime
+        prices.index = pd.to_datetime(prices.index)
+        # rename index to date to match dailynav name
+        prices.index.rename('date', inplace=True)
+        idx = prices[prices.index.get_loc(date_input, method='nearest')]
+    except KeyError:
+        return ("0")
+
+
+    return (idx)
