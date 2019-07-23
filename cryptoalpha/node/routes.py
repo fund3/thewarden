@@ -297,6 +297,7 @@ def bitcoin_transactions(address):
             balance = dojo_multiaddr(address, derivation, at).json()
         except AttributeError:
             logging.warn("Did not receive a json back from multi_add")
+
             # balance = dojo_multiaddr(address, derivation, at)
         # Check if there's a balance in this address
         # {'wallet': {'final_balance': 0}, 'info':
@@ -306,7 +307,7 @@ def bitcoin_transactions(address):
             if balance["wallet"]["final_balance"] >= 0:
                 meta["balance"] = balance["wallet"]["final_balance"]
                 meta["success"] = True
-        except KeyError:
+        except (KeyError, UnboundLocalError):
             transactions[
                 "error"
             ] += "Could not retrieve a balance for this address. Check the address."
