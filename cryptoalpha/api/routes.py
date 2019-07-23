@@ -1640,7 +1640,7 @@ def addresses_importer():
     meta['address_list'] = address_list
     # send a multiaddress request to Dojo
     at = dojo_get_settings()['token']
-    dojo = dojo_multiaddr(dojo_list, "new", at)
+    dojo = dojo_multiaddr(dojo_list, "active", at)
     try:
         dojo = dojo.json()
     except AttributeError:
