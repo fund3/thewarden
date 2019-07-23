@@ -90,25 +90,6 @@ def volchart():
     return render_template("volchart.html", title="Historical Volatility Chart")
 
 
-# MARKED FOR DELETE
-# @portfolio.route("/pnl", methods=['GET', 'POST'])
-# @login_required
-# # Function to return a table with realized PnL and matching Tables
-# # takes ticker, method and dates as arguments
-# def pnl():
-#     if request.method == 'GET':
-#         id = request.args.get('id')
-#         method = request.args.get('method')
-#         start = request.args.get('start')
-#         end = request.args.get('end')
-#
-#     realpnl, metadata = generatepnltable(current_user.username, id,
-#                                          method, start, end)
-#     # realpnl = json.dumps(realpnl, indent=4)
-#     return render_template('pnl.html', realpnl=realpnl, metadata=metadata,
-#                            title="PnL History")
-
-
 @portfolio.route("/portfolio_compare", methods=["GET"])
 @login_required
 def portfolio_compare():

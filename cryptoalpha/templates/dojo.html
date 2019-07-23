@@ -1,0 +1,258 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- http://jquery.com/ -->
+<script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous">
+    </script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+<body class="bg-main">
+
+    <div id="addresses" class="content-section">
+        <div class="row">
+            <div class="col-12">
+                <legend class="border-bottom mb-4">Dojo Settings Check</legend>
+
+                <dl class="row">
+                    <dt class="col-sm-4">Dojo Onion Address set</dt>
+
+                    {%if user_info.dojo_onion%}
+                    <dd id="tor_txt" class="col-sm-8">Found
+
+                        <div id="tor_spin" class="float-right text-success" role="status">
+                            <i class="fas fa-check fa-lg"></i>
+                        </div>
+                    </dd>
+                    </dt>
+                    {%else%}
+                    <dd id="tor_txt" class="col-sm-8 text-warning">Not found. You should set it up at the Dojo Setup
+                        Variables form below.
+
+                        <div id="tor_spin" class="float-right text-warning" role="status">
+                            <i class="fas fa-exclamation-triangle fa-lg"></i>
+                        </div>
+                    </dd>
+                    </dt>
+                    {%endif%}
+                </dl>
+
+                <dl class="row">
+                    <dt class="col-sm-4">Dojo API Key set</dt>
+                    {%if user_info.dojo_apikey%}
+                    <dd id="tor_txt" class="col-sm-8">Found
+
+                        <div id="tor_spin" class="float-right text-success" role="status">
+                            <i class="fas fa-check fa-lg"></i>
+                        </div>
+                    </dd>
+                    </dt>
+                    {%else%}
+                    <dd id="tor_txt" class="col-sm-8 text-warning">Not found. You should set it up at the Dojo Setup
+                        Variables form below.
+
+                        <div id="tor_spin" class="float-right text-warning" role="status">
+                            <i class="fas fa-exclamation-triangle fa-lg"></i>
+                        </div>
+                    </dd>
+                    </dt>
+                    {%endif%}
+                    </dt>
+                </dl>
+
+                <dl class="row">
+                    <dt class="col-sm-4">Dojo Authentication</dt>
+                    {%if at['authorizations']%}
+                    <dd id="tor_txt" class="col-sm-8">Success. Received authentication token.
+
+                        <div id="tor_spin" class="float-right text-success" role="status">
+                            <i class="fas fa-check fa-lg"></i>
+                        </div>
+                    </dd>
+                    </dt>
+                    {%else%}
+                    <dd id="tor_txt" class="col-sm-8 text-warning">
+                        <p>Authentication Failed.
+                            <div id="tor_spin" class="float-right text-warning" role="status">
+                                <i class="fas fa-exclamation-triangle fa-lg"></i>
+                            </div>
+                        </p>
+                        <p>Check if your Dojo is running
+                            and if settings are correct. Make sure that Tor is enabled and running as well.</p>
+                        <p>You can run <code>./dojo.sh logs api</code> to track if api requests are being sent to your
+                            Dojo.</p>
+
+                    </dd>
+                    </dt>
+                    {%endif%}
+                </dl>
+
+
+            </div>
+        </div>
+    </div>
+
+
+    {%if status['uptime']%}
+
+    <div id="addresses" class="content-section">
+
+        <div class="row">
+
+            <div class="col-12">
+
+                <legend class="border-bottom mb-4">Dojo Status</legend>
+                <span class="">
+                    <dl class="row">
+                        <dt class="col-sm-4">Uptime</dt>
+                        <dd class="col-sm-8">{{status['uptime']}}</dd>
+                    </dl>
+                    <dl class="row">
+                        <dt class="col-sm-4">Memory</dt>
+                        <dd class="col-sm-8">{{status['memory']}}</dd>
+                    </dl>
+
+                    <dl class="row">
+                        <dt class="col-sm-4">Blocks</dt>
+                        <dd class="col-sm-3">{{"{:,.0f}".format(status['blocks'])}}
+                            {%if last_block != " - "%}
+                            /
+                            {{"{:,.0f}".format(last_block["data"][0]["height"])}}
+
+                        </dd>
+
+                        <dd class="col-sm-5">
+                            <div class="progress">
+                                {%if (progress > 0.99)%}
+                                <div class="progress-bar bg-success" role="progressbar"
+                                    style="width: {{progress*100}}%;" aria-valuenow={{"{:,.2f}".format(progress*100)}}"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                    {{"{:,.2f}".format(progress*100)}}%
+                                </div>
+
+                                {%else%}
+                                <div class="progress-bar bg-warning" role="progressbar"
+                                    style="width: {{progress*100}}%;" aria-valuenow={{"{:,.2f}".format(progress*100)}}"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                    {{"{:,.2f}".format(progress*100)}}%
+                                </div>
+                                {%endif%}
+                            </div>
+
+                        </dd>
+                        {% else %}
+                        </dd>
+                        {% endif %}
+                    </dl>
+
+
+                </span>
+            </div>
+        </div>
+    </div>
+    {%endif%}
+
+    <div id="addresses" class="content-section">
+
+        <div class="row">
+
+            <div class="col-12">
+                <form method="POST" action="" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    <fieldset class="form-group">
+
+                        <legend class="border-bottom mb-4">Dojo Setup Variables</legend>
+
+
+                        <div class="form-group">
+                            {{ form.dojo_onion.label(class="form-control-label") }}
+                            {% if form.dojo_onion.errors %}
+                            {{ form.dojo_onion(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.dojo_onion.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            {{ form.dojo_onion(class="form-control form-control-lg") }}
+                            {% endif %}
+                            <small class="text-muted ml-2">
+                                Your Dojo onion address can be found by running the command <code>./dojo.sh onion</code>
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.dojo_apikey.label(class="form-control-label") }}
+                            {% if form.dojo_apikey.errors %}
+                            {{ form.dojo_apikey(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.dojo_apikey.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            {{ form.dojo_apikey(class="form-control form-control-lg") }}
+                            {% endif %}
+                            <small class="text-muted ml-2">
+                                This is the API Key you created when setting up your Dojo (at the
+                                <code>docker-node.conf</code> file)
+                            </small>
+                        </div>
+
+
+                        <div class="form-group">
+                            {{ form.submit(class="btn btn-outline-info")}}
+                        </div>
+
+                    </fieldset>
+                </form>
+
+
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="row">
+        <div class="col-12">
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        Setting up a Samourai Dojo
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <h5><strong>Boost your privacy</strong></h5>
+                    <p>When you run a Samourai Dojo, the blockchain requests are handled by your own node.
+                    </p>
+                    <p>
+                        This reduces the risk of IP tracking, plus the blockchain download and verification is
+                        done locally by your node.
+                        The result is much better privacy and reduced risk of accessing a tainted blockchain.
+                    </p>
+                    <p>
+                        <div class="text-left">
+                            <a class="btn btn-outline-secondary" target="new_page"
+                                href="https://github.com/Samourai-Wallet/samourai-dojo" role="button">Download
+                                DOJO</a>
+                        </div>
+                    </p>
+                    <p>Installation instructions can be found <a
+                            href="https://github.com/Samourai-Wallet/samourai-dojo/blob/develop/doc/DOCKER_setup.md">here</a>.
+
+                    </p>
+                    <p><strong>TRUST. BUT VERIFY.</strong></p>
+                </div>
+
+            </div>
+
+
+        </div>
+    </div>
+</body>
+
+{% endblock content %}

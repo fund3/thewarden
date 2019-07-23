@@ -21,7 +21,7 @@ function createcharts(data) {
 
     var myChart = Highcharts.chart('navchart', {
         credits: {
-            text: "CryptoBlotter | Historical Portfolio Chart",
+            text: "Historical Portfolio Chart",
             href: "/home"
         },
         chart: {
@@ -84,7 +84,7 @@ function createcharts(data) {
 
     var myChart = Highcharts.chart('portchart', {
         credits: {
-            text: "CryptoBlotter | Historical Portfolio Chart",
+            text: "Historical Portfolio Chart",
             href: "/home"
         },
         chart: {

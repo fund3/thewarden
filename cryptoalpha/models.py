@@ -11,7 +11,7 @@ def load_user(user_id):
 
 
 class listofcrypto(db.Model):
-    __tablename__ = 'listofcrypto'
+    __tablename__ = "listofcrypto"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200))
     symbol = db.Column(db.String(20))
@@ -25,40 +25,42 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    image_file = db.Column(db.String(20), nullable=False,
-                           default="default.jpg")
+    image_file = db.Column(db.String(20), nullable=False, default="default.jpg")
     password = db.Column(db.String(60), nullable=False)
-    creation_date = db.Column(db.DateTime, nullable=False,
-                              default=datetime.utcnow)
-    trades = db.relationship('Trades', backref='trade_inputby', lazy=True)
-    account = db.relationship('AccountInfo',
-                              backref='account_owner', lazy=True)
+    creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    trades = db.relationship("Trades", backref="trade_inputby", lazy=True)
+    account = db.relationship("AccountInfo", backref="account_owner", lazy=True)
+    bitcoin_address = db.relationship(
+        "BitcoinAddresses", backref="address_owner", lazy=True
+    )
+    aa_apikey = db.Column(db.String(120))
+    dojo_apikey = db.Column(db.String(120))
+    dojo_onion = db.Column(db.String(120))
+    dojo_token = db.Column(db.String(120))
 
     def get_reset_token(self, expires_sec=300):
-        s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
-        return s.dumps({'user_id': self.id}).decode('utf-8')
+        s = Serializer(current_app.config["SECRET_KEY"], expires_sec)
+        return s.dumps({"user_id": self.id}).decode("utf-8")
 
     @staticmethod
     def verify_reset_token(token):
-        s = Serializer(current_app.config['SECRET_KEY'])
+        s = Serializer(current_app.config["SECRET_KEY"])
         try:
-            user_id = s.loads(token)['user_id']
+            user_id = s.loads(token)["user_id"]
         except:
             return None
         return User.query.get(user_id)
 
     def __repr__(self):
-        return f"User('{self.username}', '{self.email}', '{self.image_file}')"
+        return f"User('{self.username}', '{self.email}')"
 
 
 class Trades(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    trade_inputon = db.Column(db.DateTime, nullable=False,
-                              default=datetime.utcnow)
-    trade_date = db.Column(db.DateTime, nullable=False,
-                           default=datetime.utcnow)
-    trade_currency = db.Column(db.String(3), nullable=False, default='USD')
+    user_id = db.Column(db.String(150), db.ForeignKey("user.id"), nullable=False)
+    trade_inputon = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    trade_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    trade_currency = db.Column(db.String(3), nullable=False, default="USD")
     trade_asset_ticker = db.Column(db.String(20), nullable=False)
     trade_account = db.Column(db.String(20), nullable=False)
     trade_quantity = db.Column(db.Float)
@@ -67,6 +69,7 @@ class Trades(db.Model):
     trade_fees = db.Column(db.Float, default=0)
     trade_notes = db.Column(db.Text)
     trade_reference_id = db.Column(db.String(50))
+    trade_blockchain_id = db.Column(db.String(150))
     cash_value = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
@@ -77,17 +80,40 @@ class Trades(db.Model):
 
 class AccountInfo(db.Model):
     account_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    account_longname = db.Column(db.String(255), nullable=False)
-
-    def __repr__(self):
-        return f"AccountInfo('{self.account_longname}')"
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    account_longname = db.Column(db.String(255))
+    account_type = db.Column(db.String(255))
+    check_method = db.Column(db.String(255))
+    account_blockchain_id = db.Column(db.String(256))
+    last_check = db.Column(db.DateTime)
+    last_balance = db.Column(db.Float)
+    previous_check = db.Column(db.DateTime)
+    previous_balance = db.Column(db.Float)
+    auto_check = db.Column(db.Boolean)
+    notes = db.Column(db.Text)
+    child_addresses = db.relationship("BitcoinAddresses", backref="parent_account")
+    xpub_derivation = db.Column(db.String(255))
+    xpub_created = db.Column(db.String(255))
 
 
 class Contact(db.Model):
     contact_id = db.Column(db.Integer, primary_key=True)
-    message_date = db.Column(db.DateTime, nullable=False,
-                             default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    message_date = db.Column(db.DateTime, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     email = db.Column(db.String(255))
     message = db.Column(db.Text)
+
+
+class BitcoinAddresses(db.Model):
+    address_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    account_id = db.Column(db.Integer, db.ForeignKey("account_info.account_id"))
+    address_hash = db.Column(db.String(256), nullable=False)
+    last_check = db.Column(db.DateTime)
+    last_balance = db.Column(db.Float)
+    previous_check = db.Column(db.DateTime)
+    previous_balance = db.Column(db.Float)
+    auto_check = db.Column(db.Boolean)
+    check_method = db.Column(db.String(255))
+    imported_from_hdaddress = db.Column(db.String(255))
+    notes = db.Column(db.Text)

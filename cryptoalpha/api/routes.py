@@ -2,23 +2,41 @@ import json
 import logging
 import math
 import secrets
+import requests
 from datetime import datetime, timedelta
 
 import simplejson
 import numpy as np
 import pandas as pd
+from dateutil import parser
 from dateutil.relativedelta import relativedelta
-from flask import Blueprint, jsonify, render_template, request
+from flask import (Blueprint, jsonify, render_template, request, abort, flash, redirect, url_for, get_flashed_messages)
 from flask_login import current_user, login_required
 
-from cryptoalpha import db
+from cryptoalpha import db, test_tor
 from cryptoalpha import mhp as mrh
-from cryptoalpha.models import Trades, listofcrypto
+from cryptoalpha.config import Config
+from cryptoalpha.models import Trades, listofcrypto, User, BitcoinAddresses, AccountInfo
 from cryptoalpha.users.utils import (alphavantage_historical,
                                      generate_pos_table, generatenav,
-                                     heatmap_generator, rt_price_grab)
+                                     heatmap_generator, rt_price_grab, price_ondate)
+from cryptoalpha.node.utils import  (dojo_auth, oxt_get_address, 
+                                    dojo_status, dojo_multiaddr, 
+                                    dojo_get_settings, dojo_get_txs, dojo_get_hd, tor_request)
 
 api = Blueprint("api", __name__)
+
+
+# Helper function: Make sure strings don't go into DB
+def s_to_f(x):
+    try:
+        if x == None:
+            x = 0
+        x=float(x)
+        return (x)
+    except ValueError:
+        return (0)
+
 
 
 @api.route("/cryptolist", methods=["GET", "POST"])
@@ -49,17 +67,25 @@ def cryptolist():
 @api.route("/aclst", methods=["GET", "POST"])
 @login_required
 # Returns JSON for autocomplete on account names.
+# Gathers account names from trades and account_info tables
 # Takes on input ?term - which is the string to be found
 def aclst():
     list = []
     if request.method == "GET":
+        
         tradeaccounts = Trades.query.filter_by(user_id=current_user.username).group_by(
-            Trades.trade_account
-        )
+            Trades.trade_account)
+
+        accounts = AccountInfo.query.filter_by(user_id=current_user.username).group_by(
+            AccountInfo.account_longname)
+
         q = request.args.get("term")
         for item in tradeaccounts:
             if q.upper() in item.trade_account.upper():
                 list.append(item.trade_account)
+        for item in accounts:
+            if q.upper() in item.account_longname.upper():
+                list.append(item.account_longname)
 
         list = json.dumps(list)
 
@@ -121,7 +147,7 @@ def histvol():
 
         except (FileNotFoundError, KeyError):
             datajson = "Ticker Not Found"
-            logging.error(f"File not Found Error: ID: {id}")
+            logging.message(f"File not Found Error: ID: {id}")
 
     if metadata is not None:
         metatable = {}
@@ -1354,3 +1380,389 @@ def drawdown_json():
 
     return (simplejson.dumps(return_list))
     
+
+@api.route("/test_tor", methods=["GET"])
+# Tests for Tor and sends back stats
+# response = {
+#         "pre_proxy": [pre_proxy IP],
+#         "post_proxy": [post_proxy IP],
+#         "post_proxy_ping": [post_proxy_ping time],
+#         "pre_proxy_ping": [pre_proxy_ping time],
+#         "difference": [in seconds],
+#         "status": [True or False],
+#     }
+def test_tor_api():    
+    response = test_tor()
+    return (simplejson.dumps(response))
+
+
+@api.route("/test_dojo", methods=["GET"])
+# Test for DOJO and makes some tests
+def test_dojo():
+    logging.info("[API] Testing Dojo")
+    auto = dojo_auth(True)
+    try:
+        user_info = User.query.filter_by(username=current_user.username).first()
+    except AttributeError:
+        return ("User not logged in")
+    onion = user_info.dojo_onion
+    apikey = user_info.dojo_apikey
+
+    if not onion:
+        onion="empty"
+
+    if not apikey:
+        apikey="empty"
+
+    response = {
+        'onion_address': onion,
+        'APIKey': apikey,
+        'dojo_auth': auto
+    }
+    return (simplejson.dumps(response))
+        
+    
+@api.route("/oxt_get_address", methods=["GET"])
+# Takes argument [addr] and returns OXT output
+# The request is sent through Tor only and fails if Tor is not enabled
+def gettransaction_oxt():
+    addr = request.args.get("addr")
+    if not addr:
+        return ("Error: Address needs to be provided")
+    return json.dumps((oxt_get_address(addr)))
+
+
+@api.route("/get_address", methods=["GET", "POST"])
+# Check address on database, get request method and return values
+# If success, include the last check data in the database
+# Return new updated values and alert if changes detected
+# If success, returns:
+# address_data:     . previous_check
+#                   . previous_balance
+#                   . last_check
+#                   . last_balance
+# change:           boolean (if changed)
+# success:          boolean
+# method:           Dojo or OXT 
+        
+def get_address():
+    if request.method == "GET":
+        return ("This method does not accept GET requests")
+    meta = {}
+    # get address from POST request
+    address = request.form['address']
+    # Check if this is an HD address
+    hd_address_list = ('xpub', 'ypub', 'zpub')
+    if address.lower().startswith(hd_address_list):
+        hd_address = True
+        # Get address data from DB
+        address_data = (AccountInfo.query.filter_by(user_id=current_user.username)
+            .filter_by(account_blockchain_id=address)
+            .first()
+            )
+    else:
+        hd_address = False
+        # Get address data from DB
+        address_data = (BitcoinAddresses.query.filter_by(user_id=current_user.username)
+            .filter_by(address_hash=address)
+            .first()
+            )
+    # methods: 1: Dojo, 2: OXT, 3: Dojo then OXT 
+    # START DOJO Method
+    if address_data is None:
+        return("(error) address method is invalid.")
+    try_again = False
+    if (address_data.check_method == "1") or (address_data.check_method == "3") :
+        at = dojo_get_settings()['token']
+        if hd_address:
+            dojo = dojo_get_hd(address, at)
+            # Response:
+            # {"status":"ok","data":{"balance":0,"unused":{"external":0,"internal":0},"derivation":"BIP44","created":1563110509}}
+        else:
+            dojo = dojo_get_txs(address, at)
+        method = 'Dojo'
+        
+        # Store current check into previous fields to detect changes
+        ad = {}
+        ad['previous_check'] = address_data.previous_check = address_data.last_check
+        ad['previous_balance'] = address_data.previous_balance = s_to_f(address_data.last_balance)
+        ad['last_check'] = address_data.last_check = datetime.now()
+        
+        try:
+            if hd_address:
+                dojo = (dojo.json())
+                dojo_balance = s_to_f(dojo['data']['balance'])
+                meta['xpub_data'] = dojo['data']
+                meta['xpub_status'] = dojo['status']
+                address_data.xpub_derivation = dojo['data']['derivation']
+                address_data.xpub_created = dojo['data']['created']
+
+            else:
+                dojo_balance = s_to_f(dojo['balance'])
+        except (KeyError, TypeError):
+            if address_data.check_method == "3":
+                address_data.check_method = "2"
+                try_again = True # Bump next steps and try with OXT
+            else:
+                return ("error")
+        if not try_again:
+            ad['last_balance'] = address_data.last_balance = s_to_f(dojo_balance)
+            if address_data.last_balance != address_data.previous_balance: 
+                change = True
+            else:
+                change = False
+            db.session.commit()
+            success = True
+            return jsonify({"address_data": ad, "change" : change, "success": success, "method": method, "meta":meta})
+        
+        
+    if address_data.check_method == "2":
+        oxt = oxt_get_address(address)
+        method = 'OXT'
+        if 'message' in oxt:
+            if oxt['message'] == 'Nothing found for this address. Please try later.':
+                return "error"
+
+        if 'status' in oxt:
+            return "error"
+        # Store current check into previous fields to detect changes
+        ad = {}
+        ad['previous_check'] = address_data.previous_check = address_data.last_check
+        ad['previous_balance'] = address_data.previous_balance = address_data.last_balance
+        ad['last_check'] = address_data.last_check = datetime.now()
+        data_oxt = (oxt['data'])
+        ad['last_balance'] = address_data.last_balance = s_to_f(data_oxt[0]['stats']['bl'])
+        if address_data.last_balance != address_data.previous_balance: 
+            change = True
+        else:
+            change = False
+        db.session.commit()
+        success = True
+
+        return jsonify({"address_data": ad, "change" : change, "success": success, "method": method})
+
+    return ("error")
+
+
+@api.route("/getprice_ondate", methods=["GET"])
+@login_required
+# Return the price of a ticker on a given date
+# Takes arguments:
+# ticker:       Single ticker for filter (default = NAV)
+# date:         date to get price
+def getprice_ondate(): 
+    # Get the arguments and store
+    if request.method == "GET":    
+        date_input = request.args.get("date")
+        ticker = request.args.get("ticker")
+        if (not ticker) or (not date_input):
+            return 0
+        ticker = ticker.upper()
+        get_date = datetime.strptime(date_input, "%Y-%m-%d")
+        return price_ondate(ticker, get_date)
+
+
+@api.route("/import_transaction", methods=["POST"])
+@login_required
+# Imports transactions into the database using a post method
+# Values expected
+def import_transaction():
+    # Convert to json
+    jsonData = request.get_json()
+    # Import into the database
+    for item in jsonData:
+        # Check if in database
+        transaction_id = jsonData[item]['trade_blockchain_id']
+        find_match = (
+            Trades.query.filter_by(user_id=current_user.username)
+            .filter_by(trade_blockchain_id=transaction_id)
+            .first()
+        )
+        if find_match is not None:
+            flash(f"Transaction not imported. Exists in database: {transaction_id[0:6]}...", "danger")
+            continue
+
+        try:
+            price = float(jsonData[item]['trade_price'].replace(',',''))
+            quant = (jsonData[item]['trade_quantity'])
+            cv = price * quant
+        except (AttributeError, ValueError):
+            cv = 0
+
+        # Create the database object
+        new_trade = Trades(
+        user_id=current_user.username,
+        trade_inputon=parser.parse(jsonData[item]['trade_inputon']),
+        trade_quantity=quant,
+        trade_operation=jsonData[item]['trade_operation'],
+        trade_currency=jsonData[item]['trade_currency'],
+        trade_fees=jsonData[item]['trade_fees'],
+        trade_asset_ticker=jsonData[item]['trade_asset_ticker'],
+        trade_price=price,
+        trade_date=datetime.fromtimestamp(int(jsonData[item]['trade_date'])), #epoch date to dateTime
+        trade_blockchain_id=jsonData[item]['trade_blockchain_id'],
+        trade_account=jsonData[item]['trade_account'],
+        trade_notes=jsonData[item]['trade_notes'],
+        cash_value=cv,
+        trade_reference_id = secrets.token_hex(21)
+        )
+
+        try:
+            db.session.add(new_trade)
+            db.session.commit()
+            flash(f"Transaction included. {transaction_id[0:6]}...", "success")
+        except Exception as e:
+            flash(f"Error: {e} when importing transaction {jsonData[item]['trade_blockchain_id'][0:6]}", "danger")
+
+    logging.info("Import done")
+    # logging.info(get_flashed_messages())
+    # return json.dumps(get_flashed_messages(with_categories=true))
+    return(json.dumps("OK"))
+
+
+
+@api.route("/addresses_importer", methods=["POST"])
+@login_required
+# Imports transactions into the database using a post method
+# Values expected
+def addresses_importer():
+    if request.method == "GET":
+        return ("This method does not accept GET requests")
+    data = request.form
+    for item in data:
+        loader = json.loads(item)
+    main_account = loader['account']
+    # Dojo takes a pipe separated string as input for multiaddress
+    dojo_list = loader['address_list'].replace(",", "|")
+    address_list = loader['address_list'].split(",")
+    meta = {}
+    meta['main_account'] = main_account
+    meta['address_list'] = address_list
+    # send a multiaddress request to Dojo
+    at = dojo_get_settings()['token']
+    dojo = dojo_multiaddr(dojo_list, "new", at)
+    try:
+        dojo = dojo.json()
+    except AttributeError:
+        pass
+
+    meta['dojo'] = dojo
+    # If data received back ok, import addresses into the db, if not return error
+    if 'error' in dojo:
+        return json.dumps(meta)
+    meta['status'] = {}
+    # Loop through addresses found in Dojo and include in monitor database
+    counter = 0
+    for item in dojo['addresses']:
+        address_info = {}
+        address_info['message'] = "Found and Imported"
+        # Is this a pubkey address or HD address?
+        # HD addresses are included as accounts (since they can hold pubkey addresses)
+        # pubkey addresses included in the bitcoinaddress table
+        hd_address_list = ('xpub', 'ypub', 'zpub')
+        address = item['address']
+
+        # HD Address Handling
+        if address.lower().startswith(hd_address_list):
+            address_info['hd'] = True
+            search_add = AccountInfo.query.filter_by(user_id=current_user.username).filter_by(account_blockchain_id=address)
+            if search_add.count() > 0:
+                address_info['message'] = "NOT imported. Already in database."
+                meta['status'][item['address']] = address_info
+                continue
+            counter += 1
+            bitcoin_address = AccountInfo(
+                user_id=current_user.username,
+                account_longname="HD Wallet "+str(counter),
+                check_method='1',
+                auto_check=True,
+                account_blockchain_id=address,
+                last_check = datetime.now(),
+                last_balance = s_to_f(item['final_balance']),
+                notes="Account imported using the Dojo through multi address import page",
+                )
+        # Bitcoin Address Handling - Not HD
+        else:
+            # check if this address is already in the database
+            address_info['hd'] = False
+            search_add = BitcoinAddresses.query.filter_by(user_id=current_user.username).filter_by(address_hash=address)
+            if search_add.count() > 0:
+                address_info['message'] = "NOT imported. Already in database."
+                meta['status'][item['address']] = address_info
+                continue
+            bitcoin_address = BitcoinAddresses(
+            user_id=current_user.username,
+            address_hash=address,
+            check_method='1',
+            account_id=meta['main_account'],
+            auto_check=True,
+            imported_from_hdaddress="",
+            last_check = datetime.now(),
+            last_balance = s_to_f(item['final_balance']),
+            notes="Imported using the Dojo through multi address import page",
+        )
+    
+        try:
+            db.session.add(bitcoin_address)
+            db.session.commit()
+            address_info['message'] = "Found and Imported"
+        except Exception as e:
+            logging.info(f"Error importing: {e}")
+            address_info['message'] = f"NOT imported. Error: {e}."
+        meta['status'][item['address']] = address_info
+
+    # return a list of addresses not found in the Dojo
+    for add in address_list:
+        if add not in meta['status']:
+            meta['status'][add] = "Not found"
+
+    return json.dumps(meta)
+
+
+
+@api.route("/test_aakey", methods=["GET"])
+# gets key argument and returns test results
+# {status: "success", message:"price on .... is...."}
+# {status: "failed", message:"NO API Key"}
+# {status: "failed", message:"Connection Error"}
+# {status: "failed", message:"{e}"}
+# https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=BTC&to_currency=USD&apikey=ddd
+def test_aakey():
+    # Test Variables 
+    api_key = request.args.get("key")
+    data = {
+        'status': 'failed',
+        'message': 'Empty'
+        }
+    if api_key is not None:  
+        baseURL = "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=BTC&to_currency=USD&apikey="
+        globalURL = baseURL + api_key
+        try:
+            logging.info(f"[ALPHAVANTAGE] Requesting URL: {globalURL}")
+            api_request = tor_request(globalURL)
+            data['status']= 'success'
+        except requests.exceptions.ConnectionError:
+            logging.error("[ALPHAVANTAGE] Connection ERROR " +
+                        "while trying to download prices")
+            data['status']= 'failed'
+            data['message'] = 'Connection Error'
+        try:
+            data['message'] = api_request.json()
+            # Success - store this in database
+            current_user.aa_apikey = api_key
+            db.session.commit()
+        except AttributeError:
+            data['message'] = api_request
+    return json.dumps(data)
+
+
+@api.route("/dojo_autoconfig", methods=["GET"])
+# Registers an onion and api key to the database and saves for this username
+def dojo_autoconfig():
+    if (request.args.get("onion") != '') and (request.args.get("api_key") != ''):
+        current_user.dojo_onion = request.args.get("onion")
+        current_user.dojo_apikey = request.args.get("api_key")
+        db.session.commit()
+        return json.dumps("Success")
+    else:
+        return json.dumps("Failed. Empty field.")

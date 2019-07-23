@@ -1,17 +1,20 @@
 import os
 
-
+# Config class for Application Factory
 class Config:
-    # We could set defaults here but for now they
-    # are saved on the ~/.bash_profile file
-    SECRET_KEY = os.environ.get('SECRET_KEY')
+    basedir = os.path.abspath(os.path.dirname(__file__))
+
+    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "alpha.db")
+
+    # You should change this secret key. But make sure it's done before any data
+    # is included in the database
+    SECRET_KEY = "24feff264ec3bbdb1bad4affc7bd68f4"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
-    MAIL_SERVER = 'smtp.googlemail.com'
+
+    # Used for password recovery. Not needed in most cases.
+    MAIL_SERVER = "smtp.googlemail.com"
     MAIL_PORT = 587
     MAIL_USE_TLS = True
-    MAIL_USERNAME = os.environ.get('EMAIL_USER')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    ALPHAVANTAGE_API_KEY = os.environ.get('ALPHAVANTAGE_API_KEY')
-    RPCUSER = os.environ.get('RPCUSER')
-    RPCPASSWORD = os.environ.get('RPCPASSWORD')
+    MAIL_USERNAME = os.environ.get("EMAIL_USER")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
+    DOJO_SETTINGS = None

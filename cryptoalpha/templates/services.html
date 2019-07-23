@@ -1,0 +1,198 @@
+{% extends "layout.html" %}
+{% block content %}
+<!-- http://jquery.com/ -->
+<script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous">
+    </script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+<body class="bg-main">
+
+    <div class="content-section">
+
+        <legend class="border-bottom mb-4">Privacy Services Status</legend>
+
+
+        <dl class="row">
+
+            <dt class="col-sm-3">Tor</dt>
+            <dd id="tor_txt" class="col-sm-9">Checking for Tor settings and response time...
+
+                <div id="tor_spin" class="spinner-border float-right text-warning" role="status">
+                    <span class="sr-only">Loading...</span>
+
+                </div>
+            </dd>
+
+            <dt class="col-sm-3">OXT</dt>
+            <dd id="oxt_txt" class="col-sm-9">Connecting to OXT with Tor...
+
+                <div id="oxt_spin" class="spinner-border float-right text-warning" role="status">
+                    <span class="sr-only">Loading...</span>
+
+                </div>
+            </dd>
+
+            <dt class="col-sm-3"></dt>
+            <dd id="oxta_txt" class="col-sm-9">Testing OXT with a sample address...
+
+                <div id="oxta_spin" class="spinner-border float-right text-warning" role="status">
+                    <span class="sr-only">Loading...</span>
+
+                </div>
+            </dd>
+
+            <dt class="col-sm-3">Samourai Dojo</dt>
+            <dd id="dojo_txt" class="col-sm-9">Checking for Samourai Dojo...
+
+                <div id="dojo_spin" class="spinner-border float-right text-warning" role="status">
+                    <span class="sr-only">Loading...</span>
+
+                </div>
+            </dd>
+
+            <dt class="col-sm-3"></dt>
+            <dd id="dojoa_txt" class="col-sm-9">Testing Dojo authentication...
+
+                <div id="dojoa_spin" class="spinner-border float-right text-warning" role="status">
+                    <span class="sr-only">Loading...</span>
+
+                </div>
+            </dd>
+
+        </dl>
+
+
+    </div>
+
+    <div class="content-section">
+        <div id="accordion">
+            <div class="card">
+                <div class="card-header" id="headingOne">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne"
+                            aria-expanded="true" aria-controls="collapseOne">
+                            Setting up Tor
+                        </button>
+                    </h5>
+                </div>
+
+                <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+                    <div class="card-body">
+
+
+                        <p>
+                            <h5>Why use Tor?</h5>
+                        </p>
+                        <span class="justify-content-around">
+                            <p> When sending requests through the internet, there's a risk that your IP address is
+                                exposed.
+                            </p>
+                            <p> For example, when using a block explorer to confirm a recent Bitcoin transaction, the
+                                service
+                                running the explorer
+                                could potentially link your IP address to someone interested in that Bitcoin address.
+                            </p>
+                            <p>Tor uses a routing protocol (onion) that routes traffic through multiple servers and
+                                encrypt
+                                it
+                                each step of the way.
+                                It becomes much harder to anyone to identify who is asking for which information.
+                            </p>
+                            <p>
+                                <h5>But privacy comes with some costs...</h5>
+                            </p>
+                            <p>When using Tor, the routing process will result in slower responses. If you have Tor
+                                installed,
+                                you
+                                can check <a href="{{ url_for('node.tor_setup') }}">here</a> how much slower the
+                                CryptoBlotter
+                                requests get.</p>
+                            <div class="text-left">
+                                <a class="btn btn-secondary" target="new_page"
+                                    href="https://www.torproject.org/download/" role="button">Download
+                                    Tor</a>
+                            </div>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <br>
+
+            <div class="card">
+                <div class="card-header" id="headingTwo">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo"
+                            aria-expanded="false" aria-controls="collapseTwo">
+                            Setting up a Samourai Dojo
+                        </button>
+                    </h5>
+                </div>
+                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+                    <div class="card-body">
+                        <h5><strong>Boost your privacy</strong></h5>
+                        <p>When you run a Samourai Dojo, the blockchain requests are handled by your own node.
+                        </p>
+                        <p>
+                            This reduces the risk of IP tracking, plus the blockchain download and verification is
+                            done locally by your node.
+                            The result is much better privacy and reduced risk of accessing a tainted blockchain.
+                        </p>
+                        <p>
+                            <div class="text-left">
+                                <a class="btn btn-secondary" target="new_page"
+                                    href="https://github.com/Samourai-Wallet/samourai-dojo" role="button">Download
+                                    DOJO</a>
+                            </div>
+                        </p>
+                        <p>Installation instructions can be found <a
+                                href="https://github.com/Samourai-Wallet/samourai-dojo/blob/develop/doc/DOCKER_setup.md">here</a>.
+
+                        </p>
+                        <p><strong>TRUST. BUT VERIFY.</strong></p>
+                    </div>
+                </div>
+            </div>
+
+            <br>
+
+            <div class="card">
+                <div class="card-header" id="headingThree">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseThree"
+                            aria-expanded="false" aria-controls="collapseThree">
+                            What is OXT and what are the risks of using it?
+                        </button>
+                    </h5>
+                </div>
+                <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+                    <div class="card-body">
+
+                        <p>OXT is Samourai's public Block Explorer. We offer users the alternative of using OXT to get
+                            and
+                            track address information.
+                            <strong>This option is not ideal.</strong> All requests are handled through Tor so IP
+                            addresses
+                            are not disclosed to Samourai but you are trusting their database.<strong></p>
+                        <p> If
+                            their blockchain becomes compromised, you will not know.</strong></p>
+                        <p>We encourage every user to setup a Dojo but for users who are not concerned about the risk of
+                            a
+                            tainted database, this may be a good compromise.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- app's own JavaScript -->
+    <script src="/static/services.js"></script>
+
+
+
+</body>
+
+{% endblock content %}

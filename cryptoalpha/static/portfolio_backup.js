@@ -177,7 +177,7 @@ function createcharts() {
 
             var myChart = Highcharts.chart('piechart', {
                 credits: {
-                    text: "CryptoBlotter | Allocation"
+                    text: "Allocation"
                 },
                 legend: {
                     enabled: false

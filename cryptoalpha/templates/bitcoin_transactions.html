@@ -1,0 +1,230 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<div class="row">
+    <div class="col-sm-12">
+        <div id="alerts" class="container"></div>
+    </div>
+</div>
+
+
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="content-section">
+
+
+            <dl class="row">
+                <dt class="col-sm-4">
+                    <h4>Address</h4>
+                </dt>
+                <dd class="col-sm-8">
+                    <h5> {{address[0:12]}}...{{address[-10:]}} </h5>
+                </dd>
+                </dt>
+
+                <dt class="col-sm-4">Account</dt>
+
+                {%if 'account' in meta%}
+                <dd id="account" data-account="{{meta['account']}}" class="col-sm-8">
+                    {{meta['account']}}
+                    {%else%}
+                <dd id="account" data-account="No Account" class="col-sm-8">
+                    Not linked to an account
+                    {%endif%}
+                </dd>
+                </dt>
+            </dl>
+
+
+            <dl class="row">
+                <dt class="col-sm-4">Balance:</dt>
+                <dd class="col-sm-8">
+                    {% if 'balance' in meta %}
+                    &#8383 {{meta['balance'] | jformat(4, 100000000)}}
+                    {%else%}
+                    error getting balance
+                    {%endif%}
+                </dd>
+                </dt>
+
+                <dt class="col-sm-4">Transactions Found:</dt>
+                <dd class="col-sm-8">
+                    {{transactions['n_tx']}}
+                </dd>
+                </dt>
+            </dl>
+
+        </div>
+
+    </div>
+</div>
+
+{% if 'balance' in meta %}
+{% if (meta['n_txs'] > 0) %}
+<div class="row">
+    <div class="col-sm-12">
+        <div class="content-section">
+
+            <legend class="border-bottom mb-4">
+                Address Config and Import
+            </legend>
+
+            <strong>
+                <p class="text-info">Please check Transactions</p>
+            </strong>
+            <p>There are some limitations on getting transaction history using a full node
+                (see <a target='new'
+                    href="https://bitcoincore.org/en/doc/0.18.0/rpc/blockchain/scantxoutset/">scantxoutset</a>).
+                Some transactions may be missing from the activity below. You can always import missing transactions
+                later.
+            </p>
+
+        </div>
+
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="content-section">
+
+            <legend class="mb-4">
+                <div class="row">
+                    <div class="col-sm-6">
+                        Transaction History
+                    </div>
+                    <div class="col-sm-6 text-right">
+
+                        <button type="button" id="select_none" class="btn btn-outline-secondary btn-sm">Select
+                            None</button>
+
+                        <button type="button" id="select_all" class="btn btn-outline-secondary btn-sm"
+                            value="Select All">Select All</button>
+
+                    </div>
+                </div>
+            </legend>
+
+            <table id="transactionstable" class="table table-sm align-middle text-center">
+                <thead>
+                    <tr>
+                        <th scope="col">
+                            Time
+                        </th>
+                        <th scope="col">
+                            Transaction
+                        </th>
+                        <th scope="col">
+                            &#8383 Price *
+                        </th>
+
+                        <th class="small" scope="col">
+                            Transaction Hash
+                        </th>
+                        <th class="small text-center" scope="col">
+                            Import
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="transactions">
+                    {%if (transactions['n_tx'] >= 50)%}
+                    {% set max = 49 %}
+                    <strong><span class="text-danger">More than 50 transactions found in this address. Only displaying
+                            the first
+                            50.</span></strong>
+                    {%else%}
+                    {% set max = transactions['n_tx'] %}
+                    {%endif%}
+
+                    {%for n in range(0, max)%}
+
+                    <tr>
+
+                        <td id={{transactions['transactions']['time'][n]}} class="align-middle text-center" scope="row">
+                            {{transactions['transactions']['time'][n] | epoch}}
+                        </td>
+
+                        <td id={{transactions['transactions']['result'][n]}} class="align-middle text-center redgreen"
+                            scope="row">
+                            &#8383 {{transactions['transactions']['result'][n] | jformat(4, 100000000)}}
+                        </td>
+                        <td class='btc_price' id='{{transactions['transactions']['time'][n]}}'>
+                            <div class="spinner-grow spinner-grow-sm" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </td>
+                        <td id={{transactions['transactions']['hash'][n]}} class="align-middle text-center small"
+                            scope="row">
+                            {{transactions['transactions']['hash'][n][0:4]}}...{{transactions['transactions']['hash'][n][-4:-1]}}
+                        </td>
+                        <td class="align-middle text-center" scope="row">
+                            <input type="checkbox" class="form-check-input import_check text-center checkbox"
+                                id="check_{{transactions['transactions']['hash'][n]}}">
+                        </td>
+
+                    </tr>
+                    {%endfor%}
+
+                </tbody>
+            </table>
+            <div class="row">
+                <div class="col-sm-8">
+                    <small>
+                        * &#8383 price is assumed to be the closing price on transaction date. You should adjust to your
+                        proper
+                        cost
+                        basis.
+                    </small></div>
+                <div class="col-sm-4 text-right">
+                    <button type="button" id="import_button" class="btn btn-outline-info btn-sm">Import
+                        Selected Transactions</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{%else%}
+<div class="row">
+    <div class="col-sm-12">
+        <div class="content-section">
+
+            <legend class="border-bottom mb-4">
+                Notice
+            </legend>
+
+            <strong>
+                <p class="text-info">Looks like this address was found with the Dojo but no transactions were found.</p>
+            </strong>
+            <p>There are some limitations on getting transaction history using a full node
+                (see <a target='new'
+                    href="https://bitcoincore.org/en/doc/0.18.0/rpc/blockchain/scantxoutset/">scantxoutset</a>).
+            </p>
+            <p>The address balance will still be monitored. But no transactions can be imported at this time.</p>
+        </div>
+    </div>
+</div>
+{%endif%}
+{%endif%}
+
+{% if (meta.success == False) %}
+
+<div class="row">
+    <div class="col-sm-12">
+        <div id="alerts" class="container">
+            <div class='alert alert-danger alert-dismissible fade show' role='alert'>
+                Something went wrong when connecting. Error: {{transactions.error}}
+            </div>
+        </div>
+    </div>
+</div>
+
+{%endif%}
+
+
+<script src="/static/bitcoin_transactions.js"></script>
+
+{% endblock content %}

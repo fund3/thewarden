@@ -1,3 +1,4 @@
+alembic==1.0.11
 appdirs==1.4.3
 APScheduler==3.6.0
 astroid==2.2.5
@@ -15,6 +16,8 @@ Flask==1.0.2
 Flask-Bcrypt==0.7.1
 Flask-Login==0.4.1
 Flask-Mail==0.9.1
+Flask-Migrate==2.5.2
+Flask-Session==0.3.1
 Flask-SQLAlchemy==2.3.2
 Flask-WTF==0.14.2
 gunicorn==19.9.0
@@ -25,6 +28,7 @@ Jinja2==2.10.1
 kiwisolver==1.0.1
 lazy-object-proxy==1.4.1
 lxml==4.3.3
+Mako==1.0.13
 MarkupSafe==1.1.1
 matplotlib==2.2.3
 mccabe==0.6.1
@@ -38,9 +42,11 @@ pycodestyle==2.5.0
 pycparser==2.19
 pylint==2.3.1
 pyparsing==2.2.0
+PySocks==1.7.0
 python-bitcoinrpc==1.0
 python-dateutil==2.8.0
 python-dotenv==0.10.1
+python-editor==1.0.4
 pytz==2018.9
 requests==2.22.0
 scikit-learn==0.19.2
@@ -49,6 +55,7 @@ seaborn==0.9.0
 simplejson==3.16.0
 six==1.12.0
 SQLAlchemy==1.3.4
+SQLAlchemy-Utils==0.34.0
 toml==0.10.0
 typed-ast==1.4.0
 tzlocal==1.5.1

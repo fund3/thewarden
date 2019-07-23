@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block content %}
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+
+<body class="bg-main">
+
+    <div id="addresses" class="content-section">
+        <div class="row">
+            <div class="col-12">
+                <legend class="border-bottom mb-4">Bitcoin Addresses</legend>
+                <h4>No public addresses found to monitor</h4>
+                <br>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                {%if dojo['onion'] == None%}
+                <h3>Looks like you haven't setup your Dojo yet. Start by configuring it. </h3>
+                <br>
+                <a href="{{url_for('node.dojo_setup')}}">
+                    <button type="button" id="import" class="btn btn-secondary btn-lg btn-block">Click for Dojo
+                        Setup</button>
+                </a>
+                {%else%}
+                <br>
+                <legend class="border-bottom mb-4">Dojo Onion Address found</legend>
+                <h5>You can now import addresses and transactions using your Dojo.</h5>
+                Make sure the Dojo is running by checking the Dojo icon (<span class='text-success'>
+                    <i class="fas fa-user-ninja fa-lg"></i></span>) at the
+                status bar above.
+                <br>
+                <br>
+                <a href="{{url_for('node.import_addresses')}}">
+                    <button type="button" id="import" class="btn btn-secondary btn-lg btn-block">Step into the
+                        Dojo</button>
+                </a>
+                {%endif%}
+            </div>
+        </div>
+    </div>
+</body>
+{% endblock content %}
