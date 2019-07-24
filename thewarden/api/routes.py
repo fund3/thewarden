@@ -608,6 +608,11 @@ def portfolio_compare_json():
         data.index.rename("date", inplace=True)
         data.rename(ticker + "_price", inplace=True)
         data = data.astype(float)
+        # Check if dataframe
+        if (isinstance(nav_only, pd.Series)):
+            nav_only = nav_only.to_frame()
+        if (isinstance(data, pd.Series)):
+            data = data.to_frame()    
         # Fill dailyNAV with prices for each ticker
         nav_only = pd.merge(nav_only, data, on="date", how="left")
         nav_only[ticker + "_price"].fillna(method="bfill", inplace=True)
@@ -801,10 +806,16 @@ def scatter_json():
 
         # convert string date to datetime
         data.index = pd.to_datetime(data.index)
+        
         # rename index to date to match dailynav name
         data.index.rename("date", inplace=True)
         data.rename(ticker + "_price", inplace=True)
         data = data.astype(float)
+        # Check if dataframe
+        if (isinstance(data, pd.Series)):
+            data = data.to_frame()
+        if (isinstance(nav_only, pd.Series)):
+            nav_only = nav_only.to_frame()
         # Fill dailyNAV with prices for each ticker
         nav_only = pd.merge(nav_only, data, on="date", how="left")
         nav_only[ticker + "_price"].fillna(method="bfill", inplace=True)
@@ -1143,7 +1154,7 @@ def heatmapbenchmark_json():
         "Nov",
         "Dec",
     ]
-    years = heatmap.index.to_list()
+    years = heatmap.index.tolist()
     # Create summary stats for the Ticker
     heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(axis=1)
     heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(axis=1)

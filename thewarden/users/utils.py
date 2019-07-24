@@ -887,7 +887,7 @@ def heatmap_generator():
         "Nov",
         "Dec",
     ]
-    years = heatmap.index.to_list()
+    years = (heatmap.index.tolist())
     heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(axis=1)
     heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(axis=1)
     heatmap_stats["POSITIVES"] = heatmap_stats[heatmap_stats[cols_months] > 0].count(
