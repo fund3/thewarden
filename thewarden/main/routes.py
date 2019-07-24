@@ -28,19 +28,22 @@ main = Blueprint("main", __name__)
 def before_request():
     # Before any request at main, check if API Keys are set
     # But only if user is logged in.
-    if current_user.is_authenticated:
-        user_info = User.query.filter_by(username=current_user.username).first()
-        if user_info.aa_apikey is None:
-            logging.error("NO AA API KEY FOUND!")
-            return render_template("welcome.html", title="Welcome")
-        transactions = Trades.query.filter_by(user_id=current_user.username)
-        if transactions.count() == 0:
-            return render_template("empty.html")
-        
+    exclude_list = ["main.get_started", "main.importcsv"]
+    if not request.endpoint in exclude_list:
+        if current_user.is_authenticated:
+            user_info = User.query.filter_by(username=current_user.username).first()
+            if user_info.aa_apikey is None:
+                logging.error("NO AA API KEY FOUND!")
+                return render_template("welcome.html", title="Welcome")
+            transactions = Trades.query.filter_by(user_id=current_user.username)
+            if transactions.count() == 0:
+                return render_template("empty.html")
+
 
 @main.route("/get_started")
 def get_started():
     return render_template("welcome.html", title="Welcome")
+
 
 @main.route("/")
 @main.route("/home")
@@ -160,8 +163,14 @@ def importcsv():
         if form.validate_on_submit():
             if form.submit.data:
                 if form.csvfile.data:
-                    form.csvfile.data.save('./thewarden/dailydata/' + form.csvfile.data.filename)
-                    csv_reader = open('./thewarden/dailydata/'+form.csvfile.data.filename, "r", encoding="utf-8")
+                    form.csvfile.data.save(
+                        "./thewarden/dailydata/" + form.csvfile.data.filename
+                    )
+                    csv_reader = open(
+                        "./thewarden/dailydata/" + form.csvfile.data.filename,
+                        "r",
+                        encoding="utf-8",
+                    )
                     csv_reader = csv.DictReader(csv_reader)
                     csvfile = form.csvfile.data
 
@@ -171,7 +180,7 @@ def importcsv():
                     form=form,
                     csv=csv_reader,
                     csvfile=csvfile,
-                    filename='./thewarden/dailydata/' + form.csvfile.data.filename
+                    filename="./thewarden/dailydata/" + form.csvfile.data.filename,
                 )
     if request.method == "GET":
         filename = request.args.get("f")
