@@ -3,7 +3,7 @@ import logging
 from flask import Blueprint, render_template, request, flash, redirect, url_for, abort
 from flask_login import current_user, login_required
 from flask_sqlalchemy import SQLAlchemy
-from cryptoalpha.node.utils import (
+from thewarden.node.utils import (
     dojo_add_hd,
     dojo_get_hd,
     dojo_auth,
@@ -14,10 +14,10 @@ from cryptoalpha.node.utils import (
     dojo_get_txs,
     oxt_get_address,
 )
-from cryptoalpha import db, test_tor
-from cryptoalpha.config import Config
-from cryptoalpha.node.forms import DojoForm, AddressForm, AddressForm, Custody_Account
-from cryptoalpha.models import User, BitcoinAddresses, AccountInfo
+from thewarden import db, test_tor
+from thewarden.config import Config
+from thewarden.node.forms import DojoForm, AddressForm, AddressForm, Custody_Account
+from thewarden.models import User, BitcoinAddresses, AccountInfo
 
 node = Blueprint("node", __name__)
 

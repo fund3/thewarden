@@ -13,14 +13,14 @@ from dateutil.relativedelta import relativedelta
 from flask import (Blueprint, jsonify, render_template, request, abort, flash, redirect, url_for, get_flashed_messages)
 from flask_login import current_user, login_required
 
-from cryptoalpha import db, test_tor
-from cryptoalpha import mhp as mrh
-from cryptoalpha.config import Config
-from cryptoalpha.models import Trades, listofcrypto, User, BitcoinAddresses, AccountInfo
-from cryptoalpha.users.utils import (alphavantage_historical,
+from thewarden import db, test_tor
+from thewarden import mhp as mrh
+from thewarden.config import Config
+from thewarden.models import Trades, listofcrypto, User, BitcoinAddresses, AccountInfo
+from thewarden.users.utils import (alphavantage_historical,
                                      generate_pos_table, generatenav,
                                      heatmap_generator, rt_price_grab, price_ondate)
-from cryptoalpha.node.utils import  (dojo_auth, oxt_get_address, 
+from thewarden.node.utils import  (dojo_auth, oxt_get_address, 
                                     dojo_status, dojo_multiaddr, 
                                     dojo_get_settings, dojo_get_txs, dojo_get_hd, tor_request)
 
@@ -127,7 +127,7 @@ def histvol():
         datajson = vollist.to_json()
 
     if ticker:
-        filename = "cryptoalpha/historical_data/" + ticker + ".json"
+        filename = "thewarden/historical_data/" + ticker + ".json"
 
         try:
             with open(filename) as data_file:
@@ -202,21 +202,21 @@ def portstats():
     meta["start_date"] = (data.index.min()).date().strftime("%B %d, %Y")
     meta["end_date"] = data.index.max().date().strftime("%B %d, %Y")
     meta["start_nav"] = data["NAV"][0]
-    meta["end_nav"] = data["NAV"][-1]
-    meta["max_nav"] = data["NAV"].max()
+    meta["end_nav"] = data["NAV"][-1].astype(float)
+    meta["max_nav"] = data["NAV"].max().astype(float)
     meta["max_nav_date"] = data[data["NAV"] == data["NAV"].max()].index.strftime(
         "%B %d, %Y"
     )[0]
-    meta["min_nav"] = data["NAV"].min()
+    meta["min_nav"] = data["NAV"].min().astype(float)
     meta["min_nav_date"] = data[data["NAV"] == data["NAV"].min()].index.strftime(
         "%B %d, %Y"
     )[0]
-    meta["end_portvalue"] = data["PORT_usd_pos"][-1]
-    meta["max_portvalue"] = data["PORT_usd_pos"].max()
+    meta["end_portvalue"] = data["PORT_usd_pos"][-1].astype(float)
+    meta["max_portvalue"] = data["PORT_usd_pos"].max().astype(float)
     meta["max_port_date"] = data[
         data["PORT_usd_pos"] == data["PORT_usd_pos"].max()
     ].index.strftime("%B %d, %Y")[0]
-    meta["min_portvalue"] = round(data["PORT_usd_pos"].min(), 0)
+    meta["min_portvalue"] = round(data["PORT_usd_pos"].min(), 0).astype(float)
     meta["min_port_date"] = data[
         data["PORT_usd_pos"] == data["PORT_usd_pos"].min()
     ].index.strftime("%B %d, %Y")[0]
@@ -256,9 +256,7 @@ def portstats():
         meta["return_1yr"] = "-"
 
     # create chart data for a small NAV chart
-
-    meta = json.dumps(meta)
-    return meta
+    return simplejson.dumps(meta, ignore_nan=True)
 
 
 @api.route("/navchartdatajson", methods=["GET", "POST"])

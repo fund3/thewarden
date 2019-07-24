@@ -1,8 +1,8 @@
 import os
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
 from flask_login import login_user, logout_user, current_user, login_required
-from cryptoalpha import db, Config
-from cryptoalpha.users.forms import (
+from thewarden import db, Config
+from thewarden.users.forms import (
     RegistrationForm,
     LoginForm,
     UpdateAccountForm,
@@ -10,8 +10,8 @@ from cryptoalpha.users.forms import (
     ResetPasswordForm,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
-from cryptoalpha.models import User, Trades, AccountInfo
-from cryptoalpha.users.utils import save_picture, send_reset_email
+from thewarden.models import User, Trades, AccountInfo
+from thewarden.users.utils import save_picture, send_reset_email
 
 users = Blueprint("users", __name__)
 

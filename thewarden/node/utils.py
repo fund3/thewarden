@@ -6,8 +6,8 @@ import logging
 import simplejson
 from time import time
 import pandas as pd
-from cryptoalpha.models import User
-from cryptoalpha import db
+from thewarden.models import User
+from thewarden import db
 from flask_login import current_user, login_required
 from flask import flash, Markup, current_app
 
@@ -17,7 +17,7 @@ def tor_request(url, tor_only=False, method="get"):
     # url:       url to get or post
     # tor_only:  request will only be executed if tor is available
     # method:    'get or' 'post'
-    from cryptoalpha import TOR
+    from thewarden import TOR
 
     logging.info(f"Starting request for url: {url}")
     tor_check = TOR
