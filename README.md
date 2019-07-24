@@ -18,6 +18,8 @@ The app monitors daily _Net Asset Value (NAV)_. Similar to how a fund calculates
 
 Furthermore, using my own node to verify and import transactions was a cumbersome process. By pairing with a __Samourai Dojo__, you can easily track addresses and import transactions from the blockchain while using your own full node. 
 
+Telegram group: [https://t.me/bitcoin_warden](https://t.me/bitcoin_warden)
+
 ### Sample Portfolio View:
 
 #### All trades, bitcoin addresses and other information below are hypothetical only
