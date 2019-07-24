@@ -84,7 +84,9 @@ Now you can review and modify the code freely. We recommend [Atom Editor](https:
 
 Make sure you have Python and that the expected version is available from your command line. You can check this by running:
 
-`$python --version`
+```console
+$python --version
+```
 
 You should get some output like  `Python 3.7.x`. If you do not have Python, please install the latest 3.x version from  [python.org](https://python.org/)  or refer to the  [Installing Python](http://docs.python-guide.org/en/latest/starting/installation/)  section of the Hitchhiker’s Guide to Python.
 
@@ -92,13 +94,17 @@ You should get some output like  `Python 3.7.x`. If you do not have Python, plea
 
 Pip manages Python's libraries. These are like add-ins.  You can check if it's installed by running:
 
-`$ pip --version`
+```console
+$pip --version
+```
 
 If you installed Python from source, with an installer from  [python.org](https://python.org/), or via  [Homebrew](https://brew.sh/)you should already have pip. If you’re on Linux and installed using your OS package manager, you may have to install pip separately, see  [Installing pip/setuptools/wheel with Linux Package Managers](https://packaging.python.org/guides/installing-using-linux-tools/).
 
 If  `pip`  isn’t already installed, then first try to bootstrap it from the standard library:
 
+```console
 python -m ensurepip --default-pip
+```
 
 If that still doesn’t allow you to run  `pip`:
 
