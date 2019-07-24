@@ -939,7 +939,10 @@ def transactionsandcost_json():
     # Filter only to requested ticker
     # if no ticker, use BTC as default, if not BTC then the 1st in list
     tickers = df.trade_asset_ticker.unique().tolist()
-    tickers.remove('USD')
+    try:
+        tickers.remove('USD')
+    except ValueError:
+        pass
 
     if not ticker:
         if 'BTC'in tickers:
@@ -1001,6 +1004,10 @@ def transactionsandcost_json():
     # Fill dailyNAV with prices for each ticker
     daily_df = pd.merge(daily_df, df, on="date", how="left")
     daily_df.fillna(0, inplace=True)
+
+    if type(daily_df) != type(data):
+            data = data.to_frame()
+            
     daily_df = pd.merge(daily_df, data, on="date", how="left")
     daily_df[ticker].fillna(method="ffill", inplace=True)
     message = "ok"
