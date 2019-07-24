@@ -78,6 +78,7 @@
 
     <div class="col-sm-12">
         {%for account in accounts%}
+        {%if account_info.filter_by(account_id = acc_dict[account]).first().account_blockchain_id != None%}
         <div class="content-section">
             <div class='row'>
                 <div style="width: 30%; padding-left: 1%">
@@ -266,6 +267,7 @@
             </div>
             {%endif%}
         </div>
+        {%endif%}
         {%endfor%}
     </div>
 </div>
