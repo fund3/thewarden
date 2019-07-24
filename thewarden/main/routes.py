@@ -33,6 +33,10 @@ def before_request():
         if user_info.aa_apikey is None:
             logging.error("NO AA API KEY FOUND!")
             return render_template("welcome.html", title="Welcome")
+        transactions = Trades.query.filter_by(user_id=current_user.username)
+        if transactions.count() == 0:
+            return render_template("empty.html")
+        
 
 @main.route("/get_started")
 def get_started():

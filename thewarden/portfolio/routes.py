@@ -2,11 +2,25 @@ import numpy as np
 from flask import render_template, Blueprint
 from flask_login import current_user, login_required
 from thewarden import mhp as mrh
-from thewarden.models import Trades
+from thewarden.models import Trades, User
 from datetime import datetime
 from thewarden.users.utils import generatenav, generate_pos_table, heatmap_generator
 
 portfolio = Blueprint("portfolio", __name__)
+
+
+@portfolio.before_request
+def before_request():
+    # Before any request at main, check if API Keys are set
+    # But only if user is logged in.
+    if current_user.is_authenticated:
+        user_info = User.query.filter_by(username=current_user.username).first()
+        if user_info.aa_apikey is None:
+            logging.error("NO AA API KEY FOUND!")
+            return render_template("welcome.html", title="Welcome")
+        transactions = Trades.query.filter_by(user_id=current_user.username)
+        if transactions.count() == 0:
+            return render_template("empty.html")
 
 
 @portfolio.route("/portfolio")
