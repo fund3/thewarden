@@ -2,9 +2,9 @@
 *Version 0.10 Alpha*
 ###### __Found this project useful?__ _Consider tipping the developer: [tippin.me](https://tippin.me/@alphaazeta)_.
 
-##### Open Source License: [LICENSE](https://github.com/pxsocs/cryptoblotter/blob/master/LICENSE)
-##### Contributing guidelines: [CONTRIBUTING.MD](https://github.com/pxsocs/cryptoblotter/blob/master/CONTRIBUTING.md)
-##### Installation instructions: [INSTALL.MD](https://github.com/pxsocs/cryptoblotter/blob/master/INSTALL.MD)
+##### Open Source License: [LICENSE](https://github.com/pxsocs/thewarden/blob/master/LICENSE)
+##### Contributing guidelines: [CONTRIBUTING.MD](https://github.com/pxsocs/thewarden/blob/master/CONTRIBUTING.md)
+##### Installation instructions: [INSTALL.MD](https://github.com/pxsocs/thewarden/blob/master/INSTALL.MD)
 
 ### Important Note for users upgrading from CryptoBlotter - do this before upgrading
 
@@ -24,7 +24,7 @@ Telegram group: [https://t.me/bitcoin_warden](https://t.me/bitcoin_warden)
 
 #### All trades, bitcoin addresses and other information below are hypothetical only
 
-![Front Page](https://github.com/pxsocs/cryptoblotter/blob/master/thewarden/static/images/github_images/portfolio.png)
+![Front Page](https://github.com/pxsocs/thewarden/blob/master/thewarden/static/images/github_images/portfolio.png)
 
 
 ### Why NAV is important?
@@ -53,11 +53,11 @@ All data is saved locally. __Consider a disk encryption__. Even though only publ
 Any issues, suggestions or comments should be done at Github [ISSUES page](https://github.com/issues).
 
 
-[Installation](https://github.com/pxsocs/cryptoblotter/blob/master/INSTALL.MD) instructions
+[Installation](https://github.com/pxsocs/thewarden/blob/master/INSTALL.MD) instructions
 ----------------------------
 Although Crypto Blotter can still be accessed at cryptoblotter.io, this will be discontinued soon. Users are expected to run this software locally. This option gives the user control over database (stored locally) and on whether or not to upgrade to new versions. 
 
-[Click here](https://github.com/pxsocs/cryptoblotter/blob/master/INSTALL.MD) for installation instructions.
+[Click here](https://github.com/pxsocs/thewarden/blob/master/INSTALL.MD) for installation instructions.
 
 
 Privacy
