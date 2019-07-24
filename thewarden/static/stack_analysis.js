@@ -25,11 +25,17 @@ function get_Tickers_Ajax() {
             $('#alerts').html("")
             console.log("ajax request [tickers]: OK")
             // remove USD
-            data.splice(data.indexOf('USD'), 1);
+
+            if (data.indexOf('USD') != -1) {
+                data.splice(data.indexOf('USD'), 1);
+            }
+
             btc_pos = data.indexOf('BTC')
+
             // fill data in dropdown
             var options = data;
             var select = document.getElementById('ticker');
+
             $("#ticker").empty()
             for (var i = 0; i < options.length; i++) {
                 select.options[i] = new Option(options[i], i);  //new Option("Text", "Value")
@@ -72,6 +78,7 @@ function run_ajax() {
             console.log("ajax request: OK")
             console.log(data)
             handle_ajax_data(data, ticker);
+
         },
         error: function (xhr, status, error) {
             $('#alerts').html("<div class='small alert alert-danger alert-dismissible fade show' role='alert'>An error occured while refreshing data." +
@@ -90,6 +97,7 @@ function handle_ajax_data(data, ticker) {
 
 //  CHART
 function createChart(data, ticker) {
+
 
     var myChart = Highcharts.stockChart('compchart', {
         credits: {
