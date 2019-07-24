@@ -2,8 +2,8 @@
 # __init__.py file`
 
 from flask_migrate import Migrate, upgrade
-from cryptoalpha import create_app, db
-from cryptoalpha.models import listofcrypto, User, Trades, AccountInfo, Contact
+from thewarden import create_app, db
+from thewarden.models import listofcrypto, User, Trades, AccountInfo, Contact
 
 # CLS + Welcome
 print("\033[1;32;40m")

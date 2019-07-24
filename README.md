@@ -22,7 +22,7 @@ Furthermore, using my own node to verify and import transactions was a cumbersom
 
 #### All trades, bitcoin addresses and other information below are hypothetical only
 
-![Front Page](https://github.com/pxsocs/cryptoblotter/blob/master/cryptoalpha/static/images/github_images/portfolio.png)
+![Front Page](https://github.com/pxsocs/cryptoblotter/blob/master/thewarden/static/images/github_images/portfolio.png)
 
 
 ### Why NAV is important?

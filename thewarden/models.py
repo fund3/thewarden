@@ -1,5 +1,5 @@
 from datetime import datetime
-from cryptoalpha import db, login_manager
+from thewarden import db, login_manager
 from flask import current_app
 from flask_login import UserMixin  # Manages session (anon, etc)
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer

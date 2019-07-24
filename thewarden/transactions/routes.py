@@ -6,11 +6,11 @@ import hashlib
 import pandas as pd
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
 from flask_login import current_user, login_required
-from cryptoalpha import db
-from cryptoalpha.transactions.forms import NewTrade, EditTransaction
-from cryptoalpha.models import Trades, AccountInfo
+from thewarden import db
+from thewarden.transactions.forms import NewTrade, EditTransaction
+from thewarden.models import Trades, AccountInfo
 from datetime import datetime
-from cryptoalpha.users.utils import cleancsv, generatenav
+from thewarden.users.utils import cleancsv, generatenav
 
 
 transactions = Blueprint("transactions", __name__)
@@ -155,7 +155,7 @@ def newtrade():
                     usernamehash = hashlib.sha256(
                         current_user.username.encode("utf-8")
                     ).hexdigest()
-                    filename = "cryptoalpha/nav_data/" + usernamehash + ".nav"
+                    filename = "thewarden/nav_data/" + usernamehash + ".nav"
                     logging.info(f"[newtrade] {filename} marked for deletion.")
                     # Since this function can be run as a thread,
                     # it's safer to delete the current NAV file if it exists.
@@ -290,7 +290,7 @@ def edittransaction():
                 usernamehash = hashlib.sha256(
                     current_user.username.encode("utf-8")
                 ).hexdigest()
-                filename = "cryptoalpha/nav_data/" + usernamehash + ".nav"
+                filename = "thewarden/nav_data/" + usernamehash + ".nav"
                 logging.info(f"[edittrade] {filename} marked for deletion.")
                 # Since this function can be run as a thread,
                 # it's safer to delete the current NAV file if it exists.
@@ -349,7 +349,7 @@ def edittransaction():
                 usernamehash = hashlib.sha256(
                     current_user.username.encode("utf-8")
                 ).hexdigest()
-                filename = "cryptoalpha/nav_data/" + usernamehash + ".nav"
+                filename = "thewarden/nav_data/" + usernamehash + ".nav"
                 logging.info(f"[edittrade] {filename} marked for deletion.")
                 # Since this function can be run as a thread,
                 # it's safer to delete the current NAV file if it exists.
@@ -420,7 +420,7 @@ def deltrade():
         # re-generates the NAV on the background - delete First
         # the local NAV file so it's not used.
         usernamehash = hashlib.sha256(current_user.username.encode("utf-8")).hexdigest()
-        filename = "cryptoalpha/nav_data/" + usernamehash + ".nav"
+        filename = "thewarden/nav_data/" + usernamehash + ".nav"
         logging.info(f"[deltrade] {filename} marked for deletion.")
         # Since this function can be run as a thread,
         # it's safer to delete the current NAV file if it exists.
@@ -465,7 +465,7 @@ def delalltrades():
         # re-generates the NAV on the background - delete First
         # the local NAV file so it's not used.
         usernamehash = hashlib.sha256(current_user.username.encode("utf-8")).hexdigest()
-        filename = "cryptoalpha/nav_data/" + usernamehash + ".nav"
+        filename = "thewarden/nav_data/" + usernamehash + ".nav"
         logging.info(f"[delalltrades] {filename} marked for deletion.")
         # Since this function can be run as a thread,
         # it's safer to delete the current NAV file if it exists.

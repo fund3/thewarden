@@ -14,12 +14,12 @@ from flask import (
     Blueprint,
 )
 from flask_login import current_user, login_required
-from cryptoalpha import db
-from cryptoalpha.main.forms import ImportCSV, ContactForm
-from cryptoalpha.models import Trades, listofcrypto, AccountInfo, Contact, User
+from thewarden import db
+from thewarden.main.forms import ImportCSV, ContactForm
+from thewarden.models import Trades, listofcrypto, AccountInfo, Contact, User
 from datetime import datetime
 import dateutil.parser as parser
-from cryptoalpha.users.utils import generatenav, cleancsv
+from thewarden.users.utils import generatenav, cleancsv
 
 main = Blueprint("main", __name__)
 
@@ -92,7 +92,7 @@ def exportcsv():
         return render_template("empty.html")
 
     filename = (
-        "./cryptoalpha/dailydata/"
+        "./thewarden/dailydata/"
         + current_user.username
         + "_"
         + datetime.now().strftime("%Y%m%d")
@@ -156,8 +156,8 @@ def importcsv():
         if form.validate_on_submit():
             if form.submit.data:
                 if form.csvfile.data:
-                    form.csvfile.data.save('./cryptoalpha/dailydata/' + form.csvfile.data.filename)
-                    csv_reader = open('./cryptoalpha/dailydata/'+form.csvfile.data.filename, "r", encoding="utf-8")
+                    form.csvfile.data.save('./thewarden/dailydata/' + form.csvfile.data.filename)
+                    csv_reader = open('./thewarden/dailydata/'+form.csvfile.data.filename, "r", encoding="utf-8")
                     csv_reader = csv.DictReader(csv_reader)
                     csvfile = form.csvfile.data
 
@@ -167,7 +167,7 @@ def importcsv():
                     form=form,
                     csv=csv_reader,
                     csvfile=csvfile,
-                    filename='./cryptoalpha/dailydata/' + form.csvfile.data.filename
+                    filename='./thewarden/dailydata/' + form.csvfile.data.filename
                 )
     if request.method == "GET":
         filename = request.args.get("f")
@@ -357,7 +357,7 @@ def importcsv():
             usernamehash = hashlib.sha256(
                 current_user.username.encode("utf-8")
             ).hexdigest()
-            filename = "cryptoalpha/nav_data/" + usernamehash + ".nav"
+            filename = "thewarden/nav_data/" + usernamehash + ".nav"
             logging.info(f"[newtrade] {filename} marked for deletion.")
             # Since this function can be run as a thread,
             # it's safer to delete the current NAV file if it exists.

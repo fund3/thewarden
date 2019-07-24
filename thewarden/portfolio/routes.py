@@ -1,10 +1,10 @@
 import numpy as np
 from flask import render_template, Blueprint
 from flask_login import current_user, login_required
-from cryptoalpha import mhp as mrh
-from cryptoalpha.models import Trades
+from thewarden import mhp as mrh
+from thewarden.models import Trades
 from datetime import datetime
-from cryptoalpha.users.utils import generatenav, generate_pos_table, heatmap_generator
+from thewarden.users.utils import generatenav, generate_pos_table, heatmap_generator
 
 portfolio = Blueprint("portfolio", __name__)
 

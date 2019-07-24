@@ -11,7 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, current_user
 from flask_mail import Mail
 from flask_migrate import Migrate
-from cryptoalpha.config import Config
+from thewarden.config import Config
 from sqlalchemy import MetaData
 
 
@@ -126,13 +126,13 @@ def create_app(config_class=Config):
     mail.init_app(app)
     login_manager.init_app(app)
 
-    from cryptoalpha.users.routes import users
-    from cryptoalpha.transactions.routes import transactions
-    from cryptoalpha.api.routes import api
-    from cryptoalpha.portfolio.routes import portfolio
-    from cryptoalpha.main.routes import main
-    from cryptoalpha.errors.handlers import errors
-    from cryptoalpha.node.routes import node
+    from thewarden.users.routes import users
+    from thewarden.transactions.routes import transactions
+    from thewarden.api.routes import api
+    from thewarden.portfolio.routes import portfolio
+    from thewarden.main.routes import main
+    from thewarden.errors.handlers import errors
+    from thewarden.node.routes import node
 
     app.register_blueprint(users)
     app.register_blueprint(transactions)

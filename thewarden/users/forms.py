@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from flask_login import current_user
 from flask_wtf.file import FileField, FileAllowed
-from cryptoalpha.models import User
+from thewarden.models import User
 from wtforms import (
     StringField,
     PasswordField,

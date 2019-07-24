@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from cryptoalpha.models import User
+from thewarden.models import User
 from wtforms import StringField, PasswordField, \
     SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Email, EqualTo,\

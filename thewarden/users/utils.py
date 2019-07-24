@@ -13,11 +13,11 @@ from PIL import Image
 from flask import url_for, current_app, flash
 from flask_mail import Message
 from flask_login import current_user
-from cryptoalpha import db, mail
-from cryptoalpha.config import Config
-from cryptoalpha.models import Trades, User
-from cryptoalpha.node.utils import tor_request
-from cryptoalpha import mhp as mrh
+from thewarden import db, mail
+from thewarden.config import Config
+from thewarden.models import Trades, User
+from thewarden.node.utils import tor_request
+from thewarden import mhp as mrh
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -479,7 +479,7 @@ def generatenav(user, force=False, filter=None):
         logging.info("[generatenav] FORCE update is on. Not using local file")
         usernamehash = hashlib.sha256(current_user.username.encode(
             'utf-8')).hexdigest()
-        filename = "cryptoalpha/nav_data/"+usernamehash + ".nav"
+        filename = "thewarden/nav_data/"+usernamehash + ".nav"
         logging.info(f"[generatenav] {filename} marked for deletion.")
         # Since this function can be run as a thread, it's safer to delete
         # the current NAV file if it exists. This avoids other tasks reading
@@ -494,7 +494,7 @@ def generatenav(user, force=False, filter=None):
     if not force:
         usernamehash = hashlib.sha256(current_user.username.encode(
             'utf-8')).hexdigest()
-        filename = "cryptoalpha/nav_data/"+usernamehash + ".nav"
+        filename = "thewarden/nav_data/"+usernamehash + ".nav"
         try:
             # Check if NAV saved file is recent enough to be used
             # Local file has to have a saved time less than RENEW_NAV min old
@@ -537,7 +537,7 @@ def generatenav(user, force=False, filter=None):
     dailynav = dailynav.set_index('date')
     dailynav['PORT_usd_pos'] = 0
     dailynav['PORT_cash_value'] = 0
-
+    
     # Create a dataframe for each position's prices:
     # prices = {}
     for id in tickers:
@@ -545,7 +545,7 @@ def generatenav(user, force=False, filter=None):
             continue
         local_json, _, _ = alphavantage_historical(id)
         try:
-            prices = pd.DataFrame(local_json)
+            prices = pd.DataFrame(local_json) 
             prices.reset_index(inplace=True)
             # Reassign index to the date column
             prices = prices.set_index(
@@ -553,11 +553,16 @@ def generatenav(user, force=False, filter=None):
             prices = prices['4a. close (USD)']
             # convert string date to datetime
             prices.index = pd.to_datetime(prices.index)
-            # rename index to date to match dailynav name
+            # Make sure this is a dataframe so it can be merged later
+            if type(prices) != type(dailynav):
+                prices = prices.to_frame()
+            # rename index to date to match dailynav name    
             prices.index.rename('date', inplace=True)
-            prices.rename(id+'_price', inplace=True)
+            prices.columns = [id+'_price']
+
             # Fill dailyNAV with prices for each ticker
             dailynav = pd.merge(dailynav, prices, on='date', how='left')
+            
             # Update today's price with realtime data
             try:
                 dailynav[id+"_price"][-1] = rt_price_grab(id)['USD']
@@ -603,8 +608,9 @@ def generatenav(user, force=False, filter=None):
             logging.info(
                 f"Success: imported prices from file:{filename}")
 
-        except (FileNotFoundError, KeyError, ValueError):
+        except (FileNotFoundError, KeyError, ValueError) as e:
             logging.error(f"File not Found Error: ID: {id}")
+            logging.error(f"{id}: Error: {e}")
 
     # Another loop to sum the portfolio values - maybe there is a way to
     # include this on the loop above. But this is not a huge time drag unless
@@ -675,7 +681,7 @@ def generatenav(user, force=False, filter=None):
     # Save NAV Locally as Pickle
     usernamehash = hashlib.sha256(current_user.username.encode(
         'utf-8')).hexdigest()
-    filename = "cryptoalpha/nav_data/"+usernamehash + ".nav"
+    filename = "thewarden/nav_data/"+usernamehash + ".nav"
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     dailynav.to_pickle(filename)
     logging.info(f"[generatenav] NAV saved to {filename}")
@@ -727,8 +733,8 @@ def alphavantage_historical(id):
         return("API Key is empty", "error", "empty")
     
     id = id.upper()
-    filename = "cryptoalpha/alphavantage_data/" + id + ".aap"
-    meta_filename = "cryptoalpha/alphavantage_data/" + id + "_meta.aap"
+    filename = "thewarden/alphavantage_data/" + id + ".aap"
+    meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
     try:
         # Check if saved file is recent enough to be used
         # Local file has to have a modified time in today
@@ -772,10 +778,10 @@ def alphavantage_historical(id):
             'Time Series (Digital Currency Daily)'],
             orient="index")
         # Save locally for reuse today
-        filename = "cryptoalpha/alphavantage_data/" + id + ".aap"
+        filename = "thewarden/alphavantage_data/" + id + ".aap"
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         df.to_pickle(filename)
-        meta_filename = "cryptoalpha/alphavantage_data/" + id + "_meta.aap"
+        meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
         with open(meta_filename, 'wb') as handle:
             pickle.dump(meta_data, handle,
                         protocol=pickle.HIGHEST_PROTOCOL)
@@ -804,10 +810,10 @@ def alphavantage_historical(id):
                 data['Time Series (Daily)'],
                 orient="index")
             # Save locally for reuse today
-            filename = "cryptoalpha/alphavantage_data/" + id + ".aap"
+            filename = "thewarden/alphavantage_data/" + id + ".aap"
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             df.to_pickle(filename)
-            meta_filename = "cryptoalpha/alphavantage_data/" + id + "_meta.aap"
+            meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
             with open(meta_filename, 'wb') as handle:
                 pickle.dump(meta_data, handle,
                             protocol=pickle.HIGHEST_PROTOCOL)
