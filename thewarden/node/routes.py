@@ -228,6 +228,7 @@ def bitcoin_monitor():
         acc_dict[ac_name] = ac_id
 
     addresses = BitcoinAddresses.query.filter_by(user_id=current_user.username)
+    accounts = AccountInfo.query.filter_by(user_id=current_user.username)
     # accounts_addresses = BitcoinAddresses.query().filter_by(user_id=current_user.username)
     total_accounts = AccountInfo.query.filter_by(user_id=current_user.username).count()
     accounts_none = ((AccountInfo.query
