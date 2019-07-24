@@ -229,10 +229,15 @@ def bitcoin_monitor():
 
     addresses = BitcoinAddresses.query.filter_by(user_id=current_user.username)
     # accounts_addresses = BitcoinAddresses.query().filter_by(user_id=current_user.username)
-    accounts = AccountInfo.query.filter_by(user_id=current_user.username).distinct()
+    total_accounts = AccountInfo.query.filter_by(user_id=current_user.username).count()
+    accounts_none = ((AccountInfo.query
+                    .filter_by(user_id=current_user.username)
+                    .filter_by(account_blockchain_id=None).count()) + 
+                    AccountInfo.query.filter_by(user_id=current_user.username)
+                    .filter_by(account_blockchain_id='').count())
 
     if addresses.count() == 0:
-        if accounts.count() > 0:
+        if (total_accounts - accounts_none) != 0:
             return render_template(
                 "bitcoin_monitor.html",
                 title="Bitcoin Warden",
