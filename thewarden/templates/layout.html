@@ -69,12 +69,15 @@
                     {% endif %}
 
                     <!-- Navbar Right Side -->
+                    {%if config.WARDEN_STATUS == "developer"%}
+                    <span class="text-white"><strong>WORKING IN DEVELOPMENT ENVIRONMENT</strong></span>
+                    {%endif%}
 
+                    <ul class=" navbar-nav ml-auto small">
 
-                    <ul class="navbar-nav ml-auto small">
                         <li class="nav-item">
                             {% if current_user.is_authenticated %}
-                            <span id="tor_span">
+                            <span id=" tor_span">
                                 <a style="text-decoration : none" href="{{ url_for('node.tor_setup') }}">
                                     <span class="text-white">&nbsp;&nbsp;Checking Tor
                                     </span>
