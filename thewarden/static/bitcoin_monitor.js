@@ -15,6 +15,14 @@ $(document).ready(function () {
         $('input[type="checkbox"]').prop('checked', true);
     });
 
+    // Listen for changes in any table to sum rows again
+    $(document).on('change', '.monitor_table', function () {
+        console.log("Detected change in table")
+        add_table(this)
+        console.log(this)
+    });
+
+
     $('#selectNoneButton').on('click', function () {
         $('input[type="checkbox"]').prop('checked', false);
     });
@@ -60,6 +68,18 @@ $(document).ready(function () {
     });
 
 });
+
+
+function add_table(id) {
+    var TotalValue = 0;
+    $(id).each(function () {
+        TotalValue += parseFloat($(this).find('.balance_sum').data("balance"));
+    });
+    console.log(id);
+    console.log(TotalValue / 100000);
+    $(this).find('th.sum_total').html("-")
+
+}
 
 function increment_progress(increment) {
     // Update the progress bar

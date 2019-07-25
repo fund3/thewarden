@@ -4,7 +4,23 @@ import os
 class Config:
     basedir = os.path.abspath(os.path.dirname(__file__))
 
-    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "alpha.db")
+    # WARDEN_STATUS = "developer" will use a local database
+    # To use this alternative DB, set the sql environment
+    # variable below to point to your local
+    #  sqlite:///:memory: (or, sqlite://)
+    #  sqlite:///relative/path/to/file.db
+    #  sqlite:////absolute/path/to/file.db
+    WARDEN_STATUS = os.environ.get("WARDEN_STATUS")
+    if WARDEN_STATUS == "developer":
+        print("Using alternative settings for SQL database location")
+        SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI")
+        print("SQL URI = " + SQLALCHEMY_DATABASE_URI)
+        if SQLALCHEMY_DATABASE_URI == None:
+            print("SQLALCHEMY_DATABASE_URI not found at environment - using default")
+            SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "alpha.db")
+
+    else:
+        SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "alpha.db")
 
     # You should change this secret key. But make sure it's done before any data
     # is included in the database
