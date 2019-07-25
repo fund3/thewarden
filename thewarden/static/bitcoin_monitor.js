@@ -4,10 +4,12 @@ $(document).ready(function () {
         $('[data-toggle="tooltip"]').tooltip()
     })
 
+    // Sum totals
+    refresh_tables();
+
     $(document).on('click', '.check_address', function () {
         var $linkID = $(this).attr('id');
         response = check_address($linkID, this);
-        console.log(this)
     });
 
     // Select All and Select None
@@ -17,9 +19,7 @@ $(document).ready(function () {
 
     // Listen for changes in any table to sum rows again
     $(document).on('change', '.monitor_table', function () {
-        console.log("Detected change in table")
-        add_table(this)
-        console.log(this)
+        refresh_tables();
     });
 
 
@@ -69,17 +69,19 @@ $(document).ready(function () {
 
 });
 
-
-function add_table(id) {
-    var TotalValue = 0;
-    $(id).each(function () {
-        TotalValue += parseFloat($(this).find('.balance_sum').data("balance"));
+// Sum all balances in table positions into a last row
+function refresh_tables() {
+    $('.monitor_table').each(function () {
+        var TotalValue = 0;
+        $(this).find('.balance_sum').each(function () {
+            TotalValue += parseFloat($(this).data("balance"));
+            console.log("This" + $(this).data("balance"))
+        });
+        console.log(this);
+        console.log(TotalValue);
+        $(this).find('.sum_total').html((TotalValue / 100000000).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
     });
-    console.log(id);
-    console.log(TotalValue / 100000);
-    $(this).find('th.sum_total').html("-")
-
-}
+};
 
 function increment_progress(increment) {
     // Update the progress bar

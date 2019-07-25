@@ -113,7 +113,7 @@
                     {% if acc_dict[account] != 0%}
                     <table id="transactionstable" class="table table-sm align-middle">
                         <thead class='thead-light'>
-                            <th class="align-middle text-left" scope="col" style="width: 20%">
+                            <th class="align-middle text-center" scope="col" style="width: 20%">
                                 Balance
                             </th>
                             <th class="align-middle text-left" class="" scope="col" style="width: 30%">
@@ -133,7 +133,7 @@
                         <tbody style="font-size: 16px; font-weight: bold; ">
 
                             <tr>
-                                <td class="align-middle text-left" scope="row" id="balance">
+                                <td class="align-middle text-center" scope="row" id="balance">
                                     {% if (account_info.filter_by(account_id = acc_dict[account]).first().last_balance == None)%}
                                     Never Checked
                                     {% else %}
