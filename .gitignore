@@ -5,8 +5,8 @@
 __pycache__/
 *.so
 ToDos.txt
+alpha.db
 *.db
-
 
 # Packages #
 ############

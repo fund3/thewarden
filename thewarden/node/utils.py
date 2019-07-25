@@ -132,7 +132,12 @@ def dojo_auth(force=False):
         user_info = User.query.filter_by(username=current_user.username).first()
     except AttributeError:
         logging.info("DOJO TEST: User not logged in")
-        current_app.config["DOJO_SETTINGS"]["token"] = 'error'
+        try:
+            current_app.config["DOJO_SETTINGS"]["token"] = 'error'
+        except TypeError:
+            # If new user, dojo_settings are still None
+            current_app.config["DOJO_SETTINGS"]={}
+            current_app.config["DOJO_SETTINGS"]["token"] = 'error'
         return {"status": "error", "error": "User not logged in"}
     
     # Check if variables are at database
