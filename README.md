@@ -3,12 +3,12 @@
 *Version 0.10 Alpha*
 
 __Found this project useful?__ \
-_Consider tipping the developer: [tippin.me](https://tippin.me/@alphaazeta)_.\
+_Consider tipping the developer: [tippin.me](https://tippin.me/@alphaazeta)_.
 
 __Open Source License: [LICENSE](https://github.com/pxsocs/thewarden/blob/master/LICENSE)__\
 __Contributing guidelines: [CONTRIBUTING.MD](https://github.com/pxsocs/thewarden/blob/master/CONTRIBUTING.md)__\
 __Installation instructions: [INSTALL.MD](https://github.com/pxsocs/thewarden/blob/master/INSTALL.MD)__\
-__Telegram group: [https://t.me/bitcoin_warden](https://t.me/bitcoin_warden)__\
+__Telegram group: [https://t.me/bitcoin_warden](https://t.me/bitcoin_warden)__
 
 ## Important Note for users upgrading from CryptoBlotter
 
