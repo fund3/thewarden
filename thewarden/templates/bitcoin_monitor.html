@@ -186,14 +186,14 @@
             {%if (addresses.filter_by(account_id=account).count() > 0)%}
             <h5 style="font-size: 20px">Public Addresses</h5>
             <div class="section">
-                <table id="transactionstable" class="table table-sm align-middle table-striped">
+                <table id="transactionstable" class="monitor_table table table-sm align-middle table-striped">
                     <thead class='thead-light'>
 
                         <th class="" scope="col" style="width: 30%">
                             Address
                         </th>
 
-                        <th class=" text-left" scope="col" style="width: 20%">
+                        <th class=" text-center" scope="col" style="width: 20%">
                             Balance
                         </th>
                         <th class=" text-left" class="" scope="col" style="width: 30%">
@@ -224,7 +224,8 @@
                                     title="Edit Address" data-placement="top">
                                     {{address.address_hash[0:4]}}...{{address.address_hash[-4:]}}</a>
                             </td>
-                            <td class="align-middle text-left" id="balance" data-balance="{{address.last_balance}}">
+                            <td class="align-middle text-center balance_sum" id="balance"
+                                data-balance="{{address.last_balance}}">
                                 {{address.last_balance | jformat(2, 100000000)}}
                             </td>
                             <td class=" text-left" id='check'>
@@ -261,6 +262,17 @@
                         </tr>
                         {% endif %}
                         {% endfor %}
+                        <tr>
+                            <th class="table-dark" scope="col" style="width: 30%">
+                                Total
+                            </th>
+
+                            <th class="sum_total text-center" scope="col" style="width: 20%" id="sum_total_id">
+                                <div class="spinner-grow text-secondary" role="status">
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </th>
+                        </tr>
                     </tbody>
                 </table>
                 <!-- END ADDRESS TABLE -->
