@@ -1,6 +1,7 @@
 # The WARden
 
 *Version 0.10 Alpha*
+
 __Found this project useful?__ _Consider tipping the developer: [tippin.me](https://tippin.me/@alphaazeta)_.
 
 __Open Source License: [LICENSE](https://github.com/pxsocs/thewarden/blob/master/LICENSE)__
@@ -8,7 +9,7 @@ __Contributing guidelines: [CONTRIBUTING.MD](https://github.com/pxsocs/thewarden
 __Installation instructions: [INSTALL.MD](https://github.com/pxsocs/thewarden/blob/master/INSTALL.MD)__
 __Telegram group: [https://t.me/bitcoin_warden](https://t.me/bitcoin_warden)__
 
-## Important Note for users upgrading from CryptoBlotter - do this before upgrading
+## Important Note for users upgrading from CryptoBlotter
 
 The new version does not offer backward compatibility with previous versions. If you are running an older version and have transactions, make sure to __export the transactions as CSV and save them somewhere safe__. You can later import these into the new version. This is experimental and errors may occur. 
 
