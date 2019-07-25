@@ -77,13 +77,12 @@
 
                         <li class="nav-item">
                             {% if current_user.is_authenticated %}
-                            <span id=" tor_span">
+                            <span id="tor_span">
                                 <a style="text-decoration : none" href="{{ url_for('node.tor_setup') }}">
                                     <span class="text-white">&nbsp;&nbsp;Checking Tor
                                     </span>
                                     <span class=" nav-item" style="color: rgb(179, 179, 179);">
                                         &nbsp;&nbsp;<i class="fas fa-2x fa-user-shield"></i></span>
-
                                 </a>
                             </span>
 

@@ -75,10 +75,7 @@ function refresh_tables() {
         var TotalValue = 0;
         $(this).find('.balance_sum').each(function () {
             TotalValue += parseFloat($(this).data("balance"));
-            console.log("This" + $(this).data("balance"))
         });
-        console.log(this);
-        console.log(TotalValue);
         $(this).find('.sum_total').html((TotalValue / 100000000).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
     });
 };

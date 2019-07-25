@@ -47,7 +47,7 @@ More info on how to import transactions can be found here: [CSV import details](
 
 Readme.1st
 
-----------------------------;
+----------------------------
 **Please note that this is ALPHA software. There is no guarantee that the
 information and analytics are correct. Also expect no customer support. Issues are encouraged to be raised through GitHub but they will be answered on a best efforts basis.**
 
@@ -58,22 +58,22 @@ Any issues, suggestions or comments should be done at Github [ISSUES page](https
 
 [Installation](https://github.com/pxsocs/thewarden/blob/master/INSTALL.MD) instructions
 
-----------------------------;
+----------------------------
 Although Crypto Blotter can still be accessed at cryptoblotter.io, this will be discontinued soon. Users are expected to run this software locally. This option gives the user control over database (stored locally) and on whether or not to upgrade to new versions. 
 
 [Click here](https://github.com/pxsocs/thewarden/blob/master/INSTALL.MD) for installation instructions.
 
 Privacy
-----------------------------;
+----------------------------
 Most portfolio tracking tools ask for personal information and may track your IP and other information. My experience is that even those who say they don't, may have log files at their systems that do track your IP and could be easily linked to your data.
 _By cloning CB and running locally you reduce the risk of linkage of your IP, portfolio info and other information._
 
 Asset and Liability tracking
-----------------------------;
+----------------------------
 Different than most portfolio tracking tools, CB tracks both sides of transactions: _the crypto asset side and the fiat side._ This helps in analyzing cost basis, historical cash flows and fiat to crypto conversions along time.
 
 NAV Tracking
-----------------------------;
+----------------------------
 Another major difference is the concept of tracking Net Asset Value (NAV).
 NAV tracks performance based on amount of capital allocated. For example, a portfolio starts at $100.00 on day 0. On day 1, there is a capital inflow of an additional $50.00. Now, if on day 2, the Portfolio value is $200, it's easy to conclude that there's a $50.00 profit. But in terms of % appreciation, there are different ways to calculate performance.
 CB Calculates a daily NAV (starting at 100 on day zero).
@@ -92,7 +92,7 @@ Day  | Portfolio Value*| Cash Flow  | NAV  | Performance |
 Tracking NAV is particularly helpful when #stackingsats. It calculates performance based on capital invested at any given time. A portfolio starting at $100 and ending at $200 at a given time frame, at first sight, may seem like is +100% but that depends entirely on amount of capital invested
 along that time frame.
 
-----------------------------;
+----------------------------
 
 ## FAQ
 

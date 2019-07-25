@@ -568,6 +568,10 @@ def generatenav(user, force=False, filter=None):
                 dailynav[id+"_price"][-1] = rt_price_grab(id)['USD']
             except IndexError:
                 pass
+            except TypeError: 
+                # If for some reason the last price is an error, 
+                # use the previous close
+                dailynav[id+"_price"][-1] = dailynav[id+"_price"][-2]
 
             # Replace NaN with prev value, if no prev value then zero
             dailynav[id+'_price'].fillna(method='ffill', inplace=True)
