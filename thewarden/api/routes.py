@@ -3,6 +3,7 @@ import logging
 import math
 import secrets
 import requests
+import csv
 from datetime import datetime, timedelta
 
 import simplejson
@@ -1786,3 +1787,27 @@ def dojo_autoconfig():
         return json.dumps("Success")
     else:
         return json.dumps("Failed. Empty field.")
+
+
+@api.route("/fx_lst", methods=["GET"])
+# Receiver argument ?term to return a list of fx (fiat and digital)
+# Searches the list both inside the key as well as value of dict
+def fx_list():
+    fx_dict = {}
+    with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        fiat_dict = {rows[0]:rows[1] for rows in reader}
+    with open('thewarden/static/csv_files/digital_currency_list.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        dig_dict = {rows[0]:rows[1] for rows in reader}
+    
+    fx_dict = {**fiat_dict, **dig_dict}
+    
+    q = request.args.get("term")
+    list_key = {key:value for key, value in fx_dict.items() if q.upper() in key.upper()}
+    list_value = {key:value for key, value in fx_dict.items() if q.upper() in value.upper()}
+    list = {**list_key, **list_value}
+
+    list = json.dumps(list)
+
+    return list

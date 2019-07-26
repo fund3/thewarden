@@ -7,6 +7,7 @@ import requests
 import configparser
 import hashlib
 import pickle
+import csv
 import pandas as pd
 import numpy as np
 from PIL import Image
@@ -933,3 +934,16 @@ def price_ondate(ticker, date_input):
 
 
     return (idx)
+
+
+
+def user_fx():
+    fx = current_user.image_file
+    fx_dict = {}
+    with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        fx_dict = {rows[0]:rows[1] for rows in reader}
+    with open('thewarden/static/csv_files/digital_currency_list.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        fx_dict = {rows[0]:rows[1] for rows in reader}
+    return ("USD")

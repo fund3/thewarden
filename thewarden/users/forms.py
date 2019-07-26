@@ -2,6 +2,7 @@ from flask_wtf import FlaskForm
 from flask_login import current_user
 from flask_wtf.file import FileField, FileAllowed
 from thewarden.models import User
+from wtforms.widgets import PasswordInput
 from wtforms import (
     StringField,
     PasswordField,
@@ -43,13 +44,11 @@ class LoginForm(FlaskForm):
 
 class UpdateAccountForm(FlaskForm):
     email = StringField("Email", [DataRequired(), Email()])
-    picture = FileField(
-        "Update Profile Picture", validators=[FileAllowed(["jpg", "png", "gif"])]
-    )
+    basefx = StringField("Your base currency", [DataRequired()])
     alphavantage_apikey = StringField("AlphaVantage API Key")
     sql_uri = StringField("SQL Database URI")
     dojo_onion = StringField("Dojo Onion Address")
-    dojo_apikey = StringField("Dojo API Key")
+    dojo_apikey = PasswordField("Dojo API Key", widget=PasswordInput(hide_value=False))
     submit = SubmitField("Update")
 
     def validate_alphavantage_apikey(self, alphavantage_apikey):

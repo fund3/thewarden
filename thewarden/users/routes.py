@@ -11,7 +11,7 @@ from thewarden.users.forms import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from thewarden.models import User, Trades, AccountInfo
-from thewarden.users.utils import save_picture, send_reset_email
+from thewarden.users.utils import save_picture, send_reset_email, user_fx
 
 users = Blueprint("users", __name__)
 
@@ -63,6 +63,7 @@ def logout():
 @login_required
 def account():
     form = UpdateAccountForm()
+    fx = user_fx()
     if form.validate_on_submit():
         current_user.email = form.email.data
         current_user.aa_apikey = form.alphavantage_apikey.data
