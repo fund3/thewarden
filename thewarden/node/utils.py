@@ -170,6 +170,7 @@ def dojo_auth(force=False):
         KeyError,
         requests.exceptions.ReadTimeout,
         UnicodeError,
+        requests.exceptions.InvalidSchema
     ) as e:
         logging.info(f"DOJO AUTH: Error: {e}")
         auth_response = {"status": "error", "error": f"Error: {e}"}
