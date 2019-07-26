@@ -169,6 +169,7 @@ def dojo_auth(force=False):
         requests.exceptions.InvalidURL,
         KeyError,
         requests.exceptions.ReadTimeout,
+        requests.exceptions.InvalidSchema,
         UnicodeError,
     ) as e:
         logging.info(f"DOJO AUTH: Error: {e}")
