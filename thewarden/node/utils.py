@@ -169,6 +169,7 @@ def dojo_auth(force=False):
         requests.exceptions.InvalidURL,
         KeyError,
         requests.exceptions.ReadTimeout,
+        requests.exceptions.InvalidSchema,
         UnicodeError,
         requests.exceptions.InvalidSchema
     ) as e:
