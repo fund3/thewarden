@@ -12,7 +12,7 @@ import numpy as np
 from PIL import Image
 from flask import url_for, current_app, flash
 from flask_mail import Message
-from flask_login import current_user
+from flask_login import current_user, login_required
 from thewarden import db, mail
 from thewarden.config import Config
 from thewarden.models import Trades, User
@@ -458,7 +458,7 @@ def generatepnltable(user, ticker, method, start_date=0, end_date=99999):
 
     return (realpnl, metadata)
 
-
+@login_required
 def generatenav(user, force=False, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
     # Variables

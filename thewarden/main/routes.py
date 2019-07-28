@@ -28,7 +28,7 @@ main = Blueprint("main", __name__)
 def before_request():
     # Before any request at main, check if API Keys are set
     # But only if user is logged in.
-    exclude_list = ["main.get_started", "main.importcsv"]
+    exclude_list = ["main.get_started", "main.importcsv", "main.csvtemplate"]
     if not request.endpoint in exclude_list:
         if current_user.is_authenticated:
             user_info = User.query.filter_by(username=current_user.username).first()
@@ -223,19 +223,25 @@ def importcsv():
                         errorlist.append(f"missing date on line: {a}")
 
                     # Check the Operation Type
-                    if "B" in items[2]:
-                        qop = 1
-                        operation = "B"
-                    elif "S" in items[2]:
-                        qop = -1
-                        operation = "S"
-                    elif "D" in items[2]:
-                        qop = 1
-                        operation = "D"
-                    elif "W" in items[2]:
-                        qop = -1
-                        operation = "W"
-                    else:
+                    try:
+                        if "B" in items[2]:
+                            qop = 1
+                            operation = "B"
+                        elif "S" in items[2]:
+                            qop = -1
+                            operation = "S"
+                        elif "D" in items[2]:
+                            qop = 1
+                            operation = "D"
+                        elif "W" in items[2]:
+                            qop = -1
+                            operation = "W"
+                        else:
+                            qop = 0
+                            operation = "X"
+                            errors = errors + 1
+                            errorlist.append(f"missing operation on line {a}")
+                    except IndexError:
                         qop = 0
                         operation = "X"
                         errors = errors + 1

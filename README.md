@@ -58,10 +58,6 @@ Any issues, suggestions or comments should be done at Github [ISSUES page](https
 
 [Installation](https://github.com/pxsocs/thewarden/blob/master/INSTALL.MD) instructions
 
---------------------------
-Although Crypto Blotter can still be accessed at cryptoblotter.io, this will be discontinued soon. Users are expected to run this software locally. This option gives the user control over database (stored locally) and on whether or not to upgrade to new versions. 
-
-[Click here](https://github.com/pxsocs/thewarden/blob/master/INSTALL.MD) for installation instructions.
 
 Privacy
 --------------------------

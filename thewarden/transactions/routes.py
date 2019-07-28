@@ -495,6 +495,9 @@ def delalltrades():
 # Creates a table with current custody of positions
 # Also enables user to re-allocate to different accounts
 def account_positions():
+    transactions = Trades.query.filter_by(user_id=current_user.username)
+    if transactions.count() == 0:
+        return render_template("empty.html")
     df = pd.read_sql_table("trades", db.engine)
     df = df[(df.user_id == current_user.username)]
     df["trade_date"] = pd.to_datetime(df["trade_date"])
