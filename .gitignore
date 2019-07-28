@@ -51,6 +51,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+.vscode/
 debug_archive/
 cb_env/
 .Python
