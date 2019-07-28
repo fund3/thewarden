@@ -9,6 +9,7 @@ ToDos.txt
 alpha.db
 *.db
 
+
 # Packages #
 ############
 # it's better to unpack these files and commit the raw source
@@ -51,6 +52,7 @@ __pycache__/
 
 # Distribution / packaging
 debug_archive/
+cb_env/
 .Python
 .env*.*
 venv/
