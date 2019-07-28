@@ -70,7 +70,7 @@
 
                     <!-- Navbar Right Side -->
                     {%if config.WARDEN_STATUS == "developer"%}
-                    <span class="text-white"><strong>WORKING IN DEVELOPMENT ENVIRONMENT</strong></span>
+                    <span class="text-white"><strong>DEVELOPMENT ENVIRONMENT: {{config.SQLALCHEMY_DATABASE_URI}}<br>USER: {{current_user.username}}</strong></span>
                     {%endif%}
 
                     <ul class=" navbar-nav ml-auto small">
