@@ -1,0 +1,11 @@
+TimeStamp,Account,Operator,Asset,Quantity,Price,Fee,Cash_Value,Notes,trade_reference_id
+2018-06-01 00:00:00,Test Xchange,B,BTC,0.1,7100.0,0.0,710.0,,def51cae4e32efed22c144c889f5b00f90acbf1d97
+2018-06-01 00:00:00,Test Bank,W,USD,710.0,1.0,0.0,-710.0,Matching Trade for trade id:                                <def51cae4e32efed22c144c889f5b00f90acbf1d97 > - included as a pair,def51cae4e32efed22c144c889f5b00f90acbf1d97
+2018-06-01 00:00:00,Xchange,B,LTC,3.0,112.0,0.0,336.0,,615e8038080fd20b43db70dc6ba528f755dfefdf66
+2018-06-01 00:00:00,Test Bank,W,USD,336.0,1.0,0.0,-336.0,Matching Trade for trade id:                                <615e8038080fd20b43db70dc6ba528f755dfefdf66 > - included as a pair,615e8038080fd20b43db70dc6ba528f755dfefdf66
+2018-06-19 00:00:00,Trade Xchange,B,ETH,5.0,488.0,0.0,2440.0,,b3924474f879e63b0f685745bbe71dd616e69629df
+2018-06-19 00:00:00,Trade Bank,W,USD,2440.0,1.0,0.0,-2440.0,Matching Trade for trade id:                                <b3924474f879e63b0f685745bbe71dd616e69629df > - included as a pair,b3924474f879e63b0f685745bbe71dd616e69629df
+2018-06-19 00:00:00,exchange,B,BTC,1.0,7100.0,0.0,7100.0,,162ce9f7b67218685532e1ad5df873ce13afa8af6d
+2018-06-19 00:00:00,Test Bank,W,USD,7100.0,1.0,0.0,-7100.0,Matching Trade for trade id:                                <162ce9f7b67218685532e1ad5df873ce13afa8af6d > - included as a pair,162ce9f7b67218685532e1ad5df873ce13afa8af6d
+2019-05-01 00:00:00,Crypto X,B,BTC,0.25,5770.0,10.0,1452.5,,da817aced45cdee1cf8a9087759934b0235bdb53b6
+2019-05-01 00:00:00,Bank Y,W,USD,1452.5,1.0,0.0,-1452.5,Matching Trade for trade id:                                <da817aced45cdee1cf8a9087759934b0235bdb53b6 > - included as a pair,da817aced45cdee1cf8a9087759934b0235bdb53b6
