@@ -223,19 +223,25 @@ def importcsv():
                         errorlist.append(f"missing date on line: {a}")
 
                     # Check the Operation Type
-                    if "B" in items[2]:
-                        qop = 1
-                        operation = "B"
-                    elif "S" in items[2]:
-                        qop = -1
-                        operation = "S"
-                    elif "D" in items[2]:
-                        qop = 1
-                        operation = "D"
-                    elif "W" in items[2]:
-                        qop = -1
-                        operation = "W"
-                    else:
+                    try:
+                        if "B" in items[2]:
+                            qop = 1
+                            operation = "B"
+                        elif "S" in items[2]:
+                            qop = -1
+                            operation = "S"
+                        elif "D" in items[2]:
+                            qop = 1
+                            operation = "D"
+                        elif "W" in items[2]:
+                            qop = -1
+                            operation = "W"
+                        else:
+                            qop = 0
+                            operation = "X"
+                            errors = errors + 1
+                            errorlist.append(f"missing operation on line {a}")
+                    except IndexError:
                         qop = 0
                         operation = "X"
                         errors = errors + 1
