@@ -28,7 +28,7 @@ main = Blueprint("main", __name__)
 def before_request():
     # Before any request at main, check if API Keys are set
     # But only if user is logged in.
-    exclude_list = ["main.get_started", "main.importcsv"]
+    exclude_list = ["main.get_started", "main.importcsv", "main.csvtemplate"]
     if not request.endpoint in exclude_list:
         if current_user.is_authenticated:
             user_info = User.query.filter_by(username=current_user.username).first()
