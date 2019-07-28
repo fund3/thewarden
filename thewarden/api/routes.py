@@ -10,19 +10,20 @@ import numpy as np
 import pandas as pd
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
-from flask import (Blueprint, jsonify, render_template, request, abort, flash, redirect, url_for, get_flashed_messages)
+from flask import (Blueprint, jsonify, render_template, request, flash)
 from flask_login import current_user, login_required
 
 from thewarden import db, test_tor
 from thewarden import mhp as mrh
-from thewarden.config import Config
-from thewarden.models import Trades, listofcrypto, User, BitcoinAddresses, AccountInfo
+from thewarden.models import (Trades, listofcrypto, User,
+                        BitcoinAddresses, AccountInfo)
 from thewarden.users.utils import (alphavantage_historical,
-                                     generate_pos_table, generatenav,
-                                     heatmap_generator, rt_price_grab, price_ondate)
-from thewarden.node.utils import  (dojo_auth, oxt_get_address, 
-                                    dojo_status, dojo_multiaddr, 
-                                    dojo_get_settings, dojo_get_txs, dojo_get_hd, tor_request)
+                        generate_pos_table, generatenav,
+                        heatmap_generator, rt_price_grab, price_ondate)
+from thewarden.node.utils import (dojo_auth, oxt_get_address, 
+                                    dojo_multiaddr, 
+                                    dojo_get_settings, dojo_get_txs, 
+                                    dojo_get_hd, tor_request)
 
 api = Blueprint("api", __name__)
 
@@ -1182,7 +1183,7 @@ def heatmapbenchmark_json():
                 "cols": cols,
                 "years": years,
                 "ticker": ticker,
-                "heatmap_diff" : heatmap_difference.to_dict()
+                "heatmap_diff": heatmap_difference.to_dict()
             }, ignore_nan=True, default=datetime.isoformat)
     
 
@@ -1327,7 +1328,7 @@ def drawdown_json():
             start_date = ((start_date - datetime(1970, 1, 1)).total_seconds() * 1000)
             tmp_dict['x'] = start_date
             tmp_dict['title'] = 'TOP'
-            tmp_dict['text'] = 'Start of drawdown'         
+            tmp_dict['text'] = 'Start of drawdown'
             flags.append(tmp_dict)
         # Now the bottom for all dd
             tmp_dict = {}

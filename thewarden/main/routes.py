@@ -29,13 +29,15 @@ def before_request():
     # Before any request at main, check if API Keys are set
     # But only if user is logged in.
     exclude_list = ["main.get_started", "main.importcsv", "main.csvtemplate"]
-    if not request.endpoint in exclude_list:
+    if request.endpoint not in exclude_list:
         if current_user.is_authenticated:
-            user_info = User.query.filter_by(username=current_user.username).first()
+            user_info = User.query.filter_by(
+                        username=current_user.username).first()
             if user_info.aa_apikey is None:
                 logging.error("NO AA API KEY FOUND!")
                 return render_template("welcome.html", title="Welcome")
-            transactions = Trades.query.filter_by(user_id=current_user.username)
+            transactions = Trades.query.filter_by(
+                user_id=current_user.username)
             if transactions.count() == 0:
                 return render_template("empty.html")
 

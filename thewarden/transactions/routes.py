@@ -4,7 +4,10 @@ import logging
 import threading
 import hashlib
 import pandas as pd
-from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
+from flask import (render_template, 
+                    url_for, flash, 
+                    redirect, request, 
+                    abort, Blueprint)
 from flask_login import current_user, login_required
 from thewarden import db
 from thewarden.transactions.forms import NewTrade, EditTransaction

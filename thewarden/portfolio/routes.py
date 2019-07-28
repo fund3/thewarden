@@ -2,7 +2,6 @@ import numpy as np
 import logging
 from flask import render_template, Blueprint
 from flask_login import current_user, login_required
-from thewarden import mhp as mrh
 from thewarden.models import Trades, User
 from datetime import datetime
 from thewarden.users.utils import generatenav, generate_pos_table, heatmap_generator
