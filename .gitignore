@@ -3,6 +3,7 @@
 *.nav
 *.log
 __pycache__/
+.vscode/
 *.so
 ToDos.txt
 alpha.db
