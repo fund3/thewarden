@@ -12,7 +12,7 @@ from wtforms import (
     ValidationError,
 )
 from wtforms.widgets import PasswordInput
-from wtforms.validators import DataRequired, ValidationError, Optional
+from wtforms.validators import DataRequired
 
 
 class DojoForm(FlaskForm):

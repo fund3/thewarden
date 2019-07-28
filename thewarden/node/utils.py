@@ -1,14 +1,8 @@
 import requests
 import logging
-import urllib
-import os
-import logging
-import simplejson
-from time import time
 import pandas as pd
 from thewarden.models import User
-from thewarden import db
-from flask_login import current_user, login_required
+from flask_login import current_user
 from flask import flash, Markup, current_app
 
 
@@ -61,7 +55,7 @@ def dojo_get_settings(force=False):
     # Get and test settings. If not working get a new at
     logging.info("Getting Dojo settings")
     # check if dojo_settings are already stored
-    
+
     if current_app.config["DOJO_SETTINGS"]:
         if (not force) and (current_app.config["DOJO_SETTINGS"]["token"] != 'error'):
             logging.info(
@@ -69,9 +63,9 @@ def dojo_get_settings(force=False):
             )
             return current_app.config["DOJO_SETTINGS"]
     logging.info(
-                f"Local stored settings have an error or are empty. Requesting new token and settings."
-            )
-    
+        f"Local stored settings have an error or are empty. Requesting new token and settings."
+    )
+
     user_info = User.query.filter_by(username=current_user.username).first()
     onion_address = user_info.dojo_onion
     api_key = user_info.dojo_apikey
@@ -89,9 +83,9 @@ def dojo_get_settings(force=False):
 
     logging.info(f"Current token: {token}")
     current_app.config["DOJO_SETTINGS"] = dict(
-        {"onion": onion_address, 
-        "api": api_key, 
-        "token": token}
+        {"onion": onion_address,
+         "api": api_key,
+         "token": token}
     )
     logging.info(f"Current app settings: {current_app.config['DOJO_SETTINGS']}")
     return current_app.config["DOJO_SETTINGS"]
@@ -103,7 +97,7 @@ def dojo_auth(force=False):
     # POST /v2/auth/login
 
     # On Success, returns:                  On Invalid token:
-    # {                                     {'status': 'error', 
+    # {                                     {'status': 'error',
     #   "authorizations": {                 'error': 'Invalid JSON Web Token'}
     #     "access_token": <token>,
     #     "refresh_token": <token>
@@ -116,7 +110,7 @@ def dojo_auth(force=False):
     #   "error": "Invalid API key"              "error": "Connection Error"
     # }                                     }
     # SET Default timeout to get a token. Too low timeouts could be a problem
-    
+
     TIME_OUT = 20
     logging.info("Starting DOJO Auth")
 
@@ -136,10 +130,10 @@ def dojo_auth(force=False):
             current_app.config["DOJO_SETTINGS"]["token"] = 'error'
         except TypeError:
             # If new user, dojo_settings are still None
-            current_app.config["DOJO_SETTINGS"]={}
+            current_app.config["DOJO_SETTINGS"] = {}
             current_app.config["DOJO_SETTINGS"]["token"] = 'error'
         return {"status": "error", "error": "User not logged in"}
-    
+
     # Check if variables are at database
     onion_address = user_info.dojo_onion
     APIKey = user_info.dojo_apikey
@@ -176,12 +170,12 @@ def dojo_auth(force=False):
         auth_response = {"status": "error", "error": f"Error: {e}"}
         token = 'error'
     # Store for this session in Global Variable
-    
+
     current_app.config["DOJO_SETTINGS"] = dict(
-        {"onion": onion_address, 
-        "api": APIKey, 
-        "token": token,
-        "auth_response": auth_response}
+        {"onion": onion_address,
+         "api": APIKey,
+         "token": token,
+         "auth_response": auth_response}
     )
     logging.info(f"DOJO Settings updated")
     logging.info(
@@ -215,12 +209,12 @@ def dojo_get_address(addr, at):
 def dojo_multiaddr(addr, type, at):
     # Request details about a collection of HD accounts and/or loose addresses and/or public keys.
     # Takes arguments:
-    #   addr:   address or list of addresses
-    #   type:   [active, new, bip49, bip84, pubkey] - more details below
+    #   addr    address or list of addresses
+    #   type    [active, new, bip49, bip84, pubkey] - more details below
     #           https://github.com/Samourai-Wallet/samourai-dojo/blob/develop/doc/GET_multiaddr.md
     #           IMPORTANT: to include new addresses for tracking, the type ACTIVE needs to be passed
     #           This will force a rescan of that address.
-    #   at:     authentication token
+    #   at      authentication token
     logging.info("Starting MultiAddr")
     onion_address = dojo_get_settings()["onion"]
     if type.lower() == "bip44":
@@ -382,4 +376,3 @@ def dojo_status(token_test=None):
         auth_response = {"status": "error", "error": e}
     logging.info(f"Dojo Status responded: {auth_response}")
     return auth_response
-

@@ -1,6 +1,4 @@
 import os
-import json
-import re
 import secrets
 import logging
 import requests
@@ -10,16 +8,14 @@ import pickle
 import pandas as pd
 import numpy as np
 from PIL import Image
-from flask import url_for, current_app, flash
+from flask import url_for, current_app
 from flask_mail import Message
 from flask_login import current_user, login_required
 from thewarden import db, mail
-from thewarden.config import Config
 from thewarden.models import Trades, User
 from thewarden.node.utils import tor_request
 from thewarden import mhp as mrh
 from datetime import datetime, timedelta
-from apscheduler.schedulers.background import BackgroundScheduler
 
 # ---------------------------------------------------------
 # Helper Functions start here
@@ -329,7 +325,7 @@ def generate_pos_table(user, fx, hidesmall):
             summary_table['trade_quantity'][ticker].to_dict()
         table[ticker]['count'] = summary_table['count'][ticker].to_dict()
         table[ticker]['average_price'] = \
-            summary_table['average_price'][ticker].to_dict()        
+            summary_table['average_price'][ticker].to_dict()
 
     return(table, pie_data)
 
@@ -458,6 +454,7 @@ def generatepnltable(user, ticker, method, start_date=0, end_date=99999):
 
     return (realpnl, metadata)
 
+
 @login_required
 def generatenav(user, force=False, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
@@ -537,7 +534,7 @@ def generatenav(user, force=False, filter=None):
     dailynav = dailynav.set_index('date')
     dailynav['PORT_usd_pos'] = 0
     dailynav['PORT_cash_value'] = 0
-    
+
     # Create a dataframe for each position's prices:
     # prices = {}
     for id in tickers:
@@ -545,7 +542,7 @@ def generatenav(user, force=False, filter=None):
             continue
         local_json, _, _ = alphavantage_historical(id)
         try:
-            prices = pd.DataFrame(local_json) 
+            prices = pd.DataFrame(local_json)
             prices.reset_index(inplace=True)
             # Reassign index to the date column
             prices = prices.set_index(
@@ -556,20 +553,20 @@ def generatenav(user, force=False, filter=None):
             # Make sure this is a dataframe so it can be merged later
             if type(prices) != type(dailynav):
                 prices = prices.to_frame()
-            # rename index to date to match dailynav name    
+            # rename index to date to match dailynav name
             prices.index.rename('date', inplace=True)
             prices.columns = [id+'_price']
 
             # Fill dailyNAV with prices for each ticker
             dailynav = pd.merge(dailynav, prices, on='date', how='left')
-            
+
             # Update today's price with realtime data
             try:
                 dailynav[id+"_price"][-1] = rt_price_grab(id)['USD']
             except IndexError:
                 pass
-            except TypeError: 
-                # If for some reason the last price is an error, 
+            except TypeError:
+                # If for some reason the last price is an error,
                 # use the previous close
                 dailynav[id+"_price"][-1] = dailynav[id+"_price"][-2]
 
@@ -735,7 +732,7 @@ def alphavantage_historical(id):
     api_key = user_info.aa_apikey
     if api_key is None:
         return("API Key is empty", "error", "empty")
-    
+
     id = id.upper()
     filename = "thewarden/alphavantage_data/" + id + ".aap"
     meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
@@ -847,7 +844,7 @@ def send_reset_email(user):
 
 
 def heatmap_generator():
-     # If no Transactions for this user, return empty.html
+    # If no Transactions for this user, return empty.html
     transactions = Trades.query.filter_by(user_id=current_user.username).order_by(
         Trades.trade_date
     )
@@ -930,6 +927,5 @@ def price_ondate(ticker, date_input):
         idx = prices[prices.index.get_loc(date_input, method='nearest')]
     except KeyError:
         return ("0")
-
-
     return (idx)
+    

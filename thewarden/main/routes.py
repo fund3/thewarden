@@ -32,7 +32,7 @@ def before_request():
     if request.endpoint not in exclude_list:
         if current_user.is_authenticated:
             user_info = User.query.filter_by(
-                        username=current_user.username).first()
+                username=current_user.username).first()
             if user_info.aa_apikey is None:
                 logging.error("NO AA API KEY FOUND!")
                 return render_template("welcome.html", title="Welcome")
@@ -101,11 +101,11 @@ def exportcsv():
         return render_template("empty.html")
 
     filename = (
-        "./thewarden/dailydata/"
-        + current_user.username
-        + "_"
-        + datetime.now().strftime("%Y%m%d")
-        + ".csv"
+        "./thewarden/dailydata/" +
+        current_user.username +
+        "_" +
+        datetime.now().strftime("%Y%m%d") +
+        ".csv"
     )
     os.makedirs(os.path.dirname(filename), exist_ok=True)
 
@@ -143,11 +143,11 @@ def exportcsv():
             )
 
     filename = (
-        "./dailydata/"
-        + current_user.username
-        + "_"
-        + datetime.now().strftime("%Y%m%d")
-        + ".csv"
+        "./dailydata/" +
+        current_user.username +
+        "_" +
+        datetime.now().strftime("%Y%m%d") +
+        ".csv"
     )
 
     return send_file(filename, as_attachment=True)
@@ -421,4 +421,3 @@ def importcsv():
 # template details for CSV import
 def csvtemplate():
     return render_template("csvtemplate.html", title="CSV Template")
-

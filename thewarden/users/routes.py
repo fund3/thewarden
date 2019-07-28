@@ -1,4 +1,3 @@
-import os
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
 from flask_login import login_user, logout_user, current_user, login_required
 from thewarden import db, Config
@@ -11,7 +10,7 @@ from thewarden.users.forms import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from thewarden.models import User, Trades, AccountInfo
-from thewarden.users.utils import save_picture, send_reset_email
+from thewarden.users.utils import send_reset_email
 
 users = Blueprint("users", __name__)
 
@@ -141,4 +140,3 @@ def reset_token(token):
 @users.route("/services", methods=["GET"])
 def services():
     return render_template("services.html", title="Services Available")
-

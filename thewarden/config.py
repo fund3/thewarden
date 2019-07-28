@@ -1,5 +1,6 @@
 import os
 
+
 # Config class for Application Factory
 class Config:
     basedir = os.path.abspath(os.path.dirname(__file__))
@@ -15,7 +16,7 @@ class Config:
         print("Using alternative settings for SQL database location")
         SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI")
         print("SQL URI = " + SQLALCHEMY_DATABASE_URI)
-        if SQLALCHEMY_DATABASE_URI == None:
+        if SQLALCHEMY_DATABASE_URI is None:
             print("SQLALCHEMY_DATABASE_URI not found at environment - using default")
             SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "alpha.db")
 
@@ -34,4 +35,3 @@ class Config:
     MAIL_USERNAME = os.environ.get("EMAIL_USER")
     MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
     DOJO_SETTINGS = None
-

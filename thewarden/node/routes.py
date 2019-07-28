@@ -2,21 +2,17 @@ import json
 import logging
 from flask import Blueprint, render_template, request, flash, redirect, url_for, abort
 from flask_login import current_user, login_required
-from flask_sqlalchemy import SQLAlchemy
 from thewarden.node.utils import (
     dojo_add_hd,
-    dojo_get_hd,
     dojo_auth,
     dojo_status,
     tor_request,
     dojo_get_settings,
     dojo_multiaddr,
     dojo_get_txs,
-    oxt_get_address,
 )
 from thewarden import db, test_tor
-from thewarden.config import Config
-from thewarden.node.forms import DojoForm, AddressForm, AddressForm, Custody_Account
+from thewarden.node.forms import DojoForm, AddressForm, Custody_Account
 from thewarden.models import User, BitcoinAddresses, AccountInfo
 
 node = Blueprint("node", __name__)
@@ -105,7 +101,7 @@ def bitcoin_address():
             if bitcoin_address is None:
                 flash("Address id not found", "danger")
                 return redirect(url_for("node.bitcoin_monitor"))
-                
+
             bitcoin_address.user_id = current_user.username
             bitcoin_address.address_hash = form.address.data
             bitcoin_address.check_method = form.check_method.data
@@ -153,9 +149,10 @@ def bitcoin_address():
             # dojo_multiaddr(bitcoin_address.address_hash, "new", at)
             dojo_multiaddr(bitcoin_address.address_hash, "active", at)
             flash(f"Address included.", "success")
-        except Exception as e:
+        except Exception as err:
             flash(
-                f"Address included in database but something went wrong while trying to register this address at the Dojo. Check if your Dojo is connected.",
+                "Address included in database but something went wrong while trying " +
+                f"to register this address at the Dojo. Check if your Dojo is connected | Error {err}",
                 "warning",
             )
 
@@ -232,10 +229,10 @@ def bitcoin_monitor():
     # accounts_addresses = BitcoinAddresses.query().filter_by(user_id=current_user.username)
     total_accounts = AccountInfo.query.filter_by(user_id=current_user.username).count()
     accounts_none = ((AccountInfo.query
-                    .filter_by(user_id=current_user.username)
-                    .filter_by(account_blockchain_id=None).count()) + 
-                    AccountInfo.query.filter_by(user_id=current_user.username)
-                    .filter_by(account_blockchain_id='').count())
+                      .filter_by(user_id=current_user.username)
+                      .filter_by(account_blockchain_id=None).count()) +
+                     AccountInfo.query.filter_by(user_id=current_user.username)
+                     .filter_by(account_blockchain_id='').count())
 
     if addresses.count() == 0:
         if (total_accounts - accounts_none) != 0:
@@ -384,7 +381,7 @@ def custody_account():
             )
 
         if id or account_name:
-            if account == None:
+            if account is None:
                 account = AccountInfo()
             account.user_id = current_user.username
             account.account_blockchain_id = form.account_blockchain_id.data
@@ -460,7 +457,7 @@ def custody_account():
         if not account:
             title = form_title = "Include Custody Account Info"
             form.account_longname.data = account_name
-        if account != None:
+        if account is not None:
             title = form_title = "Edit Custody Account Info"
             form.account_longname.data = account.account_longname
             form.check_method.data = account.check_method
