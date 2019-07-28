@@ -163,6 +163,8 @@ def importcsv():
         if form.validate_on_submit():
             if form.submit.data:
                 if form.csvfile.data:
+                    test_file = "./thewarden/dailydata/test.csv"
+                    os.makedirs(os.path.dirname(test_file), exist_ok=True)
                     form.csvfile.data.save(
                         "./thewarden/dailydata/" + form.csvfile.data.filename
                     )
