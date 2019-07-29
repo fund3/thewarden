@@ -1556,12 +1556,15 @@ def get_address():
 
         try:
             if hd_address:
-                dojo = dojo.json()
-                dojo_balance = s_to_f(dojo["data"]["balance"])
-                meta["xpub_data"] = dojo["data"]
-                meta["xpub_status"] = dojo["status"]
-                address_data.xpub_derivation = dojo["data"]["derivation"]
-                address_data.xpub_created = dojo["data"]["created"]
+                try:
+                    dojo = dojo.json()
+                    dojo_balance = s_to_f(dojo["data"]["balance"])
+                    meta["xpub_data"] = dojo["data"]
+                    meta["xpub_status"] = dojo["status"]
+                    address_data.xpub_derivation = dojo["data"]["derivation"]
+                    address_data.xpub_created = dojo["data"]["created"]
+                except (AttributeError, KeyError):
+                    logging.error("Error when passing Dojo data as json")
 
             else:
                 dojo_balance = s_to_f(dojo["balance"])
