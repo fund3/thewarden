@@ -49,16 +49,18 @@
 
 
         <header class="site-header">
-            <nav class="navbar navbar-expand-sm navbar-dark bg-steel fixed-top justify-content-end">
-                {% if current_user.is_authenticated %}
-                <a href="#menu-toggle" id="menu-toggle">
-                    <div id="btn_tgl" class="fa fa-bars rotate text-white"></div>
-                </a>
-                {%endif%}
-                <!-- <a href="#menu-toggle" class="btn btn-light" id="menu-toggle">
+
+            <div class="row navbar navbar-expand-sm navbar-dark bg-steel fixed-top justify-content-end">
+                <div class="col-2">
+                    {% if current_user.is_authenticated %}
+                    <a href="#menu-toggle" id="menu-toggle">
+                        <div id="btn_tgl" class="fa fa-bars rotate text-white"></div>
+                    </a>
+                    {%endif%}
+                    <!-- <a href="#menu-toggle" class="btn btn-light" id="menu-toggle">
                     <i class="fas fa-bars rotate"></i>
                 </a> -->
-                <div class="container max-width">
+
                     {% if current_user.is_authenticated %}
                     {% else %}
                     <button class="navbar-toggler navbar-brand" type="button" data-toggle="collapse"
@@ -68,46 +70,43 @@
                     </button>
                     {% endif %}
 
+                </div>
+                <div class="col-7 text-left">
                     <!-- Navbar Right Side -->
                     {%if config.WARDEN_STATUS == "developer"%}
-                    <span class="text-white" style="font-size: 10px;">DEVELOPMENT ENVIRONMENT: {{config.SQLALCHEMY_DATABASE_URI}}<br>USER: {{current_user.username}}</span>
+                    <span class="text-white" style="font-size: 10px;">DEVELOPMENT ENVIRONMENT:
+                        {{config.SQLALCHEMY_DATABASE_URI}}<br>USER: {{current_user.username}}</span>
                     {%endif%}
+                </div>
+                <div class="col-3 text-right small">
 
-                    <ul class=" navbar-nav ml-auto small">
-
-                        <li class="nav-item">
-                            {% if current_user.is_authenticated %}
-                            <span id="tor_span">
-                                <a style="text-decoration : none" href="{{ url_for('node.tor_setup') }}">
-                                    <span class="text-white">&nbsp;&nbsp;Checking Tor
-                                    </span>
-                                    <span class=" nav-item" style="color: rgb(179, 179, 179);">
-                                        &nbsp;&nbsp;<i class="fas fa-2x fa-user-shield"></i></span>
-                                </a>
+                    {% if current_user.is_authenticated %}
+                    <span id="tor_span">
+                        <a style="text-decoration : none" href="{{ url_for('node.tor_setup') }}">
+                            <span class="text-white">&nbsp;&nbsp;Checking Tor
                             </span>
+                            <span class=" nav-item" style="color: rgb(179, 179, 179);">
+                                &nbsp;&nbsp;<i class="fas fa-2x fa-user-shield"></i></span>
+                        </a>
+                    </span>
 
-                            &nbsp;&nbsp;&nbsp;
+                    &nbsp;&nbsp;&nbsp;
 
-                            <span id="dojo_span">
-                                <a style="text-decoration : none" href="{{ url_for('node.dojo_setup') }}">
-                                    <span class="text-white">&nbsp;&nbsp;Checking DOJO
-                                    </span>
-                                    <span class=" nav-item" style="color: rgb(179, 179, 179);">
-                                        &nbsp;&nbsp;<i class="fas fa-2x fa-user-ninja"></i></span>
-                                </a>
+                    <span id="dojo_span">
+                        <a style="text-decoration : none" href="{{ url_for('node.dojo_setup') }}">
+                            <span class="text-white">&nbsp;&nbsp;Checking DOJO
                             </span>
-
-
-                            {% else %}
-                            <a class="nav-item text-white"
-                                href="{{ url_for('users.login') }}">Login</a>&nbsp;&nbsp;&nbsp;&nbsp;
-                            <a class="nav-item text-white" href="{{ url_for('users.register') }}">Register</a>
-                            {% endif %}
-                        </li>
-                    </ul>
+                            <span class=" nav-item" style="color: rgb(179, 179, 179);">
+                                &nbsp;&nbsp;<i class="fas fa-2x fa-user-ninja"></i></span>
+                        </a>
+                    </span>
+                    {% else %}
+                    <a class="nav-item text-white" href="{{ url_for('users.login') }}">Login</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                    <a class="nav-item text-white" href="{{ url_for('users.register') }}">Register</a>
+                    {% endif %}
 
                 </div>
-            </nav>
+            </div>
         </header>
 
 
@@ -254,7 +253,7 @@
         </a>
     </li>
 
-    <br><br><br><br>
+    <br><br><br><br><br><br><br>
     </ul>
 
     </div>
@@ -275,8 +274,9 @@
             {% endfor %}
             {% endif %}
             {% endwith %}
-            <br>
-            {% block content %}{% endblock %}
+            <div style='padding-top: 70px;'>
+                {% block content %}{% endblock %}
+            </div>
             <br>
         </main>
 

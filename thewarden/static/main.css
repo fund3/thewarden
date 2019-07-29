@@ -403,3 +403,22 @@ a {
   6% {left: 3px}
   7% {left: 0}
 }
+
+
+.alignleft {
+  float: left;
+  width:33.33333%;
+  text-align:left;
+}
+
+.aligncenter {
+  float: left;
+  width:33.33333%;
+  text-align:center;
+}
+
+.alignright {
+ float: left;
+ width:33.33333%;
+ text-align:right;
+}​
