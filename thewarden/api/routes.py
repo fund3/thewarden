@@ -1143,6 +1143,7 @@ def heatmapbenchmark_json():
     # Include the last price of ticker in the df
     try:
         data[pd.to_datetime(datetime.today())] = rt_price_grab(ticker)["USD"]
+        data.sort_index(inplace=True)
     except KeyError:
         logging.warn(
             f"Could not get realtime price for {ticker}. Last price defaulted to previous close price."
@@ -1151,7 +1152,6 @@ def heatmapbenchmark_json():
     returns = data["pchange"].copy()
     # Run the mrh function to generate heapmap table
     heatmap = mrh.get(returns, eoy=True)
-
     heatmap_stats = heatmap.copy()
     cols = [
         "Jan",

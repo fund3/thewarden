@@ -854,7 +854,7 @@ def heatmap_generator():
     # Generate NAV Table first
     data = generatenav(current_user.username)
     data["navpchange"] = (data["NAV"] / data["NAV"].shift(1)) - 1
-    returns = data["navpchange"].copy()
+    returns = data["navpchange"]
     # Run the mrh function to generate heapmap table
     heatmap = mrh.get(returns, eoy=True)
 
@@ -928,4 +928,3 @@ def price_ondate(ticker, date_input):
     except KeyError:
         return ("0")
     return (idx)
-    
