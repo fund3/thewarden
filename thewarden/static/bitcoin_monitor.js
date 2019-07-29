@@ -1,33 +1,33 @@
-$(document).ready(function() {
+$(document).ready(function () {
   // Initialize tool tips
-  $(function() {
+  $(function () {
     $('[data-toggle="tooltip"]').tooltip();
   });
 
   // Sum totals
   refresh_tables();
 
-  $(document).on("click", ".check_address", function() {
+  $(document).on("click", ".check_address", function () {
     var $linkID = $(this).attr("id");
     response = check_address($linkID, this);
   });
 
   // Select All and Select None
-  $("#selectAllButton").on("click", function() {
+  $("#selectAllButton").on("click", function () {
     $('input[type="checkbox"]').prop("checked", true);
   });
 
   // Listen for changes in any table to sum rows again
-  $(document).on("change", ".monitor_table", function() {
+  $(document).on("change", ".monitor_table", function () {
     refresh_tables();
   });
 
-  $("#selectNoneButton").on("click", function() {
+  $("#selectNoneButton").on("click", function () {
     $('input[type="checkbox"]').prop("checked", false);
   });
 
   // Section (account) click - select section checkbox
-  $(".section .section_label input").click(function() {
+  $(".section .section_label input").click(function () {
     $(this)
       .closest(".section")
       .find('input[type="checkbox"]')
@@ -35,7 +35,7 @@ $(document).ready(function() {
       .prop("checked", this.checked);
   });
 
-  $("#check_selected").on("click", function() {
+  $("#check_selected").on("click", function () {
     // Any address selected?
     var count = $(".address_check:checkbox:checked").length;
     if (count == 0) {
@@ -58,7 +58,7 @@ $(document).ready(function() {
     $("#status_bar").html("Checking a total of " + count + " addresses...");
 
     // Loop through list of addresses
-    $(".address_check:checkbox:checked").each(function() {
+    $(".address_check:checkbox:checked").each(function () {
       // Show if address is being checked
       address = $(this).attr("id");
       $("#status_bar").html("Checking address: " + address + "...");
@@ -78,11 +78,11 @@ $(document).ready(function() {
 
 // Sum all balances in table positions into a last row
 function refresh_tables() {
-  $(".monitor_table").each(function() {
+  $(".monitor_table").each(function () {
     var TotalValue = 0;
     $(this)
       .find(".balance_sum")
-      .each(function() {
+      .each(function () {
         TotalValue += parseFloat($(this).data("balance"));
       });
     $(this)
@@ -106,7 +106,7 @@ function increment_progress(increment) {
   $(".progress-bar").html(String(pr_now.toFixed(2)) + "%");
   if (pr_now >= 99.9999) {
     $(".progress-bar").html("All Done");
-    $(".progress-bar").queue(function() {
+    $(".progress-bar").queue(function () {
       $(".progress-bar").css("background-color", "green");
     });
     $("#scan_title").html("Scan Complete. Check table for status.");
@@ -119,11 +119,11 @@ function check_address(address, element, progress) {
   $.ajax({
     type: "POST",
     url: "/get_address",
-    timeout: 20000,
+    timeout: 900000,
     data: {
       address: address
     },
-    success: function(data_return) {
+    success: function (data_return) {
       $("#status_bar").html(
         "Received back data for address: " + address + "..."
       );
@@ -162,21 +162,21 @@ function check_address(address, element, progress) {
             .children("#balance")
             .html(
               "<strong class='text-center'>Changed from:<br><span class='text-info'> " +
-                (
-                  data_return["address_data"]["previous_balance"] / 100000000
-                ).toLocaleString("en-US", {
-                  style: "decimal",
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2
-                }) +
-                "</span><br> to: <br><span class='text-info'>" +
-                (
-                  data_return["address_data"]["last_balance"] / 100000000
-                ).toLocaleString("en-US", {
-                  style: "decimal",
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2
-                })
+              (
+                data_return["address_data"]["previous_balance"] / 100000000
+              ).toLocaleString("en-US", {
+                style: "decimal",
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 2
+              }) +
+              "</span><br> to: <br><span class='text-info'>" +
+              (
+                data_return["address_data"]["last_balance"] / 100000000
+              ).toLocaleString("en-US", {
+                style: "decimal",
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 2
+              })
             ) +
             "Check recent <a href='/bitcoin_transactions/" +
             address +
@@ -201,7 +201,7 @@ function check_address(address, element, progress) {
         }
       }
     },
-    error: function(xhr, status, error) {
+    error: function (xhr, status, error) {
       increment_progress(progress);
       $("#status_bar").html("Address: " + address + " FAILED. Error: " + error);
       console.log("ERROR on AJAX");
