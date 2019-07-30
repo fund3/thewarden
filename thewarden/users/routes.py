@@ -10,7 +10,7 @@ from thewarden.users.forms import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from thewarden.models import User, Trades, AccountInfo
-from thewarden.users.utils import send_reset_email
+from thewarden.users.utils import send_reset_email, user_fx
 
 users = Blueprint("users", __name__)
 
