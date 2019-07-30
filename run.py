@@ -1,7 +1,7 @@
 # When creating packages, the import app below gets from
 # __init__.py file`
 
-from flask_migrate import Migrate, upgrade
+from flask_migrate import Migrate
 from thewarden import create_app, db
 from thewarden.models import listofcrypto, User, Trades, AccountInfo, Contact
 

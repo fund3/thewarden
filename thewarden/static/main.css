@@ -110,6 +110,7 @@ a.article-title:hover {
     font-size: 14px;
 
 }
+
 td.red_negpos {
   color: red;
 }
@@ -121,7 +122,6 @@ td.green_negpos {
 .hinumber {
     color: #1F5168;
 }
-
 
 .hinumbersmall {
     color: #1F5168;;
@@ -146,7 +146,6 @@ pre {
     font-size: 120%;
     background-color: LightGray;
     font-weight: bold;
-
 }
 
 .table-white {
@@ -222,43 +221,50 @@ pre {
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
     margin-left: 0;
 }
+
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
     right: 0px;
 }
-
 
 /* FIFO LIFO Switch  */
 .fifolifoswitch {
     position: relative; width: 67px;
     -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
 }
+
 .fifolifoswitch-checkbox {
     display: none;
 }
+
 .fifolifoswitch-label {
     display: block; overflow: hidden; cursor: pointer;
     border: 2px solid #999999; border-radius: 50px;
 }
+
 .fifolifoswitch-inner {
     display: block; width: 200%; margin-left: -100%;
     transition: margin 0.3s ease-in 0s;
 }
+
 .fifolifoswitch-inner:before, .fifolifoswitch-inner:after {
     display: block; float: left; width: 50%; height: 14px; padding: 0; line-height: 14px;
     font-size: 13px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
     box-sizing: border-box;
 }
+
 .fifolifoswitch-inner:before {
     content: "LIFO";
     padding-left: 8px;
     background-color: #F2F2F2; color: #000000;
 }
+
 .fifolifoswitch-inner:after {
     content: "FIFO";
     padding-right: 8px;
     background-color: #F2F2F2; color: #000000;
     text-align: right;
 }
+
 .fifolifoswitch-switch {
     display: block; width: 14px; margin: 2.5px;
     background: #FFFFFF;
@@ -267,13 +273,14 @@ pre {
     border: 2px solid #999999; border-radius: 50px;
     transition: all 0.3s ease-in 0s;
 }
+
 .fifolifoswitch-checkbox:checked + .fifolifoswitch-label .fifolifoswitch-inner {
     margin-left: 0;
 }
+
 .fifolifoswitch-checkbox:checked + .fifolifoswitch-label .fifolifoswitch-switch {
     right: 0px;
 }
-
 
 .emptycell {
     background-color: #E6E6E6;
@@ -352,6 +359,7 @@ a {
             0 0 0 #fefc4b;
     }
 }
+
 .noclose .ui-dialog-titlebar-close
 {
     display:none;
@@ -403,3 +411,22 @@ a {
   6% {left: 3px}
   7% {left: 0}
 }
+
+
+.alignleft {
+  float: left;
+  width:33.33333%;
+  text-align:left;
+}
+
+.aligncenter {
+  float: left;
+  width:33.33333%;
+  text-align:center;
+}
+
+.alignright {
+ float: left;
+ width:33.33333%;
+ text-align:right;
+}​

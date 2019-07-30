@@ -28,14 +28,16 @@ main = Blueprint("main", __name__)
 def before_request():
     # Before any request at main, check if API Keys are set
     # But only if user is logged in.
-    exclude_list = ["main.get_started", "main.importcsv"]
-    if not request.endpoint in exclude_list:
+    exclude_list = ["main.get_started", "main.importcsv", "main.csvtemplate"]
+    if request.endpoint not in exclude_list:
         if current_user.is_authenticated:
-            user_info = User.query.filter_by(username=current_user.username).first()
+            user_info = User.query.filter_by(
+                username=current_user.username).first()
             if user_info.aa_apikey is None:
                 logging.error("NO AA API KEY FOUND!")
                 return render_template("welcome.html", title="Welcome")
-            transactions = Trades.query.filter_by(user_id=current_user.username)
+            transactions = Trades.query.filter_by(
+                user_id=current_user.username)
             if transactions.count() == 0:
                 return render_template("empty.html")
 
@@ -99,11 +101,11 @@ def exportcsv():
         return render_template("empty.html")
 
     filename = (
-        "./thewarden/dailydata/"
-        + current_user.username
-        + "_"
-        + datetime.now().strftime("%Y%m%d")
-        + ".csv"
+        "./thewarden/dailydata/" +
+        current_user.username +
+        "_" +
+        datetime.now().strftime("%Y%m%d") +
+        ".csv"
     )
     os.makedirs(os.path.dirname(filename), exist_ok=True)
 
@@ -141,11 +143,11 @@ def exportcsv():
             )
 
     filename = (
-        "./dailydata/"
-        + current_user.username
-        + "_"
-        + datetime.now().strftime("%Y%m%d")
-        + ".csv"
+        "./dailydata/" +
+        current_user.username +
+        "_" +
+        datetime.now().strftime("%Y%m%d") +
+        ".csv"
     )
 
     return send_file(filename, as_attachment=True)
@@ -223,19 +225,25 @@ def importcsv():
                         errorlist.append(f"missing date on line: {a}")
 
                     # Check the Operation Type
-                    if "B" in items[2]:
-                        qop = 1
-                        operation = "B"
-                    elif "S" in items[2]:
-                        qop = -1
-                        operation = "S"
-                    elif "D" in items[2]:
-                        qop = 1
-                        operation = "D"
-                    elif "W" in items[2]:
-                        qop = -1
-                        operation = "W"
-                    else:
+                    try:
+                        if "B" in items[2]:
+                            qop = 1
+                            operation = "B"
+                        elif "S" in items[2]:
+                            qop = -1
+                            operation = "S"
+                        elif "D" in items[2]:
+                            qop = 1
+                            operation = "D"
+                        elif "W" in items[2]:
+                            qop = -1
+                            operation = "W"
+                        else:
+                            qop = 0
+                            operation = "X"
+                            errors = errors + 1
+                            errorlist.append(f"missing operation on line {a}")
+                    except IndexError:
                         qop = 0
                         operation = "X"
                         errors = errors + 1
@@ -413,4 +421,3 @@ def importcsv():
 # template details for CSV import
 def csvtemplate():
     return render_template("csvtemplate.html", title="CSV Template")
-

@@ -1,7 +1,6 @@
 from flask_wtf import FlaskForm
-from flask_login import current_user
 
-from thewarden.models import listofcrypto, AccountInfo
+from thewarden.models import listofcrypto
 from wtforms import StringField, SubmitField, SelectField
 from wtforms.validators import DataRequired, ValidationError, Optional
 from wtforms.fields.html5 import DateField
@@ -61,7 +60,7 @@ class NewTrade(FlaskForm):
             raise ValidationError("Invalid Price")
         if price < 0:
             raise ValidationError("Price has to be a positive number")
-        if price is "":
+        if price == "":
             raise ValidationError("Price can't be empty")
 
     def validate_trade_quantity(self, trade_quantity):
@@ -71,7 +70,7 @@ class NewTrade(FlaskForm):
             raise ValidationError("Invalid Quantity")
         if quant < 0:
             raise ValidationError("Quantity has to be a positive number")
-        if quant is "":
+        if quant == "":
             raise ValidationError("Quantity can't be empty")
 
 

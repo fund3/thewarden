@@ -11,19 +11,30 @@ import numpy as np
 import pandas as pd
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
-from flask import (Blueprint, jsonify, render_template, request, abort, flash, redirect, url_for, get_flashed_messages)
+from flask import Blueprint, jsonify, render_template, request, flash
 from flask_login import current_user, login_required
 
 from thewarden import db, test_tor
 from thewarden import mhp as mrh
-from thewarden.config import Config
-from thewarden.models import Trades, listofcrypto, User, BitcoinAddresses, AccountInfo
-from thewarden.users.utils import (alphavantage_historical,
-                                     generate_pos_table, generatenav,
-                                     heatmap_generator, rt_price_grab, price_ondate)
-from thewarden.node.utils import  (dojo_auth, oxt_get_address, 
-                                    dojo_status, dojo_multiaddr, 
-                                    dojo_get_settings, dojo_get_txs, dojo_get_hd, tor_request)
+from thewarden.models import (
+    Trades, listofcrypto, User, BitcoinAddresses, AccountInfo)
+from thewarden.users.utils import (
+    alphavantage_historical,
+    generate_pos_table,
+    generatenav,
+    heatmap_generator,
+    rt_price_grab,
+    price_ondate,
+)
+from thewarden.node.utils import (
+    dojo_auth,
+    oxt_get_address,
+    dojo_multiaddr,
+    dojo_get_settings,
+    dojo_get_txs,
+    dojo_get_hd,
+    tor_request,
+)
 
 api = Blueprint("api", __name__)
 
@@ -31,13 +42,12 @@ api = Blueprint("api", __name__)
 # Helper function: Make sure strings don't go into DB
 def s_to_f(x):
     try:
-        if x == None:
+        if x is None:
             x = 0
-        x=float(x)
-        return (x)
+        x = float(x)
+        return x
     except ValueError:
-        return (0)
-
+        return 0
 
 
 @api.route("/cryptolist", methods=["GET", "POST"])
@@ -61,7 +71,8 @@ def cryptolist():
             return jsonify(jsonlist)
 
     return render_template(
-        "cryptolist.html", title="List of Crypto Currencies", listofcrypto=getlist
+        "cryptolist.html",
+        title="List of Crypto Currencies", listofcrypto=getlist
     )
 
 
@@ -73,12 +84,15 @@ def cryptolist():
 def aclst():
     list = []
     if request.method == "GET":
-        
-        tradeaccounts = Trades.query.filter_by(user_id=current_user.username).group_by(
+
+        tradeaccounts = Trades.query.filter_by(
+            user_id=current_user.username).group_by(
             Trades.trade_account)
 
-        accounts = AccountInfo.query.filter_by(user_id=current_user.username).group_by(
-            AccountInfo.account_longname)
+        accounts = AccountInfo.query.filter_by(
+            user_id=current_user.username).group_by(
+            AccountInfo.account_longname
+        )
 
         q = request.args.get("term")
         for item in tradeaccounts:
@@ -114,14 +128,16 @@ def histvol():
 
     # When ticker is not sent, will calculate for portfolio
     if not ticker:
-        transactions = Trades.query.filter_by(user_id=current_user.username).order_by(
+        transactions = Trades.query.filter_by(
+            user_id=current_user.username).order_by(
             Trades.trade_date
         )
         if transactions.count() == 0:
             return render_template("empty.html")
 
         data = generatenav(current_user.username)
-        data["vol"] = data["NAV"].pct_change().rolling(q).std() * (365 ** 0.5) * 100
+        data["vol"] = (data["NAV"].pct_change().rolling(q).std() *
+                       (365 ** 0.5) * 100)
         # data.set_index('date', inplace=True)
         vollist = data[["vol"]].copy()
         vollist.index = vollist.index.strftime("%Y-%m-%d")
@@ -137,11 +153,11 @@ def histvol():
                 prices = pd.DataFrame(
                     local_json["Time Series (Digital Currency Daily)"]
                 ).T
-                prices["4b. close (USD)"] = prices["4b. close (USD)"].astype(np.float)
+                prices["4b. close (USD)"] = prices["4b. close (USD)"].astype(
+                    np.float)
                 prices["vol"] = (
-                    prices["4b. close (USD)"].pct_change().rolling(q).std()
-                    * (365 ** 0.5)
-                    * 100
+                    prices["4b. close (USD)"].pct_change().rolling(q).std() *
+                    (365 ** 0.5) * 100
                 )
                 pricelist = prices[["vol"]].copy()
                 datajson = pricelist.to_json()
@@ -156,7 +172,8 @@ def histvol():
         metatable["max"] = vollist.vol.max()
         metatable["min"] = vollist.vol.min()
         metatable["last"] = vollist.vol[-1]
-        metatable["lastvsmean"] = ((vollist.vol[-1] / vollist.vol.mean()) - 1) * 100
+        metatable["lastvsmean"] = (
+            (vollist.vol[-1] / vollist.vol.mean()) - 1) * 100
         metatable = json.dumps(metatable)
         return metatable
 
@@ -206,12 +223,10 @@ def portstats():
     meta["end_nav"] = data["NAV"][-1].astype(float)
     meta["max_nav"] = data["NAV"].max().astype(float)
     meta["max_nav_date"] = data[data["NAV"] == data["NAV"].max()].index.strftime(
-        "%B %d, %Y"
-    )[0]
+        "%B %d, %Y")[0]
     meta["min_nav"] = data["NAV"].min().astype(float)
     meta["min_nav_date"] = data[data["NAV"] == data["NAV"].min()].index.strftime(
-        "%B %d, %Y"
-    )[0]
+        "%B %d, %Y")[0]
     meta["end_portvalue"] = data["PORT_usd_pos"][-1].astype(float)
     meta["max_portvalue"] = data["PORT_usd_pos"].max().astype(float)
     meta["max_port_date"] = data[
@@ -300,9 +315,9 @@ def manage_custody():
                 from_account = request.args.get("from_account")
                 # Implement the trade and write to dbase
                 tradedetails = (
-                    f"Trade included to wipe out {ticker} "
-                    + f"dust amount of {quant_before} from "
-                    + f"{from_account}"
+                    f"Trade included to wipe out {ticker} " +
+                    f"dust amount of {quant_before} from " +
+                    f"{from_account}"
                 )
 
                 tradedate = datetime.now()
@@ -339,8 +354,8 @@ def manage_custody():
                 to_account = request.args.get("to_account")
 
                 tradedetails = (
-                    f"Trade included to move dust amount of "
-                    + f"{quant_before} from {from_account} to {to_account}"
+                    f"Trade included to move dust amount of " +
+                    f"{quant_before} from {from_account} to {to_account}"
                 )
                 tradedate = datetime.now()
                 if float(quant_before) < 0:
@@ -400,8 +415,8 @@ def manage_custody():
                 from_account = request.args.get("from_account")
                 to_quant = request.args.get("to_quant")
                 tradedetails = (
-                    f"Trade included to adjust dust amount "
-                    + f"of {quant_before} from to {to_quant} at {from_account}"
+                    f"Trade included to adjust dust amount " +
+                    f"of {quant_before} from to {to_quant} at {from_account}"
                 )
                 tradedate = datetime.now()
                 # Create a unique ID
@@ -437,9 +452,9 @@ def manage_custody():
                 from_account = request.args.get("from_account")
                 to_account = request.args.get("to_account")
                 tradedetails = (
-                    f"Trade included to move {quant_before} "
-                    + f"{ticker} from account {from_account} to "
-                    + f"account {to_account}"
+                    f"Trade included to move {quant_before} " +
+                    f"{ticker} from account {from_account} to " +
+                    f"account {to_account}"
                 )
                 tradedate = datetime.now()
                 if float(quant_before) < 0:
@@ -492,8 +507,8 @@ def manage_custody():
             except KeyError:
                 tradedetails = "Error"
             tradedetails = (
-                f"Trade included to move position from "
-                + f"{from_account} to {to_account}"
+                f"Trade included to move position from " +
+                f"{from_account} to {to_account}"
             )
 
         elif action == "position_adjust":
@@ -503,8 +518,8 @@ def manage_custody():
                 from_account = request.args.get("from_account")
                 to_quant = request.args.get("to_quant")
                 tradedetails = (
-                    f"Trade included to adjust position from "
-                    + f"{quant_before} to to {to_quant}"
+                    f"Trade included to adjust position from " +
+                    f"{quant_before} to to {to_quant}"
                 )
                 tradedate = datetime.now()
                 # Create a unique ID
@@ -558,7 +573,8 @@ def portfolio_compare_json():
             start_date = datetime.strptime(start_date, "%Y-%m-%d")
         except (ValueError, TypeError) as e:
             logging.info(
-                f"[portfolio_compare_json] Error: {e}, " + "setting start_date to zero"
+                f"[portfolio_compare_json] Error: {e}, " +
+                "setting start_date to zero"
             )
             start_date = 0
 
@@ -568,14 +584,15 @@ def portfolio_compare_json():
             end_date = datetime.strptime(end_date, "%Y-%m-%d")
         except (ValueError, TypeError) as e:
             logging.info(
-                f"[portfolio_compare_json] Error: {e}, " + "setting end_date to now"
+                f"[portfolio_compare_json] Error: {e}, " +
+                "setting end_date to now"
             )
             end_date = datetime.now()
     data = {}
 
     logging.info(
-        "[portfolio_compare_json] NAV requested in list of "
-        + "tickers, requesting generatenav."
+        "[portfolio_compare_json] NAV requested in list of " +
+        "tickers, requesting generatenav."
     )
     nav = generatenav(current_user.username)
     nav_only = nav["NAV"]
@@ -610,16 +627,17 @@ def portfolio_compare_json():
         data.rename(ticker + "_price", inplace=True)
         data = data.astype(float)
         # Check if dataframe
-        if (isinstance(nav_only, pd.Series)):
+        if isinstance(nav_only, pd.Series):
             nav_only = nav_only.to_frame()
-        if (isinstance(data, pd.Series)):
-            data = data.to_frame()    
+        if isinstance(data, pd.Series):
+            data = data.to_frame()
         # Fill dailyNAV with prices for each ticker
         nav_only = pd.merge(nav_only, data, on="date", how="left")
         nav_only[ticker + "_price"].fillna(method="bfill", inplace=True)
         messages[ticker] = "ok"
         meta_data[ticker] = meta
-        logging.info(f"[portfolio_compare_json] {ticker}: Success - Merged OK")
+        logging.info(
+            f"[portfolio_compare_json] {ticker}: Success - Merged OK")
 
     nav_only.fillna(method="ffill", inplace=True)
 
@@ -635,7 +653,8 @@ def portfolio_compare_json():
     table["meta"] = {}
     table["meta"]["start_date"] = (nav_only.index[0]).strftime("%m-%d-%Y")
     table["meta"]["end_date"] = nav_only.index[-1].strftime("%m-%d-%Y")
-    table["meta"]["number_of_days"] = ((nav_only.index[-1] - nav_only.index[0])).days
+    table["meta"]["number_of_days"] = (
+        (nav_only.index[-1] - nav_only.index[0])).days
     table["meta"]["count_of_points"] = nav_only["NAV"].count().astype(float)
     table["NAV"] = {}
     table["NAV"]["start"] = nav_only["NAV"][0]
@@ -655,9 +674,11 @@ def portfolio_compare_json():
             table[ticker]["start"] = nav_only[ticker + "_price"][0]
             table[ticker]["end"] = nav_only[ticker + "_price"][-1]
             table[ticker]["return"] = (
-                nav_only[ticker + "_price"][-1] / nav_only[ticker + "_price"][0]
+                nav_only[ticker + "_price"][-1] /
+                nav_only[ticker + "_price"][0]
             ) - 1
-            table[ticker]["comp2nav"] = table[ticker]["return"] - table["NAV"]["return"]
+            table[ticker]["comp2nav"] = table[ticker]["return"] - \
+                table["NAV"]["return"]
             table[ticker]["avg_return"] = nav_only[ticker + "_ret"].mean()
             table[ticker]["ann_std_dev"] = nav_only[ticker + "_ret"].std() * math.sqrt(
                 365
@@ -729,8 +750,6 @@ def generate_pos_table_json():
         return simplejson.dumps(pos_table, ignore_nan=True, default=datetime.isoformat)
 
 
-
-
 @api.route("/scatter_json", methods=["GET"])
 @login_required
 # Compare portfolio performance to a list of assets
@@ -758,8 +777,7 @@ def scatter_json():
             start_date = datetime.strptime(start_date, "%Y-%m-%d")
         except (ValueError, TypeError) as e:
             logging.info(
-                f"[scatter_json] Error: {e}, " + "setting start_date to zero"
-            )
+                f"[scatter_json] Error: {e}, " + "setting start_date to zero")
             start_date = 0
 
         end_date = request.args.get("end")
@@ -768,14 +786,13 @@ def scatter_json():
             end_date = datetime.strptime(end_date, "%Y-%m-%d")
         except (ValueError, TypeError) as e:
             logging.info(
-                f"[scatter_json] Error: {e}, " + "setting end_date to now"
-            )
+                f"[scatter_json] Error: {e}, " + "setting end_date to now")
             end_date = datetime.now()
     data = {}
 
     logging.info(
-        "[scatter_json] NAV requested in list of "
-        + "tickers, requesting generatenav."
+        "[scatter_json] NAV requested in list of " +
+        "tickers, requesting generatenav."
     )
     nav = generatenav(current_user.username)
     nav_only = nav["NAV"]
@@ -807,15 +824,15 @@ def scatter_json():
 
         # convert string date to datetime
         data.index = pd.to_datetime(data.index)
-        
+
         # rename index to date to match dailynav name
         data.index.rename("date", inplace=True)
         data.rename(ticker + "_price", inplace=True)
         data = data.astype(float)
         # Check if dataframe
-        if (isinstance(data, pd.Series)):
+        if isinstance(data, pd.Series):
             data = data.to_frame()
-        if (isinstance(nav_only, pd.Series)):
+        if isinstance(nav_only, pd.Series):
             nav_only = nav_only.to_frame()
         # Fill dailyNAV with prices for each ticker
         nav_only = pd.merge(nav_only, data, on="date", how="left")
@@ -838,7 +855,8 @@ def scatter_json():
     table["meta"] = {}
     table["meta"]["start_date"] = (nav_only.index[0]).strftime("%m-%d-%Y")
     table["meta"]["end_date"] = nav_only.index[-1].strftime("%m-%d-%Y")
-    table["meta"]["number_of_days"] = ((nav_only.index[-1] - nav_only.index[0])).days
+    table["meta"]["number_of_days"] = (
+        (nav_only.index[-1] - nav_only.index[0])).days
     table["meta"]["count_of_points"] = nav_only["NAV"].count().astype(float)
     table["NAV"] = {}
     table["NAV"]["start"] = nav_only["NAV"][0]
@@ -859,9 +877,11 @@ def scatter_json():
             table[ticker]["start"] = nav_only[ticker + "_price"][0]
             table[ticker]["end"] = nav_only[ticker + "_price"][-1]
             table[ticker]["return"] = (
-                nav_only[ticker + "_price"][-1] / nav_only[ticker + "_price"][0]
+                nav_only[ticker + "_price"][-1] /
+                nav_only[ticker + "_price"][0]
             ) - 1
-            table[ticker]["comp2nav"] = table[ticker]["return"] - table["NAV"]["return"]
+            table[ticker]["comp2nav"] = table[ticker]["return"] - \
+                table["NAV"]["return"]
             table[ticker]["avg_return"] = nav_only[ticker + "_ret"].mean()
             table[ticker]["ann_std_dev"] = nav_only[ticker + "_ret"].std() * math.sqrt(
                 365
@@ -882,7 +902,7 @@ def scatter_json():
     #           name: 'NAV / BTC',
     #           color: '[blue]',
     #           data: [[-0.01,-0.02], [0.02, 0.04]]
-    # },{       
+    # },{
     #           name: .....}]
     series_hc = []
     # Append NAV ticker to list of tickers, remove duplicates
@@ -892,14 +912,15 @@ def scatter_json():
         tmp_dict = {}
         if ticker == market:
             continue
-        tmp_dict['name'] = "x: " + market + ", y: " + ticker
-        tmp_dict['regression'] = 1
-        tmp_df = nav_matrix[[market+"_ret", ticker+"_ret"]].copy()
-        tmp_df.fillna(0, inplace=True)        
-        tmp_dict['data'] = list(zip(tmp_df[market+"_ret"], tmp_df[ticker+"_ret"]))
+        tmp_dict["name"] = "x: " + market + ", y: " + ticker
+        tmp_dict["regression"] = 1
+        tmp_df = nav_matrix[[market + "_ret", ticker + "_ret"]].copy()
+        tmp_df.fillna(0, inplace=True)
+        tmp_dict["data"] = list(
+            zip(tmp_df[market + "_ret"], tmp_df[ticker + "_ret"]))
         series_hc.append(tmp_dict)
 
-    # Now, let's return the data in the correct format as requested 
+    # Now, let's return the data in the correct format as requested
     return jsonify(
         {
             "chart_data": series_hc,
@@ -911,7 +932,6 @@ def scatter_json():
     )
 
 
-
 @api.route("/transactionsandcost_json", methods=["GET"])
 @login_required
 # Return daily data on transactions and cost for a single ticker
@@ -921,7 +941,7 @@ def scatter_json():
 # end      - end date in the format YYMMDD (defaults to today)
 def transactionsandcost_json():
     # Get arguments and assign values if needed
-    if request.method == "GET":    
+    if request.method == "GET":
         start_date = request.args.get("start")
         ticker = request.args.get("ticker")
 
@@ -930,7 +950,8 @@ def transactionsandcost_json():
             start_date = datetime.strptime(start_date, "%Y-%m-%d")
         except (ValueError, TypeError) as e:
             logging.info(
-                f"[transactionsandcost_json] Warning: {e}, " + "setting start_date to zero"
+                f"[transactionsandcost_json] Warning: {e}, " +
+                "setting start_date to zero"
             )
             start_date = datetime(2000, 1, 1)
 
@@ -940,10 +961,11 @@ def transactionsandcost_json():
             end_date = datetime.strptime(end_date, "%Y-%m-%d")
         except (ValueError, TypeError) as e:
             logging.info(
-                f"[transactionsandcost_json] Warning: {e}, " + "setting end_date to now"
+                f"[transactionsandcost_json] Warning: {e}, " +
+                "setting end_date to now"
             )
             end_date = datetime.now()
-   
+
     # Get Transaction List
     df = pd.read_sql_table("trades", db.engine)
     # Filter only the trades for current user
@@ -952,33 +974,35 @@ def transactionsandcost_json():
     # if no ticker, use BTC as default, if not BTC then the 1st in list
     tickers = df.trade_asset_ticker.unique().tolist()
     try:
-        tickers.remove('USD')
+        tickers.remove("USD")
     except ValueError:
         pass
 
     if not ticker:
-        if 'BTC'in tickers:
-            ticker = 'BTC'
+        if "BTC" in tickers:
+            ticker = "BTC"
         else:
             ticker = tickers[0]
     df = df[(df.trade_asset_ticker == ticker)]
     # Filter only buy and sells, ignore deposit / withdraw
     # For now, including Deposits and Withdrawns as well but
-    # may consider only B and S as line below. 
+    # may consider only B and S as line below.
     # df = df[(df.trade_operation == "B") | (df.trade_operation == "S")]
     df.drop("user_id", axis=1, inplace=True)
     # Create a cash_flow column - so we can calculate
     # average price for days with multiple buys and/or sells
-    df['cash_flow'] = df['trade_quantity'] * df['trade_price'] +df['trade_fees']
-    df['trade_date'] = pd.to_datetime(df['trade_date'])
+    df["cash_flow"] = df["trade_quantity"] * \
+        df["trade_price"] + df["trade_fees"]
+    df["trade_date"] = pd.to_datetime(df["trade_date"])
 
     # Consolidate all transactions from a single day by grouping
-    df = df.groupby(['trade_date'])[
-        ["cash_value", "trade_fees", "trade_quantity"]].agg(['sum','count'])
-    df.index.names = ['date']
+    df = df.groupby(["trade_date"])[["cash_value", "trade_fees", "trade_quantity"]].agg(
+        ["sum", "count"]
+    )
+    df.index.names = ["date"]
     # Remove the double index for column and consolidate under one row
-    df.columns = ['_'.join(col).strip() for col in df.columns.values]
-    
+    df.columns = ["_".join(col).strip() for col in df.columns.values]
+
     # Filter to Start and End Dates passed as arguments
     mask = (df.index >= start_date) & (df.index <= end_date)
     df = df.loc[mask]
@@ -990,7 +1014,7 @@ def transactionsandcost_json():
     # If notification is an error, skip this ticker
     if notification == "error":
         message = data
-        return(message)
+        return message
     data.reset_index(inplace=True)
     data = data.set_index(list(data.columns[[0]]))
     try:
@@ -1000,26 +1024,26 @@ def transactionsandcost_json():
             data = data["4. close"]
         except KeyError:
             message = "Key Error on Data"
-            return(message)
+            return message
     # convert string date to datetime
     data.index = pd.to_datetime(data.index)
     # rename index to date to match dailynav name
     data.index.rename("date", inplace=True)
     data.rename(ticker, inplace=True)
     data = data.astype(float)
-    
+
     # Create a DF, fill with dates and fill with operation and prices
     start_date = df.index.min()
-    daily_df = pd.DataFrame(columns=['date'])
-    daily_df['date'] = pd.date_range(start=start_date, end=end_date)
-    daily_df = daily_df.set_index('date')
+    daily_df = pd.DataFrame(columns=["date"])
+    daily_df["date"] = pd.date_range(start=start_date, end=end_date)
+    daily_df = daily_df.set_index("date")
     # Fill dailyNAV with prices for each ticker
     daily_df = pd.merge(daily_df, df, on="date", how="left")
     daily_df.fillna(0, inplace=True)
 
     if type(daily_df) != type(data):
-            data = data.to_frame()
-            
+        data = data.to_frame()
+
     daily_df = pd.merge(daily_df, data, on="date", how="left")
     daily_df[ticker].fillna(method="ffill", inplace=True)
     message = "ok"
@@ -1028,31 +1052,33 @@ def transactionsandcost_json():
     # Create additional columns on df
     # ---------------------------------------------------------
     # daily_df['transaction_boolean'] = daily_df.loc[daily_df.trade_quantity_sum > 0] = 'True'
-    daily_df.loc[daily_df.trade_quantity_sum > 0, 'traded'] = 1
-    daily_df.loc[daily_df.trade_quantity_sum <= 0, 'traded'] = 0
-    daily_df['q_cum_sum'] = daily_df['trade_quantity_sum'].cumsum()
-    daily_df['cv_cum_sum'] = daily_df['cash_value_sum'].cumsum()
-    daily_df['avg_cost'] = daily_df['cv_cum_sum'] / daily_df['q_cum_sum'] 
-    daily_df['price_over_cost_usd'] =  daily_df[ticker] - daily_df['avg_cost']
-    daily_df['price_over_cost_perc'] =  (daily_df[ticker] / daily_df['avg_cost']) - 1
-    daily_df['impact_on_cost_usd'] = (daily_df['avg_cost'].diff())
-    daily_df['impact_on_cost_per'] = daily_df['impact_on_cost_usd'] / daily_df[ticker] 
+    daily_df.loc[daily_df.trade_quantity_sum > 0, "traded"] = 1
+    daily_df.loc[daily_df.trade_quantity_sum <= 0, "traded"] = 0
+    daily_df["q_cum_sum"] = daily_df["trade_quantity_sum"].cumsum()
+    daily_df["cv_cum_sum"] = daily_df["cash_value_sum"].cumsum()
+    daily_df["avg_cost"] = daily_df["cv_cum_sum"] / daily_df["q_cum_sum"]
+    daily_df["price_over_cost_usd"] = daily_df[ticker] - daily_df["avg_cost"]
+    daily_df["price_over_cost_perc"] = (
+        daily_df[ticker] / daily_df["avg_cost"]) - 1
+    daily_df["impact_on_cost_usd"] = daily_df["avg_cost"].diff()
+    daily_df["impact_on_cost_per"] = daily_df["impact_on_cost_usd"] / \
+        daily_df[ticker]
     # Remove cost if position is too small - this avoids large numbers
     # Also, remove cost calculation if positions are open (from zero)
-    daily_df.loc[daily_df.q_cum_sum <= 0.009, 'price_over_cost_usd'] = np.NaN
-    daily_df.loc[daily_df.q_cum_sum <= 0.009, 'avg_cost'] = np.NaN
-    daily_df.loc[daily_df.q_cum_sum.shift(1) <= 0.009, 'impact_on_cost_usd'] = np.NaN
-    daily_df.loc[daily_df.q_cum_sum <= 0.009, 'impact_on_cost_usd'] = np.NaN
-    daily_df.loc[daily_df.q_cum_sum <= 0.009, 'impact_on_cost_per'] = np.NaN
+    daily_df.loc[daily_df.q_cum_sum <= 0.009, "price_over_cost_usd"] = np.NaN
+    daily_df.loc[daily_df.q_cum_sum <= 0.009, "avg_cost"] = np.NaN
+    daily_df.loc[daily_df.q_cum_sum.shift(
+        1) <= 0.009, "impact_on_cost_usd"] = np.NaN
+    daily_df.loc[daily_df.q_cum_sum <= 0.009, "impact_on_cost_usd"] = np.NaN
+    daily_df.loc[daily_df.q_cum_sum <= 0.009, "impact_on_cost_per"] = np.NaN
 
     return_dict = {}
-    return_dict['data'] = daily_df.to_json()
-    return_dict['meta_data'] = meta
-    return_dict['message'] = message
+    return_dict["data"] = daily_df.to_json()
+    return_dict["meta_data"] = meta
+    return_dict["message"] = message
     logging.info(f"[transactionandcost_json] Success generating data")
-    
-    return jsonify(return_dict)
 
+    return jsonify(return_dict)
 
 
 @api.route("/heatmapbenchmark_json", methods=["GET"])
@@ -1066,20 +1092,20 @@ def heatmapbenchmark_json():
     heatmap_gen, heatmap_stats, years, cols = heatmap_generator()
 
     # Now get the ticker information and run comparison
-    if request.method == "GET":    
+    if request.method == "GET":
         ticker = request.args.get("ticker")
         # Defaults to king BTC
         if not ticker:
             ticker = "BTC"
 
-    # Gather the first trade date in portfolio and store 
+    # Gather the first trade date in portfolio and store
     # used to match the matrixes later
     # Panda dataframe with transactions
-    df = pd.read_sql_table('trades', db.engine)
+    df = pd.read_sql_table("trades", db.engine)
     df = df[(df.user_id == current_user.username)]
     # Filter the df acccoring to filter passed as arguments
-    df['trade_date'] = pd.to_datetime(df['trade_date'])
-    start_date = df['trade_date'].min()
+    df["trade_date"] = pd.to_datetime(df["trade_date"])
+    start_date = df["trade_date"].min()
     start_date -= timedelta(days=1)  # start on t-1 of first trade
 
     # Generate price Table now for the ticker and trim to match portfolio
@@ -1088,10 +1114,10 @@ def heatmapbenchmark_json():
     try:
         data.index = pd.to_datetime(data.index)
     except TypeError:
-        return ("Connection Error")
-  
-    data.index.names = ['date']
-    mask = (data.index >= start_date)
+        return "Connection Error"
+
+    data.index.names = ["date"]
+    mask = data.index >= start_date
     data = data.loc[mask]
 
     # If notification is an error, skip this ticker
@@ -1117,14 +1143,16 @@ def heatmapbenchmark_json():
     data = data.astype(float)
     # Include the last price of ticker in the df
     try:
-        data[pd.to_datetime(datetime.today())] = rt_price_grab(ticker)['USD']
+        data[pd.to_datetime(datetime.today())] = rt_price_grab(ticker)["USD"]
+        data.sort_index(inplace=True)
     except KeyError:
-        logging.warn(f"Could not get realtime price for {ticker}. Last price defaulted to previous close price.")
+        logging.warn(
+            f"Could not get realtime price for {ticker}. Last price defaulted to previous close price."
+        )
     data["pchange"] = (data / data.shift(1)) - 1
     returns = data["pchange"].copy()
     # Run the mrh function to generate heapmap table
     heatmap = mrh.get(returns, eoy=True)
-
     heatmap_stats = heatmap.copy()
     cols = [
         "Jan",
@@ -1157,8 +1185,10 @@ def heatmapbenchmark_json():
     ]
     years = heatmap.index.tolist()
     # Create summary stats for the Ticker
-    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(axis=1)
-    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(axis=1)
+    heatmap_stats["MAX"] = heatmap_stats[heatmap_stats[cols_months] != 0].max(
+        axis=1)
+    heatmap_stats["MIN"] = heatmap_stats[heatmap_stats[cols_months] != 0].min(
+        axis=1)
     heatmap_stats["POSITIVES"] = heatmap_stats[heatmap_stats[cols_months] > 0].count(
         axis=1
     )
@@ -1171,21 +1201,25 @@ def heatmapbenchmark_json():
     heatmap_stats["NEG_MEAN"] = heatmap_stats[heatmap_stats[cols_months] < 0].mean(
         axis=1
     )
-    heatmap_stats["MEAN"] = heatmap_stats[heatmap_stats[cols_months] != 0].mean(axis=1)
+    heatmap_stats["MEAN"] = heatmap_stats[heatmap_stats[cols_months] != 0].mean(
+        axis=1)
 
     # Create the difference between the 2 df - Pandas is cool!
     heatmap_difference = heatmap_gen - heatmap
 
     # return (heatmap, heatmap_stats, years, cols, ticker, heatmap_diff)
-    return simplejson.dumps({
-                "heatmap": heatmap.to_dict(),
-                "heatmap_stats": heatmap_stats.to_dict(),
-                "cols": cols,
-                "years": years,
-                "ticker": ticker,
-                "heatmap_diff" : heatmap_difference.to_dict()
-            }, ignore_nan=True, default=datetime.isoformat)
-    
+    return simplejson.dumps(
+        {
+            "heatmap": heatmap.to_dict(),
+            "heatmap_stats": heatmap_stats.to_dict(),
+            "cols": cols,
+            "years": years,
+            "ticker": ticker,
+            "heatmap_diff": heatmap_difference.to_dict(),
+        },
+        ignore_nan=True,
+        default=datetime.isoformat,
+    )
 
 
 @api.route("/drawdown_json", methods=["GET"])
@@ -1198,9 +1232,9 @@ def heatmapbenchmark_json():
 # n_dd:         Top n drawdowns to be calculated
 # chart:        Boolean - return data for chart
 def drawdown_json():
-    
+
     # Get the arguments and store
-    if request.method == "GET":    
+    if request.method == "GET":
         start_date = request.args.get("start")
         ticker = request.args.get("ticker")
         n_dd = request.args.get("n_dd")
@@ -1209,7 +1243,7 @@ def drawdown_json():
             ticker = "NAV"
         ticker = ticker.upper()
         if n_dd:
-            try: 
+            try:
                 n_dd = int(n_dd)
             except TypeError:
                 n_dd = 2
@@ -1219,24 +1253,20 @@ def drawdown_json():
         try:
             start_date = datetime.strptime(start_date, "%Y-%m-%d")
         except (ValueError, TypeError) as e:
-            logging.info(
-                f"Warning: {e}, " + "setting start_date to zero"
-            )
+            logging.info(f"Warning: {e}, " + "setting start_date to zero")
             start_date = datetime(2000, 1, 1)
 
         end_date = request.args.get("end")
         try:
             end_date = datetime.strptime(end_date, "%Y-%m-%d")
         except (ValueError, TypeError) as e:
-            logging.info(
-                f"Warning: {e}, " + "setting end_date to now"
-            )
+            logging.info(f"Warning: {e}, " + "setting end_date to now")
             end_date = datetime.now()
 
     # Create a df with either NAV or ticker prices
-    if ticker=="NAV":
+    if ticker == "NAV":
         data = generatenav(current_user.username)
-        data = data['NAV']
+        data = data["NAV"]
     else:
         # Get price of ticker passed as argument
         message = {}
@@ -1244,7 +1274,7 @@ def drawdown_json():
         # If notification is an error, return error
         if notification == "error":
             message = data
-            return(message)
+            return message
         data.reset_index(inplace=True)
         data = data.set_index(list(data.columns[[0]]))
         try:
@@ -1254,7 +1284,7 @@ def drawdown_json():
                 data = data["4. close"]
             except KeyError:
                 message = "Key Error on Data"
-                return(message)
+                return message
         # convert string date to datetime
         data.index = pd.to_datetime(data.index)
         # rename index to date to match dailynav name
@@ -1268,38 +1298,51 @@ def drawdown_json():
     # # Rename columns
     data.index.rename("date", inplace=True)
     data.columns = [ticker]
-    
-    # # Calculate drawdowns    
-    df = 100 * (1 + data/100).cumprod()
+
+    # # Calculate drawdowns
+    df = 100 * (1 + data / 100).cumprod()
     df = pd.DataFrame(data)
-    df.columns = ['close']
-    df['ret'] = df.close/df.close[0]
-    df['modMax'] = df.ret.cummax()
-    df['modDD'] = (df.ret/df['modMax']) - 1
+    df.columns = ["close"]
+    df["ret"] = df.close / df.close[0]
+    df["modMax"] = df.ret.cummax()
+    df["modDD"] = (df.ret / df["modMax"]) - 1
     # Starting date of the currency modMax
-    df['end_date'] = df.index
+    df["end_date"] = df.index
     # is this the first occurence of this modMax?
-    df['dup'] = df.duplicated(['modMax'])
+    df["dup"] = df.duplicated(["modMax"])
 
     # Now, exclude the drawdowns that have overlapping data, keep only highest
-    df_group = df.groupby(['modMax']).min().sort_values(by='modDD', ascending=True)
+    df_group = df.groupby(["modMax"]).min().sort_values(
+        by="modDD", ascending=True)
     # Trim to fit n_dd
-    df_group = (df_group.head(n_dd))
+    df_group = df_group.head(n_dd)
     # Format a dict for return
     return_list = []
     for index, row in df_group.iterrows():
         # access data using column names
         tmp_dict = {}
-        tmp_dict['dd'] = row['modDD']
-        tmp_dict['start_date'] = row['end_date'].strftime('%Y-%m-%d')
-        tmp_dict['end_value'] = row['close']
-        tmp_dict['recovery_date'] = df[df.modMax == index].tail(1).end_date[0].strftime('%Y-%m-%d')
-        tmp_dict['end_date'] = df[df.close == row['close']].tail(1).end_date[0].strftime('%Y-%m-%d')
-        tmp_dict['start_value'] = df[df.index == row['end_date']].tail(1).close[0]
-        tmp_dict['days_to_recovery'] = (df[df.modMax == index].tail(1).end_date[0] - row['end_date']).days
-        tmp_dict['days_to_bottom'] = (df[df.close == row['close']].tail(1).end_date[0] - row['end_date']).days
-        tmp_dict['days_bottom_to_recovery'] = (df[df.modMax == index].tail(1).end_date[0] -
-                                                df[df.close == row['close']].tail(1).end_date[0]).days
+        tmp_dict["dd"] = row["modDD"]
+        tmp_dict["start_date"] = row["end_date"].strftime("%Y-%m-%d")
+        tmp_dict["end_value"] = row["close"]
+        tmp_dict["recovery_date"] = (
+            df[df.modMax == index].tail(1).end_date[0].strftime("%Y-%m-%d")
+        )
+        tmp_dict["end_date"] = (
+            df[df.close == row["close"]].tail(
+                1).end_date[0].strftime("%Y-%m-%d")
+        )
+        tmp_dict["start_value"] = df[df.index ==
+                                     row["end_date"]].tail(1).close[0]
+        tmp_dict["days_to_recovery"] = (
+            df[df.modMax == index].tail(1).end_date[0] - row["end_date"]
+        ).days
+        tmp_dict["days_to_bottom"] = (
+            df[df.close == row["close"]].tail(1).end_date[0] - row["end_date"]
+        ).days
+        tmp_dict["days_bottom_to_recovery"] = (
+            df[df.modMax == index].tail(1).end_date[0] -
+            df[df.close == row["close"]].tail(1).end_date[0]
+        ).days
         return_list.append(tmp_dict)
 
     if chart:
@@ -1322,62 +1365,69 @@ def drawdown_json():
         total_recovery_days = 0
         total_drawdown_days = 0
         for item in return_list:
-        # First the start date for all dd
+            # First the start date for all dd
             tmp_dict = {}
-            start_date = datetime.strptime(item['start_date'], '%Y-%m-%d')
-            start_date = ((start_date - datetime(1970, 1, 1)).total_seconds() * 1000)
-            tmp_dict['x'] = start_date
-            tmp_dict['title'] = 'TOP'
-            tmp_dict['text'] = 'Start of drawdown'         
+            start_date = datetime.strptime(item["start_date"], "%Y-%m-%d")
+            start_date = (start_date - datetime(1970, 1, 1)
+                          ).total_seconds() * 1000
+            tmp_dict["x"] = start_date
+            tmp_dict["title"] = "TOP"
+            tmp_dict["text"] = "Start of drawdown"
             flags.append(tmp_dict)
-        # Now the bottom for all dd
+            # Now the bottom for all dd
             tmp_dict = {}
-            end_date = datetime.strptime(item['end_date'], '%Y-%m-%d')
-            end_date = ((end_date - datetime(1970, 1, 1)).total_seconds() * 1000)
-            tmp_dict['x'] = end_date
-            tmp_dict['title'] = 'BOTTOM'
-            tmp_dict['text'] = 'Bottom of drawdown'
+            end_date = datetime.strptime(item["end_date"], "%Y-%m-%d")
+            end_date = (end_date - datetime(1970, 1, 1)
+                        ).total_seconds() * 1000
+            tmp_dict["x"] = end_date
+            tmp_dict["title"] = "BOTTOM"
+            tmp_dict["text"] = "Bottom of drawdown"
             flags.append(tmp_dict)
-        # Now the bottom for all dd
+            # Now the bottom for all dd
             tmp_dict = {}
-            recovery_date = datetime.strptime(item['recovery_date'], '%Y-%m-%d')
-            recovery_date = ((recovery_date - datetime(1970, 1, 1)).total_seconds() * 1000)
-            tmp_dict['x'] = recovery_date
-            tmp_dict['title'] = 'RECOVERED'
-            tmp_dict['text'] = 'End of drawdown Cycle'
+            recovery_date = datetime.strptime(
+                item["recovery_date"], "%Y-%m-%d")
+            recovery_date = (
+                recovery_date - datetime(1970, 1, 1)
+            ).total_seconds() * 1000
+            tmp_dict["x"] = recovery_date
+            tmp_dict["title"] = "RECOVERED"
+            tmp_dict["text"] = "End of drawdown Cycle"
             flags.append(tmp_dict)
-        # Now create the plot bands
+            # Now create the plot bands
             drop_days = (end_date - start_date) / 1000 / 60 / 60 / 24
             recovery_days = (recovery_date - end_date) / 1000 / 60 / 60 / 24
             total_drawdown_days += round(drop_days, 0)
             total_recovery_days += round(recovery_days, 0)
             tmp_dict = {}
-            tmp_dict['label'] = {}
-            tmp_dict['label']['align'] = 'center'
-            tmp_dict['label']['textAlign'] = 'left'
-            tmp_dict['label']['rotation'] = 90
-            tmp_dict['label']['text'] = 'Lasted ' + str(round(drop_days,0)) + ' days'
-            tmp_dict['label']['style'] = {}
-            tmp_dict['label']['style']['color'] = 'white'
-            tmp_dict['label']['style']['fontWeight'] = 'bold'
-            tmp_dict['color'] = '#E6A68E'
-            tmp_dict['from'] = start_date
-            tmp_dict['to'] = end_date
+            tmp_dict["label"] = {}
+            tmp_dict["label"]["align"] = "center"
+            tmp_dict["label"]["textAlign"] = "left"
+            tmp_dict["label"]["rotation"] = 90
+            tmp_dict["label"]["text"] = "Lasted " + \
+                str(round(drop_days, 0)) + " days"
+            tmp_dict["label"]["style"] = {}
+            tmp_dict["label"]["style"]["color"] = "white"
+            tmp_dict["label"]["style"]["fontWeight"] = "bold"
+            tmp_dict["color"] = "#E6A68E"
+            tmp_dict["from"] = start_date
+            tmp_dict["to"] = end_date
             plot_bands.append(tmp_dict)
             tmp_dict = {}
-            tmp_dict['label'] = {}
-            tmp_dict['label']['rotation'] = 90
-            tmp_dict['label']['align'] = 'center'
-            tmp_dict['label']['textAlign'] = 'left'
-            tmp_dict['label']['text'] = 'Lasted ' + str(round(recovery_days,0)) + ' days'
-            tmp_dict['label']['style'] = {}
-            tmp_dict['label']['style']['color'] = 'white'
-            tmp_dict['label']['style']['fontWeight'] = 'bold'
-            tmp_dict['color'] = '#8CADE1'
-            tmp_dict['from'] = end_date
-            tmp_dict['to'] = recovery_date
+            tmp_dict["label"] = {}
+            tmp_dict["label"]["rotation"] = 90
+            tmp_dict["label"]["align"] = "center"
+            tmp_dict["label"]["textAlign"] = "left"
+            tmp_dict["label"]["text"] = (
+                "Lasted " + str(round(recovery_days, 0)) + " days"
+            )
+            tmp_dict["label"]["style"] = {}
+            tmp_dict["label"]["style"]["color"] = "white"
+            tmp_dict["label"]["style"]["fontWeight"] = "bold"
+            tmp_dict["color"] = "#8CADE1"
+            tmp_dict["from"] = end_date
+            tmp_dict["to"] = recovery_date
             plot_bands.append(tmp_dict)
-
 
         return jsonify(
             {
@@ -1390,13 +1440,13 @@ def drawdown_json():
                     "drawdown": total_drawdown_days,
                     "trending": total_days - total_drawdown_days - total_recovery_days,
                     "non_trending": total_drawdown_days + total_recovery_days,
-                    "total": total_days
-                } 
+                    "total": total_days,
+                },
             }
         )
 
-    return (simplejson.dumps(return_list))
-    
+    return simplejson.dumps(return_list)
+
 
 @api.route("/test_tor", methods=["GET"])
 # Tests for Tor and sends back stats
@@ -1408,9 +1458,9 @@ def drawdown_json():
 #         "difference": [in seconds],
 #         "status": [True or False],
 #     }
-def test_tor_api():    
+def test_tor_api():
     response = test_tor()
-    return (simplejson.dumps(response))
+    return simplejson.dumps(response)
 
 
 @api.route("/test_dojo", methods=["GET"])
@@ -1419,33 +1469,30 @@ def test_dojo():
     logging.info("[API] Testing Dojo")
     auto = dojo_auth(True)
     try:
-        user_info = User.query.filter_by(username=current_user.username).first()
+        user_info = User.query.filter_by(
+            username=current_user.username).first()
     except AttributeError:
-        return ("User not logged in")
+        return "User not logged in"
     onion = user_info.dojo_onion
     apikey = user_info.dojo_apikey
 
     if not onion:
-        onion="empty"
+        onion = "empty"
 
     if not apikey:
-        apikey="empty"
+        apikey = "empty"
 
-    response = {
-        'onion_address': onion,
-        'APIKey': apikey,
-        'dojo_auth': auto
-    }
-    return (simplejson.dumps(response))
-        
-    
+    response = {"onion_address": onion, "APIKey": apikey, "dojo_auth": auto}
+    return simplejson.dumps(response)
+
+
 @api.route("/oxt_get_address", methods=["GET"])
 # Takes argument [addr] and returns OXT output
 # The request is sent through Tor only and fails if Tor is not enabled
 def gettransaction_oxt():
     addr = request.args.get("addr")
     if not addr:
-        return ("Error: Address needs to be provided")
+        return "Error: Address needs to be provided"
     return json.dumps((oxt_get_address(addr)))
 
 
@@ -1460,105 +1507,126 @@ def gettransaction_oxt():
 #                   . last_balance
 # change:           boolean (if changed)
 # success:          boolean
-# method:           Dojo or OXT 
-        
+# method:           Dojo or OXT
 def get_address():
     if request.method == "GET":
-        return ("This method does not accept GET requests")
+        return "This method does not accept GET requests"
     meta = {}
     # get address from POST request
-    address = request.form['address']
+    address = request.form["address"]
     # Check if this is an HD address
-    hd_address_list = ('xpub', 'ypub', 'zpub')
+    hd_address_list = ("xpub", "ypub", "zpub")
     if address.lower().startswith(hd_address_list):
         hd_address = True
         # Get address data from DB
-        address_data = (AccountInfo.query.filter_by(user_id=current_user.username)
+        address_data = (
+            AccountInfo.query.filter_by(user_id=current_user.username)
             .filter_by(account_blockchain_id=address)
             .first()
-            )
+        )
     else:
         hd_address = False
         # Get address data from DB
-        address_data = (BitcoinAddresses.query.filter_by(user_id=current_user.username)
+        address_data = (
+            BitcoinAddresses.query.filter_by(user_id=current_user.username)
             .filter_by(address_hash=address)
             .first()
-            )
-    # methods: 1: Dojo, 2: OXT, 3: Dojo then OXT 
+        )
+    # methods: 1: Dojo, 2: OXT, 3: Dojo then OXT
     # START DOJO Method
     if address_data is None:
-        return("(error) address method is invalid.")
+        return "(error) address method is invalid."
     try_again = False
-    if (address_data.check_method == "1") or (address_data.check_method == "3") :
-        at = dojo_get_settings()['token']
+    if (address_data.check_method == "1") or (address_data.check_method == "3"):
+        at = dojo_get_settings()["token"]
         if hd_address:
             dojo = dojo_get_hd(address, at)
             # Response:
             # {"status":"ok","data":{"balance":0,"unused":{"external":0,"internal":0},"derivation":"BIP44","created":1563110509}}
         else:
             dojo = dojo_get_txs(address, at)
-        method = 'Dojo'
-        
+        method = "Dojo"
+
         # Store current check into previous fields to detect changes
         ad = {}
-        ad['previous_check'] = address_data.previous_check = address_data.last_check
-        ad['previous_balance'] = address_data.previous_balance = s_to_f(address_data.last_balance)
-        ad['last_check'] = address_data.last_check = datetime.now()
-        
+        ad["previous_check"] = address_data.previous_check = address_data.last_check
+        ad["previous_balance"] = address_data.previous_balance = s_to_f(
+            address_data.last_balance
+        )
+        ad["last_check"] = address_data.last_check = datetime.now()
+
         try:
             if hd_address:
-                dojo = (dojo.json())
-                dojo_balance = s_to_f(dojo['data']['balance'])
-                meta['xpub_data'] = dojo['data']
-                meta['xpub_status'] = dojo['status']
-                address_data.xpub_derivation = dojo['data']['derivation']
-                address_data.xpub_created = dojo['data']['created']
+                try:
+                    dojo = dojo.json()
+                    dojo_balance = s_to_f(dojo["data"]["balance"])
+                    meta["xpub_data"] = dojo["data"]
+                    meta["xpub_status"] = dojo["status"]
+                    address_data.xpub_derivation = dojo["data"]["derivation"]
+                    address_data.xpub_created = dojo["data"]["created"]
+                except (AttributeError, KeyError):
+                    logging.error("Error when passing Dojo data as json")
 
             else:
-                dojo_balance = s_to_f(dojo['balance'])
+                dojo_balance = s_to_f(dojo["balance"])
         except (KeyError, TypeError):
             if address_data.check_method == "3":
                 address_data.check_method = "2"
-                try_again = True # Bump next steps and try with OXT
+                try_again = True  # Bump next steps and try with OXT
             else:
-                return ("error")
+                return "error"
         if not try_again:
-            ad['last_balance'] = address_data.last_balance = s_to_f(dojo_balance)
-            if address_data.last_balance != address_data.previous_balance: 
+            ad["last_balance"] = address_data.last_balance = s_to_f(
+                dojo_balance)
+            if address_data.last_balance != address_data.previous_balance:
                 change = True
             else:
                 change = False
             db.session.commit()
             success = True
-            return jsonify({"address_data": ad, "change" : change, "success": success, "method": method, "meta":meta})
-        
-        
+            return jsonify(
+                {
+                    "address_data": ad,
+                    "change": change,
+                    "success": success,
+                    "method": method,
+                    "meta": meta,
+                }
+            )
+
     if address_data.check_method == "2":
         oxt = oxt_get_address(address)
-        method = 'OXT'
-        if 'message' in oxt:
-            if oxt['message'] == 'Nothing found for this address. Please try later.':
+        method = "OXT"
+        if "message" in oxt:
+            if oxt["message"] == "Nothing found for this address. Please try later.":
                 return "error"
 
-        if 'status' in oxt:
+        if "status" in oxt:
             return "error"
         # Store current check into previous fields to detect changes
         ad = {}
-        ad['previous_check'] = address_data.previous_check = address_data.last_check
-        ad['previous_balance'] = address_data.previous_balance = address_data.last_balance
-        ad['last_check'] = address_data.last_check = datetime.now()
-        data_oxt = (oxt['data'])
-        ad['last_balance'] = address_data.last_balance = s_to_f(data_oxt[0]['stats']['bl'])
-        if address_data.last_balance != address_data.previous_balance: 
+        ad["previous_check"] = address_data.previous_check = address_data.last_check
+        ad[
+            "previous_balance"
+        ] = address_data.previous_balance = address_data.last_balance
+        ad["last_check"] = address_data.last_check = datetime.now()
+        data_oxt = oxt["data"]
+        ad["last_balance"] = address_data.last_balance = s_to_f(
+            data_oxt[0]["stats"]["bl"]
+        )
+        if address_data.last_balance != address_data.previous_balance:
             change = True
         else:
             change = False
         db.session.commit()
         success = True
 
-        return jsonify({"address_data": ad, "change" : change, "success": success, "method": method})
+        return jsonify(
+            {"address_data": ad, "change": change,
+                "success": success, "method": method}
+        )
 
-    return ("error")
+    return "error"
 
 
 @api.route("/getprice_ondate", methods=["GET"])
@@ -1567,9 +1635,9 @@ def get_address():
 # Takes arguments:
 # ticker:       Single ticker for filter (default = NAV)
 # date:         date to get price
-def getprice_ondate(): 
+def getprice_ondate():
     # Get the arguments and store
-    if request.method == "GET":    
+    if request.method == "GET":
         date_input = request.args.get("date")
         ticker = request.args.get("ticker")
         if (not ticker) or (not date_input):
@@ -1589,57 +1657,68 @@ def import_transaction():
     # Import into the database
     for item in jsonData:
         # Check if in database
-        transaction_id = jsonData[item]['trade_blockchain_id']
+        transaction_id = jsonData[item]["trade_blockchain_id"]
         find_match = (
             Trades.query.filter_by(user_id=current_user.username)
             .filter_by(trade_blockchain_id=transaction_id)
             .first()
         )
         if find_match is not None:
-            flash(f"Transaction not imported. Exists in database: {transaction_id[0:6]}...", "danger")
+            flash(
+                f"Transaction not imported. Exists in database: {transaction_id[0:6]}...",
+                "danger",
+            )
             continue
 
         try:
             try:
-                price = float(jsonData[item]['trade_price'].replace(',',''))
+                price = float(jsonData[item]["trade_price"].replace(",", ""))
             except KeyError:
-                flash(f"Error: No price found when importing transaction {jsonData[item]['trade_blockchain_id'][0:6]}", "danger")
+                flash(
+                    f"Error: No price found when importing transaction {jsonData[item]['trade_blockchain_id'][0:6]}",
+                    "danger",
+                )
                 continue
-            quant = (jsonData[item]['trade_quantity'])
+            quant = jsonData[item]["trade_quantity"]
             cv = price * quant
         except (AttributeError, ValueError):
             cv = 0
 
         # Create the database object
         new_trade = Trades(
-        user_id=current_user.username,
-        trade_inputon=parser.parse(jsonData[item]['trade_inputon']),
-        trade_quantity=quant,
-        trade_operation=jsonData[item]['trade_operation'],
-        trade_currency=jsonData[item]['trade_currency'],
-        trade_fees=jsonData[item]['trade_fees'],
-        trade_asset_ticker=jsonData[item]['trade_asset_ticker'],
-        trade_price=price,
-        trade_date=datetime.fromtimestamp(int(jsonData[item]['trade_date'])), #epoch date to dateTime
-        trade_blockchain_id=jsonData[item]['trade_blockchain_id'],
-        trade_account=jsonData[item]['trade_account'],
-        trade_notes=jsonData[item]['trade_notes'],
-        cash_value=cv,
-        trade_reference_id = secrets.token_hex(21)
+            user_id=current_user.username,
+            trade_inputon=parser.parse(jsonData[item]["trade_inputon"]),
+            trade_quantity=quant,
+            trade_operation=jsonData[item]["trade_operation"],
+            trade_currency=jsonData[item]["trade_currency"],
+            trade_fees=jsonData[item]["trade_fees"],
+            trade_asset_ticker=jsonData[item]["trade_asset_ticker"],
+            trade_price=price,
+            trade_date=datetime.fromtimestamp(
+                int(jsonData[item]["trade_date"])
+            ),  # epoch date to dateTime
+            trade_blockchain_id=jsonData[item]["trade_blockchain_id"],
+            trade_account=jsonData[item]["trade_account"],
+            trade_notes=jsonData[item]["trade_notes"],
+            cash_value=cv,
+            trade_reference_id=secrets.token_hex(21),
         )
 
         try:
             db.session.add(new_trade)
             db.session.commit()
-            flash(f"Transaction included. {transaction_id[0:6]}...", "success")
+            flash(
+                f"Transaction included. {transaction_id[0:6]}...", "success")
         except Exception as e:
-            flash(f"Error: {e} when importing transaction {jsonData[item]['trade_blockchain_id'][0:6]}", "danger")
+            flash(
+                f"Error: {e} when importing transaction {jsonData[item]['trade_blockchain_id'][0:6]}",
+                "danger",
+            )
 
     logging.info("Import done")
     # logging.info(get_flashed_messages())
     # return json.dumps(get_flashed_messages(with_categories=true))
-    return(json.dumps("OK"))
-
+    return json.dumps("OK")
 
 
 @api.route("/addresses_importer", methods=["POST"])
@@ -1648,97 +1727,100 @@ def import_transaction():
 # Values expected
 def addresses_importer():
     if request.method == "GET":
-        return ("This method does not accept GET requests")
+        return "This method does not accept GET requests"
     data = request.form
     for item in data:
         loader = json.loads(item)
-    main_account = loader['account']
+    main_account = loader["account"]
     # Dojo takes a pipe separated string as input for multiaddress
-    dojo_list = loader['address_list'].replace(",", "|")
-    address_list = loader['address_list'].split(",")
+    dojo_list = loader["address_list"].replace(",", "|")
+    address_list = loader["address_list"].split(",")
     meta = {}
-    meta['main_account'] = main_account
-    meta['address_list'] = address_list
+    meta["main_account"] = main_account
+    meta["address_list"] = address_list
     # send a multiaddress request to Dojo
-    at = dojo_get_settings()['token']
+    at = dojo_get_settings()["token"]
     dojo = dojo_multiaddr(dojo_list, "active", at)
     try:
         dojo = dojo.json()
     except AttributeError:
         pass
 
-    meta['dojo'] = dojo
+    meta["dojo"] = dojo
     # If data received back ok, import addresses into the db, if not return error
-    if 'error' in dojo:
+    if "error" in dojo:
         return json.dumps(meta)
-    meta['status'] = {}
+    meta["status"] = {}
     # Loop through addresses found in Dojo and include in monitor database
     counter = 0
-    for item in dojo['addresses']:
+    for item in dojo["addresses"]:
         address_info = {}
-        address_info['message'] = "Found and Imported"
+        address_info["message"] = "Found and Imported"
         # Is this a pubkey address or HD address?
         # HD addresses are included as accounts (since they can hold pubkey addresses)
         # pubkey addresses included in the bitcoinaddress table
-        hd_address_list = ('xpub', 'ypub', 'zpub')
-        address = item['address']
+        hd_address_list = ("xpub", "ypub", "zpub")
+        address = item["address"]
 
         # HD Address Handling
         if address.lower().startswith(hd_address_list):
-            address_info['hd'] = True
-            search_add = AccountInfo.query.filter_by(user_id=current_user.username).filter_by(account_blockchain_id=address)
+            address_info["hd"] = True
+            search_add = AccountInfo.query.filter_by(
+                user_id=current_user.username
+            ).filter_by(account_blockchain_id=address)
             if search_add.count() > 0:
-                address_info['message'] = "NOT imported. Already in database."
-                meta['status'][item['address']] = address_info
+                address_info["message"] = "NOT imported. Already in database."
+                meta["status"][item["address"]] = address_info
                 continue
             counter += 1
             bitcoin_address = AccountInfo(
                 user_id=current_user.username,
-                account_longname="HD Wallet "+str(counter),
-                check_method='1',
+                account_longname="HD Wallet " + str(counter),
+                check_method="1",
                 auto_check=True,
                 account_blockchain_id=address,
-                last_check = datetime.now(),
-                last_balance = s_to_f(item['final_balance']),
+                last_check=datetime.now(),
+                last_balance=s_to_f(item["final_balance"]),
                 notes="Account imported using the Dojo through multi address import page",
-                )
+            )
         # Bitcoin Address Handling - Not HD
         else:
             # check if this address is already in the database
-            address_info['hd'] = False
-            search_add = BitcoinAddresses.query.filter_by(user_id=current_user.username).filter_by(address_hash=address)
+            address_info["hd"] = False
+            search_add = BitcoinAddresses.query.filter_by(
+                user_id=current_user.username
+            ).filter_by(address_hash=address)
             if search_add.count() > 0:
-                address_info['message'] = "NOT imported. Already in database."
-                meta['status'][item['address']] = address_info
+                address_info["message"] = "NOT imported. Already in database."
+                meta["status"][item["address"]] = address_info
                 continue
             bitcoin_address = BitcoinAddresses(
-            user_id=current_user.username,
-            address_hash=address,
-            check_method='1',
-            account_id=meta['main_account'],
-            auto_check=True,
-            imported_from_hdaddress="",
-            last_check = datetime.now(),
-            last_balance = s_to_f(item['final_balance']),
-            notes="Imported using the Dojo through multi address import page",
-        )
-    
+                user_id=current_user.username,
+                address_hash=address,
+                check_method="1",
+                account_id=meta["main_account"],
+                auto_check=True,
+                imported_from_hdaddress="",
+                last_check=datetime.now(),
+                last_balance=s_to_f(item["final_balance"]),
+                notes="Imported using the Dojo through multi address import page",
+            )
+
         try:
             db.session.add(bitcoin_address)
             db.session.commit()
-            address_info['message'] = "Found and Imported"
+            address_info["message"] = "Found and Imported"
         except Exception as e:
             logging.info(f"Error importing: {e}")
-            address_info['message'] = f"NOT imported. Error: {e}."
-        meta['status'][item['address']] = address_info
+            address_info["message"] = f"NOT imported. Error: {e}."
+        meta["status"][item["address"]] = address_info
 
     # return a list of addresses not found in the Dojo
     for add in address_list:
-        if add not in meta['status']:
-            meta['status'][add] = "Not found"
+        if add not in meta["status"]:
+            meta["status"][add] = "Not found"
 
     return json.dumps(meta)
-
 
 
 @api.route("/test_aakey", methods=["GET"])
@@ -1749,38 +1831,37 @@ def addresses_importer():
 # {status: "failed", message:"{e}"}
 # https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=BTC&to_currency=USD&apikey=ddd
 def test_aakey():
-    # Test Variables 
+    # Test Variables
     api_key = request.args.get("key")
-    data = {
-        'status': 'failed',
-        'message': 'Empty'
-        }
-    if api_key is not None:  
+    data = {"status": "failed", "message": "Empty"}
+    if api_key is not None:
         baseURL = "https://www.alphavantage.co/query?function=CURRENCY_EXCHANGE_RATE&from_currency=BTC&to_currency=USD&apikey="
         globalURL = baseURL + api_key
         try:
             logging.info(f"[ALPHAVANTAGE] Requesting URL: {globalURL}")
             api_request = tor_request(globalURL)
-            data['status']= 'success'
+            data["status"] = "success"
         except requests.exceptions.ConnectionError:
-            logging.error("[ALPHAVANTAGE] Connection ERROR " +
-                        "while trying to download prices")
-            data['status']= 'failed'
-            data['message'] = 'Connection Error'
+            logging.error(
+                "[ALPHAVANTAGE] Connection ERROR " +
+                "while trying to download prices"
+            )
+            data["status"] = "failed"
+            data["message"] = "Connection Error"
         try:
-            data['message'] = api_request.json()
+            data["message"] = api_request.json()
             # Success - store this in database
             current_user.aa_apikey = api_key
             db.session.commit()
         except AttributeError:
-            data['message'] = api_request
+            data["message"] = api_request
     return json.dumps(data)
 
 
 @api.route("/dojo_autoconfig", methods=["GET"])
 # Registers an onion and api key to the database and saves for this username
 def dojo_autoconfig():
-    if (request.args.get("onion") != '') and (request.args.get("api_key") != ''):
+    if (request.args.get("onion") != "") and (request.args.get("api_key") != ""):
         current_user.dojo_onion = request.args.get("onion")
         current_user.dojo_apikey = request.args.get("api_key")
         db.session.commit()
@@ -1796,16 +1877,16 @@ def fx_list():
     fx_dict = {}
     with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
         reader = csv.reader(csvfile)
-        fiat_dict = {rows[0]:rows[1] for rows in reader}
+        fiat_dict = {rows[0]: rows[1] for rows in reader}
     with open('thewarden/static/csv_files/digital_currency_list.csv', newline='') as csvfile:
         reader = csv.reader(csvfile)
-        dig_dict = {rows[0]:rows[1] for rows in reader}
-    
+        dig_dict = {rows[0]: rows[1] for rows in reader}
+
     fx_dict = {**fiat_dict, **dig_dict}
-    
+
     q = request.args.get("term")
-    list_key = {key:value for key, value in fx_dict.items() if q.upper() in key.upper()}
-    list_value = {key:value for key, value in fx_dict.items() if q.upper() in value.upper()}
+    list_key = {key: value for key, value in fx_dict.items() if q.upper() in key.upper()}
+    list_value = {key: value for key, value in fx_dict.items() if q.upper() in value.upper()}
     list = {**list_key, **list_value}
 
     list = json.dumps(list)

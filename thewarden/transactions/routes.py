@@ -4,7 +4,10 @@ import logging
 import threading
 import hashlib
 import pandas as pd
-from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
+from flask import (render_template,
+                   url_for, flash,
+                   redirect, request,
+                   abort, Blueprint)
 from flask_login import current_user, login_required
 from thewarden import db
 from thewarden.transactions.forms import NewTrade, EditTransaction
@@ -495,6 +498,9 @@ def delalltrades():
 # Creates a table with current custody of positions
 # Also enables user to re-allocate to different accounts
 def account_positions():
+    transactions = Trades.query.filter_by(user_id=current_user.username)
+    if transactions.count() == 0:
+        return render_template("empty.html")
     df = pd.read_sql_table("trades", db.engine)
     df = df[(df.user_id == current_user.username)]
     df["trade_date"] = pd.to_datetime(df["trade_date"])
@@ -530,4 +536,3 @@ def account_positions():
         account_table=account_table,
         all_accounts=all_accounts,
     )
-
