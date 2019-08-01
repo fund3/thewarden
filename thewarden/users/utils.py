@@ -522,6 +522,8 @@ def generatenav(user, force=False, filter=None):
     start_date = df['trade_date'].min()
     start_date -= timedelta(days=1)  # start on t-1 of first trade
     df = df.set_index('trade_date')
+    # Ignore times in df to merge - keep only dates
+    df.index = df.index.floor('d')
     end_date = datetime.today()
 
     # Create a list of all tickers that were traded in this portfolio
@@ -534,6 +536,8 @@ def generatenav(user, force=False, filter=None):
     dailynav = dailynav.set_index('date')
     dailynav['PORT_usd_pos'] = 0
     dailynav['PORT_cash_value'] = 0
+    # Ignore times in df to merge - keep only dates
+    dailynav.index = dailynav.index.floor('d')
 
     # Create a dataframe for each position's prices:
     # prices = {}
@@ -556,6 +560,8 @@ def generatenav(user, force=False, filter=None):
             # rename index to date to match dailynav name
             prices.index.rename('date', inplace=True)
             prices.columns = [id+'_price']
+            # Ignore times in df to merge - keep only dates
+            # prices.index = prices.index.floor('d')
 
             # Fill dailyNAV with prices for each ticker
             dailynav = pd.merge(dailynav, prices, on='date', how='left')
@@ -575,7 +581,7 @@ def generatenav(user, force=False, filter=None):
             dailynav[id+'_price'].fillna(0, inplace=True)
             # Now let's find trades for this ticker and include in dailynav
             tradedf = df[['trade_asset_ticker',
-                          'trade_quantity', 'cash_value']].copy()
+                          'trade_quantity', 'cash_value']]                              
             # Filter trades only for this ticker
             tradedf = tradedf[tradedf['trade_asset_ticker'] == id]
             # consolidate all trades in a single date Input
@@ -589,7 +595,6 @@ def generatenav(user, force=False, filter=None):
                                     'cash_value': id+'_cash_value',
                                     'cum_quant': id+'_pos'},
                            inplace=True)
-
             # merge
             dailynav = pd.merge(dailynav, tradedf, on='date', how='left')
             # for empty days just trade quantity = 0, same for CV
@@ -646,6 +651,7 @@ def generatenav(user, force=False, filter=None):
                             "on NAV Table - continuing but this is not good." +
                             " NAV calculations will be erroneous.")
             continue
+
 
     # Create a new column with the portfolio change only due to market move
     # discounting all cash flows for that day

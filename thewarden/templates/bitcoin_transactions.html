@@ -130,11 +130,11 @@
                     </tr>
                 </thead>
                 <tbody id="transactions">
-                    {%if (transactions['n_tx'] >= 50)%}
-                    {% set max = 49 %}
-                    <strong><span class="text-danger">More than 50 transactions found in this address. Only displaying
+                    {%if (transactions['n_tx'] >= 499)%}
+                    {% set max = 499 %}
+                    <strong><span class="text-danger">More than 500 transactions found in this address. Only displaying
                             the first
-                            50.</span></strong>
+                            500.</span></strong>
                     {%else%}
                     {% set max = transactions['n_tx'] %}
                     {%endif%}

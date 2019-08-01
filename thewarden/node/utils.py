@@ -291,7 +291,7 @@ def dojo_get_txs(addr, at):
         "https": "socks5h://127.0.0.1:9150",
     }
     try:
-        url = url + addr + "&at=" + at
+        url = url + addr + "&count=500&at=" + at
         auth_response = session.get(url)
         auth_response = auth_response.json()
         meta = {}
@@ -300,7 +300,6 @@ def dojo_get_txs(addr, at):
         txs = auth_response["txs"]
         # Create dataframe
         df_dict = pd.DataFrame.from_dict(txs)
-
         # Now construct the tx table in a pandas df
         tmp_list = []
         for __, row in df_dict.iterrows():
