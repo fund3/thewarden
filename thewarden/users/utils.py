@@ -827,10 +827,10 @@ def alphavantage_historical(id):
             logging.info(f"[ALPHAVANTAGE] {filename}: Filed saved locally")
             return (df, "stock", meta_data)
 
-        except KeyError:
+        except KeyError as e:
             logging.warning(
                 f"[ALPHAVANTAGE] {id} not found as Stock or Crypto" +
-                " - INVALID TICKER")
+                f" - INVALID TICKER - {e}")
             return("Invalid Ticker", "error", "empty")
 
 
