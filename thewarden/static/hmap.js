@@ -59,7 +59,7 @@ function run_ajax() {
 function handle_ajax_data(data) {
     console.log(data)
     // Now that data was returned, let's create the tables
-    var benchmark_table = "     <table class='table small'> \
+    var benchmark_table = "     <table class='table small table-condensed'> \
                                     <thead class='thead-light'> \
                                     <tr class='table-active'> \
                                <th></th>"
@@ -103,7 +103,7 @@ function handle_ajax_data(data) {
 
 
     // Create Table for difference between the 2 assets
-    benchmark_table = "     <table class='table small'> \
+    benchmark_table = "     <table class='table small table-condensed'> \
                                     <thead class='thead-light'> \
                                     <tr class='table-active'> \
                                <th></th>"

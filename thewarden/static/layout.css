@@ -16,6 +16,7 @@ body {
   -moz-transition: all 0.5s ease;
   -o-transition: all 0.5s ease;
   transition: all 0.5s ease;
+  width: 100vw;
 }
 
 #wrapper.toggled {
@@ -121,9 +122,12 @@ body {
   background: rgba(255, 255, 255, 0.2);
 }
 
-@media (min-width: 768px) {
+@media {
   #wrapper {
     padding-left: 250px;
+    width: 100%;
+    display: flex;
+    flex-grow: 100;
   }
 
   #wrapper.toggled {

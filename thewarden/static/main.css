@@ -365,6 +365,14 @@ a {
     display:none;
 }
 
+.large-table {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+  table-layout: fixed;
+  width: 100%;
+}
+
 .checkbox {
   height: 20px;
   width: 20px;
