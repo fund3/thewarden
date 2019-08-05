@@ -1867,3 +1867,16 @@ def dojo_autoconfig():
         return json.dumps("Success")
     else:
         return json.dumps("Failed. Empty field.")
+
+
+@api.route("/bitmex_orders", methods=["GET"])
+# Returns a json with all Bitmex Order History
+def bitmex_orders():
+    from bitmex import bitmex
+    testnet = True
+    api_key = "OnEDc0MgU3lL6CbnzRQ6z3BU"
+    api_secret = "jNaY-Pq2uLRMtZCBoUf12dxYZ6IITGuJf8lYvwVRfp9JxBdD"
+    mex = bitmex(test=testnet, api_key=api_key, api_secret=api_secret)
+    resp = mex.User.User_getWalletHistory(currency='XBt', count=500).result()
+    print(resp)
+
