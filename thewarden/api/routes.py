@@ -1894,7 +1894,7 @@ def test_bitmex():
         logging.info("Credentials saved to bitmex.json")
         return ({'status': 'success', 'message': resp})
     except Exception as e:
-        return ({'status': 'error', 'message': f'Error when connectiong to Bitmex. Check credentials. Error: {e}'})
+        return ({'status': 'error', 'message': f'Error when connecting to Bitmex. Check credentials. Error: {e}'})
     
 
 

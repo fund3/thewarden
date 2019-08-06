@@ -20,7 +20,6 @@ $(document).ready(function () {
 
         // $('#import_button').attr('disabled', 'disabled');
         $('#import_button').html('Please wait. Importing into Database.');
-        console.log("Staring Import Routine...")
         // Loop through the selected transactions
         // Alert if none selected and abort
         var list = {};

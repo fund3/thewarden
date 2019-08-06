@@ -966,7 +966,10 @@ def bitmex_orders(api_key, api_secret, testnet=True):
     # Takes arguments: ticker, testnet
     # reads api credentials from file
     from bitmex import bitmex
-    mex = bitmex(test=testnet, api_key=api_key, api_secret=api_secret)
+    try:
+        mex = bitmex(test=testnet, api_key=api_key, api_secret=api_secret)
+    except Exception:
+        return ("Connection Error. Check your connection.")
     try:
         resp = mex.Execution.Execution_getTradeHistory(count=500, start=0, reverse=True).result()
         # resp = mex.User.User_getWalletHistory(count=50000).result()

@@ -27,9 +27,16 @@
                 <input id='api_secret' type="text" class="form-control" value={{bitmex_credentials['api_secret']}}>
 
                 <div class="input-group-append">
-                    <button id='api_key' class="btn btn-outline-primary" type="button">Test and Update Key</button>
+                    <button id='api_key' class="btn btn-outline-secondary" type="button">Test and Update Key</button>
                 </div>
             </div>
+
+            <div class='small text-muted'>
+                To get an API key, go to <a href='https://www.bitmex.com/app/apiKeys'>Accounts
+                    <i class="fas fa-arrow-right"></i> API Keys on
+                </a> on your Bitmex account
+            </div>
+
 
             <div class='content-section' id='api_status' style="display:none; background:lightgray;">
             </div>
@@ -39,7 +46,7 @@
     </div>
 </div>
 
-
+{%if meta.success=='success'%}
 
 <div class="row">
     <div class="col-sm-12">
@@ -60,12 +67,16 @@
 
                         <button type="button" id="select_all" class="btn btn-outline-secondary btn-sm"
                             value="Select All">Select All</button>
+                        <br>
+                        <button type="button" id="import" class="btn btn-secondary btn-sm">Import Selected
+                            Transactions</button>
 
                     </div>
                 </div>
             </legend>
 
-            <table id="transactionstable" class="table table-sm align-middle text-center">
+
+            <table id="transactionstable" class="table table-sm table-striped align-middle text-center">
                 <thead>
                     <tr>
                         <th scope="col">
@@ -81,23 +92,25 @@
                             Side
                         </th>
                         <th scope="col">
-                            Quantity
+                            Notional ($)
                         </th>
                         <th scope="col">
-                            Price
+                            Price ($)
                         </th>
                         <th scope="col">
-                            Fees
+                            Fees ($)
                         </th>
-                        <th scope="col">
-                            ID
+                        <th scope="col" class='small'>
+                            Transaction ID
                         </th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody id="transactions">
                     {%for key, item in transactions['data'].iterrows()%}
-                    <tr>
+
+                    <tr id={{item['execID']}}>
+
                         <td>
                             {{item['transactTime'].strftime('%Y-%m-%d')}}
                         </td>
@@ -119,12 +132,28 @@
                         <td>
                             {{item['fiat_fee'] | jformat(2)}}
                         </td>
-                        <td>
+                        <td class='small'>
+                            {%if item['execType']=='Trade'%}
+                            {%if not item['exists']%}
                             {{item['execID']}}
-                        </td>
+                            {%else%}
+                            <span class='text-success'>
+                                Trade already imported
+                            </span>
+                            {%endif%}
+
+                            {%elif item['execType']=='Funding'%}
+                            <span class='text-warning'>
+                                Can't import funding
+                            </span>
+                            {%endif%} </td>
                         <td class="align-middle text-center" scope="row">
+                            {%if item['execType']=='Trade'%}
+                            {%if not item['exists']%}
                             <input type="checkbox" class="form-check-input import_check text-center checkbox"
                                 id="check_{{item['execID']}}">
+                            {%endif%}
+                            {%endif%}
                         </td>
 
                     </tr>
@@ -134,7 +163,15 @@
         </div>
     </div>
 </div>
-
+{%else%}
+<div class="row">
+    <div class="col-sm-12">
+        <div class="content-section text-info">
+            Error: Check your API Credentials above
+        </div>
+    </div>
+</div>
+{%endif%}
 
 
 
