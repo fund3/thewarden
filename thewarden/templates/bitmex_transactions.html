@@ -1,0 +1,143 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<div class="row">
+    <div class="col-sm-12">
+        <div id="alerts" class="container"></div>
+    </div>
+</div>
+
+
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="content-section">
+            <legend>Bitmex Login Credentials</legend>
+
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">API Key</span>
+                </div>
+                <input id='api_txt' type="text" class="form-control" value={{bitmex_credentials['api_key']}}>
+                <div class="input-group-prepend">
+                    <span class="input-group-text">API Secret</span>
+                </div>
+
+                <input id='api_secret' type="text" class="form-control" value={{bitmex_credentials['api_secret']}}>
+
+                <div class="input-group-append">
+                    <button id='api_key' class="btn btn-outline-primary" type="button">Test and Update Key</button>
+                </div>
+            </div>
+
+            <div class='content-section' id='api_status' style="display:none; background:lightgray;">
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="content-section">
+
+            <legend class="mb-4">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <span class="small">
+                            <strong>Note</strong>: Only the latest 500 transactions are shown
+                        </span>
+
+                    </div>
+                    <div class="col-sm-6 text-right">
+
+                        <button type="button" id="select_none" class="btn btn-outline-secondary btn-sm">Select
+                            None</button>
+
+                        <button type="button" id="select_all" class="btn btn-outline-secondary btn-sm"
+                            value="Select All">Select All</button>
+
+                    </div>
+                </div>
+            </legend>
+
+            <table id="transactionstable" class="table table-sm align-middle text-center">
+                <thead>
+                    <tr>
+                        <th scope="col">
+                            Time
+                        </th>
+                        <th scope="col">
+                            Symbol
+                        </th>
+                        <th scope="col">
+                            Type
+                        </th>
+                        <th scope="col">
+                            Side
+                        </th>
+                        <th scope="col">
+                            Quantity
+                        </th>
+                        <th scope="col">
+                            Price
+                        </th>
+                        <th scope="col">
+                            Fees
+                        </th>
+                        <th scope="col">
+                            ID
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="transactions">
+                    {%for key, item in transactions['data'].iterrows()%}
+                    <tr>
+                        <td>
+                            {{item['transactTime'].strftime('%Y-%m-%d')}}
+                        </td>
+                        <td>
+                            {{item['symbol']}}
+                        </td>
+                        <td>
+                            {{item['execType']}}
+                        </td>
+                        <td>
+                            {{item['side']}}
+                        </td>
+                        <td>
+                            {{item['lastQty'] | jformat(2,1) }}
+                        </td>
+                        <td>
+                            {{item['lastPx'] | jformat(2,1)}}
+                        </td>
+                        <td>
+                            {{item['fiat_fee'] | jformat(2)}}
+                        </td>
+                        <td>
+                            {{item['execID']}}
+                        </td>
+                        <td class="align-middle text-center" scope="row">
+                            <input type="checkbox" class="form-check-input import_check text-center checkbox"
+                                id="check_{{item['execID']}}">
+                        </td>
+
+                    </tr>
+                    {%endfor%}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script src="/static/bitmex_transactions.js"></script>
+
+{% endblock content %}

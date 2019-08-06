@@ -13,7 +13,10 @@ from thewarden import db
 from thewarden.transactions.forms import NewTrade, EditTransaction
 from thewarden.models import Trades, AccountInfo
 from datetime import datetime
-from thewarden.users.utils import cleancsv, generatenav
+from thewarden.users.utils import (cleancsv,
+                                   generatenav,
+                                   bitmex_orders,
+                                   load_bitmex_json)
 
 
 transactions = Blueprint("transactions", __name__)
@@ -535,4 +538,33 @@ def account_positions():
         tickers=tickers,
         account_table=account_table,
         all_accounts=all_accounts,
+    )
+
+
+@transactions.route("/bitmex_transactions", methods=["GET", "POST"])
+@login_required
+def bitmex_transactions():
+    logging.info(f"Started Bitmex Transaction method")
+    meta = {}
+    transactions = {}
+    transactions["error"] = ""
+    meta["success"] = False
+    meta["n_txs"] = 0
+    bitmex_credentials = load_bitmex_json()
+    if ("api_key" in bitmex_credentials) and ("api_secret" in bitmex_credentials):
+        data = bitmex_orders(bitmex_credentials['api_key'],
+                             bitmex_credentials['api_secret'],
+                             True)
+        data_df = pd.DataFrame.from_dict(data[0])
+        data_df['fiat_fee'] = data_df['execComm'] * data_df['lastPx'] / 100000000
+        print(data_df)
+        print(data_df.columns)
+        transactions["data"] = data_df
+
+    return render_template(
+        "bitmex_transactions.html",
+        title="Bitmex Transactions",
+        meta=meta,
+        transactions=transactions,
+        bitmex_credentials=bitmex_credentials
     )

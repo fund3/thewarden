@@ -9,6 +9,7 @@ import simplejson
 import numpy as np
 import pandas as pd
 from dateutil import parser
+from bitmex import bitmex
 from dateutil.relativedelta import relativedelta
 from flask import Blueprint, jsonify, render_template, request, flash
 from flask_login import current_user, login_required
@@ -1872,17 +1873,30 @@ def dojo_autoconfig():
 # API Helpers for Bitmex start here
 # ------------------------------------
 
-@api.route("/save_bitmex_json", methods=["GET"])
+@api.route("/test_bitmex", methods=["GET"])
 # receives api_key and api_secret then saves to a local json for later use
-def save_bitmex_json():
+# returns in message - user details
+def test_bitmex():
     api_key = request.args.get("api_key")
     api_secret = request.args.get("api_secret")
     if (api_key is None) or (api_secret is None):
-        return ("missing arguments")
-    bitmex_data = {"api_key": api_key, "api_secret": api_secret}
-    with open('thewarden/api/bitmex.json', 'w') as fp:
-        json.dump(bitmex_data, fp)
-        return ("Credentials saved to bitmex.json")
+        return ({'status': 'error', 'message': 'API credentials not found'})
+   
+    # First test and return result
+    testnet = True
+    mex = bitmex(test=testnet, api_key=api_key, api_secret=api_secret)
+    try:
+        resp = mex.User.User_get().result()[0]
+        # Save locally to json
+        bitmex_data = {"api_key": api_key, "api_secret": api_secret}
+        with open('thewarden/api/bitmex.json', 'w') as fp:
+            json.dump(bitmex_data, fp)
+        logging.info("Credentials saved to bitmex.json")
+        return ({'status': 'success', 'message': resp})
+    except Exception as e:
+        return ({'status': 'error', 'message': f'Error when connectiong to Bitmex. Check credentials. Error: {e}'})
+    
+
 
 
 @api.route("/load_bitmex_json", methods=["GET"])
@@ -1896,32 +1910,4 @@ def load_bitmex_json():
     except (FileNotFoundError, KeyError):
         return ({'status': 'error', 'message': 'API credentials not found'})
 
-
-@api.route("/bitmex_orders", methods=["GET"])
-# Returns a json with all Bitmex Order History
-# Takes arguments: ticker, testnet
-# reads api credentials from file
-def bitmex_orders():
-    meta = {}
-    # First check if API key and secret are stored locally
-    try:
-        with open('thewarden/api/bitmex.json', 'r') as fp:
-            data = json.load(fp)
-            api_key = data['api_key']
-            api_secret = data['api_secret']
-    except (FileNotFoundError, KeyError):
-        meta['status'] = 'error'
-        meta['message'] = 'API credentials not found'
-        return (meta)
-
-    from bitmex import bitmex
-    testnet = request.args.get("testnet")
-    ticker = request.args.get("ticker")  # ex: 'XBt'
-    if testnet is None:
-        testnet = False
-    # api_key = "OnEDc0MgU3lL6CbnzRQ6z3BU"
-    # api_secret = "jNaY-Pq2uLRMtZCBoUf12dxYZ6IITGuJf8lYvwVRfp9JxBdD"
-    mex = bitmex(test=testnet, api_key=api_key, api_secret=api_secret)
-    resp = mex.User.User_getWalletHistory(currency=ticker, count=5000).result()
-    return(resp)
 

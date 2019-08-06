@@ -5,6 +5,7 @@ import requests
 import configparser
 import hashlib
 import pickle
+import json
 import pandas as pd
 import numpy as np
 from PIL import Image
@@ -934,4 +935,43 @@ def price_ondate(ticker, date_input):
     except KeyError:
         return ("0")
     return (idx)
+
+
+# ------------------------------------
+# Helpers for Bitmex start here
+# ------------------------------------
+
+def save_bitmex_json(api_key, api_secret):
+    # receives api_key and api_secret then saves to a local json for later use
+    if (api_key is None) or (api_secret is None):
+        return ("missing arguments")
+    bitmex_data = {"api_key": api_key, "api_secret": api_secret}
+    with open('thewarden/api/bitmex.json', 'w') as fp:
+        json.dump(bitmex_data, fp)
+        return ("Credentials saved to bitmex.json")
+
+
+def load_bitmex_json():
+    # returns current stored keys if any
+    try:
+        with open('thewarden/api/bitmex.json', 'r') as fp:
+            data = json.load(fp)
+            return (data)
+    except (FileNotFoundError, KeyError):
+        return ({'status': 'error', 'message': 'API credentials not found'})
+
+
+def bitmex_orders(api_key, api_secret, testnet=True):
+    # Returns a json with all Bitmex Order History
+    # Takes arguments: ticker, testnet
+    # reads api credentials from file
+    from bitmex import bitmex
+    mex = bitmex(test=testnet, api_key=api_key, api_secret=api_secret)
+    try:
+        resp = mex.Execution.Execution_getTradeHistory(count=500, start=0, reverse=True).result()
+        # resp = mex.User.User_getWalletHistory(count=50000).result()
+        # resp = mex.User.User_getWalletHistory(currency=ticker, count=5000).result()
+    except Exception:
+        resp = "Invalid Credential or Connection Error"
+    return(resp)
 
