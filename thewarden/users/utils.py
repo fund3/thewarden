@@ -189,8 +189,11 @@ def generate_pos_table(user, fx, hidesmall):
         return (price_data)
 
     def find_price_data_BTC(ticker):
-        price_data = price_list["RAW"][ticker]['BTC']
-        return (price_data)
+        try:
+            price_data = price_list["RAW"][ticker]['BTC']
+            return (price_data)
+        except KeyError:
+            return (0)
 
     consol_table['price_data_USD'] = consol_table['symbol'].\
         apply(find_price_data)
@@ -201,8 +204,11 @@ def generate_pos_table(user, fx, hidesmall):
         consol_table.price_data_USD.map(lambda v: v['PRICE'])
     consol_table['chg_pct_24h'] =\
         consol_table.price_data_USD.map(lambda v: v['CHANGEPCT24HOUR'])
-    consol_table['btc_price'] =\
-        consol_table.price_data_BTC.map(lambda v: v['PRICE'])
+    try:
+        consol_table['btc_price'] =\
+            consol_table.price_data_BTC.map(lambda v: v['PRICE'])
+    except TypeError:
+        consol_table['btc_price'] = 0
 
     consol_table['usd_position'] = consol_table['usd_price'] *\
         consol_table['trade_quantity']

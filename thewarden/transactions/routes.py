@@ -547,7 +547,7 @@ def check_trade_included(id):
     df = pd.read_sql_table("trades", db.engine)
     # Filter only the trades for current user
     df = df[(df.user_id == current_user.username)]
-    df = df[(df.trade_reference_id == id)]
+    df = df[(df.trade_blockchain_id == id)]
     if df.empty:
         return False
     return True
@@ -573,10 +573,7 @@ def bitmex_transactions():
             data_df['fiat_fee'] = data_df['execComm'] * data_df['lastPx'] / 100000000
             # Check if the transactions are included in the database already
             data_df['exists'] = data_df['execID'].apply(check_trade_included)
-            print(data_df)
-            print(data_df.columns)
             transactions["data"] = data_df
-
             meta["success"] = "success"
         except ValueError:
             meta["success"] = "error"

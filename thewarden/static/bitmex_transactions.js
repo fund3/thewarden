@@ -20,9 +20,8 @@ $(document).ready(function () {
     // When import button is clicked, prepare transactions to send to database
     $("#import_button").click(function () {
 
-        // $('#import_button').attr('disabled', 'disabled');
+        $('#import_button').attr('disabled', 'disabled');
         $('#import_button').html('Please wait. Importing into Database.');
-        console.log("Staring Import Routine...")
         // Loop through the selected transactions
         // Alert if none selected and abort
         var list = {};
@@ -31,27 +30,40 @@ $(document).ready(function () {
             // Create a dictionary of transaction details to return to model
             var row = {};
             row['trade_inputon'] = new Date();
-            row['trade_quantity'] = ($(this).closest('tr').find('td:nth-child(2)').attr('id')) / 100000000;
-            if (row['trade_quantity'] < 0) {
+
+            multiplier = 0
+            oper = ($(this).closest('tr').find('td:nth-child(4)').attr('id'));
+            if (oper == 'Sell') {
                 row['trade_operation'] = 'S'
+                multiplier = -1
             };
-            if (row['trade_quantity'] >= 0) {
+            if (oper == 'Buy') {
                 row['trade_operation'] = 'B'
+                multiplier = 1
             };
+
+            row['trade_price'] = ($(this).closest('tr').find('td:nth-child(6)').attr('id'));
+            notional = row['trade_fees'] = ($(this).closest('tr').find('td:nth-child(5)').attr('id'));
+            console.log(notional)
+            console.log(multiplier)
+            console.log(row['trade_price'])
+            row['trade_quantity'] = multiplier * notional / row['trade_price']
+
             row['trade_currency'] = 'USD';
-            row['trade_fees'] = 0
-            row['trade_asset_ticker'] = 'BTC';
-            row['trade_price'] = ($(this).closest('tr').find('td:nth-child(3)').find('input:text').val());
+            row['trade_fees'] = ($(this).closest('tr').find('td:nth-child(7)').attr('id'));
+            row['trade_asset_ticker'] = ($(this).closest('tr').find('td:nth-child(2)').attr('id'));
             row['trade_date'] = ($(this).closest('tr').find('td:nth-child(1)').attr('id'))
-            row['trade_blockchain_id'] = ($(this).closest('tr').find('td:nth-child(4)').attr('id'))
-            row['trade_account'] = $('#account').data('account')
-            row['trade_notes'] = "Imported with Samourai Dojo"
+            row['id'] = ($(this).closest('tr').find('td:nth-child(8)').attr('id'))
+            row['trade_account'] = "BitMEX"
+            row['trade_notes'] = "Imported with Bitmex API"
+            row['trade_blockchain_id'] = row['id']
             // Add this row to our list of rows
             list[count] = row;
             count = count + 1;
         });
         // Now push the list into the database through the API
         list = JSON.stringify(list)
+        console.log(list)
 
         $.ajax({
             type: "POST",
@@ -62,7 +74,7 @@ $(document).ready(function () {
             success: function (data_back) {
                 console.log("[import] Ajax ok");
                 console.log(data_back)
-                window.location.href = "/bitcoin_monitor";
+                window.location.href = "/bitmex_transactions";
             }
         });
 

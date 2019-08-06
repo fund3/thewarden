@@ -68,7 +68,7 @@
                         <button type="button" id="select_all" class="btn btn-outline-secondary btn-sm"
                             value="Select All">Select All</button>
                         <br>
-                        <button type="button" id="import" class="btn btn-secondary btn-sm">Import Selected
+                        <button type="button" id="import_button" class="btn btn-secondary btn-sm">Import Selected
                             Transactions</button>
 
                     </div>
@@ -109,30 +109,30 @@
                 <tbody id="transactions">
                     {%for key, item in transactions['data'].iterrows()%}
 
-                    <tr id={{item['execID']}}>
+                    <tr id="{{item['execID']}}">
 
-                        <td>
+                        <td id="{{item['transactTime']}}">
                             {{item['transactTime'].strftime('%Y-%m-%d')}}
                         </td>
-                        <td>
+                        <td id="{{item['symbol']}}">
                             {{item['symbol']}}
                         </td>
-                        <td>
+                        <td id="{{item['execType']}}">
                             {{item['execType']}}
                         </td>
-                        <td>
+                        <td id="{{item['side']}}"">
                             {{item['side']}}
                         </td>
-                        <td>
+                        <td id=" {{item['lastQty']}}">
                             {{item['lastQty'] | jformat(2,1) }}
                         </td>
-                        <td>
+                        <td id="{{item['lastPx']}}"">
                             {{item['lastPx'] | jformat(2,1)}}
                         </td>
-                        <td>
+                        <td id=" {{item['fiat_fee']}}">
                             {{item['fiat_fee'] | jformat(2)}}
                         </td>
-                        <td class='small'>
+                        <td class='small' id="{{item['execID']}}">
                             {%if item['execType']=='Trade'%}
                             {%if not item['exists']%}
                             {{item['execID']}}

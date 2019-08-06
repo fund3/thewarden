@@ -1685,6 +1685,13 @@ def import_transaction():
             cv = 0
 
         # Create the database object
+        # Check if date in epoch or not
+        try:
+            trade_date = datetime.fromtimestamp(
+                int(jsonData[item]["trade_date"]))  # Epoch worked
+        except ValueError:
+            trade_date = parser.parse(jsonData[item]["trade_date"])
+        
         new_trade = Trades(
             user_id=current_user.username,
             trade_inputon=parser.parse(jsonData[item]["trade_inputon"]),
@@ -1694,9 +1701,7 @@ def import_transaction():
             trade_fees=jsonData[item]["trade_fees"],
             trade_asset_ticker=jsonData[item]["trade_asset_ticker"],
             trade_price=price,
-            trade_date=datetime.fromtimestamp(
-                int(jsonData[item]["trade_date"])
-            ),  # epoch date to dateTime
+            trade_date=trade_date,  # epoch date to dateTime
             trade_blockchain_id=jsonData[item]["trade_blockchain_id"],
             trade_account=jsonData[item]["trade_account"],
             trade_notes=jsonData[item]["trade_notes"],
