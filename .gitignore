@@ -8,7 +8,7 @@ __pycache__/
 ToDos.txt
 alpha.db
 *.db
-
+bitmex.json
 
 # Packages #
 ############

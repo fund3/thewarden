@@ -1868,15 +1868,60 @@ def dojo_autoconfig():
     else:
         return json.dumps("Failed. Empty field.")
 
+# ------------------------------------
+# API Helpers for Bitmex start here
+# ------------------------------------
+
+@api.route("/save_bitmex_json", methods=["GET"])
+# receives api_key and api_secret then saves to a local json for later use
+def save_bitmex_json():
+    api_key = request.args.get("api_key")
+    api_secret = request.args.get("api_secret")
+    if (api_key is None) or (api_secret is None):
+        return ("missing arguments")
+    bitmex_data = {"api_key": api_key, "api_secret": api_secret}
+    with open('thewarden/api/bitmex.json', 'w') as fp:
+        json.dump(bitmex_data, fp)
+        return ("Credentials saved to bitmex.json")
+
+
+@api.route("/load_bitmex_json", methods=["GET"])
+# returns current stored keys if any
+def load_bitmex_json():
+    # First check if API key and secret are stored locally
+    try:
+        with open('thewarden/api/bitmex.json', 'r') as fp:
+            data = json.load(fp)
+            return (data)
+    except (FileNotFoundError, KeyError):
+        return ({'status': 'error', 'message': 'API credentials not found'})
+
 
 @api.route("/bitmex_orders", methods=["GET"])
 # Returns a json with all Bitmex Order History
+# Takes arguments: ticker, testnet
+# reads api credentials from file
 def bitmex_orders():
+    meta = {}
+    # First check if API key and secret are stored locally
+    try:
+        with open('thewarden/api/bitmex.json', 'r') as fp:
+            data = json.load(fp)
+            api_key = data['api_key']
+            api_secret = data['api_secret']
+    except (FileNotFoundError, KeyError):
+        meta['status'] = 'error'
+        meta['message'] = 'API credentials not found'
+        return (meta)
+
     from bitmex import bitmex
-    testnet = True
-    api_key = "OnEDc0MgU3lL6CbnzRQ6z3BU"
-    api_secret = "jNaY-Pq2uLRMtZCBoUf12dxYZ6IITGuJf8lYvwVRfp9JxBdD"
+    testnet = request.args.get("testnet")
+    ticker = request.args.get("ticker")  # ex: 'XBt'
+    if testnet is None:
+        testnet = False
+    # api_key = "OnEDc0MgU3lL6CbnzRQ6z3BU"
+    # api_secret = "jNaY-Pq2uLRMtZCBoUf12dxYZ6IITGuJf8lYvwVRfp9JxBdD"
     mex = bitmex(test=testnet, api_key=api_key, api_secret=api_secret)
-    resp = mex.User.User_getWalletHistory(currency='XBt', count=500).result()
-    print(resp)
+    resp = mex.User.User_getWalletHistory(currency=ticker, count=5000).result()
+    return(resp)
 
