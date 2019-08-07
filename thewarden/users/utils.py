@@ -848,7 +848,6 @@ def alphavantage_historical(id):
                 data['4b. close (USD)'] = data['4a. close (USD)']
                 # Remove tzutc() time type from timestamp (otherwise merging would fail)
                 data['timestamp'] = pd.to_datetime(data['timestamp'], utc = False)
-                print (data['timestamp'].dtypes)
 
                 # Change timestamp column to index
                 data.set_index('timestamp', inplace=True)
