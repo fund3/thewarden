@@ -1888,7 +1888,7 @@ def test_bitmex():
         return ({'status': 'error', 'message': 'API credentials not found'})
    
     # First test and return result
-    testnet = True
+    testnet = False
     mex = bitmex(test=testnet, api_key=api_key, api_secret=api_secret)
     try:
         resp = mex.User.User_get().result()[0]
