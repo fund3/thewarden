@@ -1,5 +1,6 @@
 alembic==1.0.11
 blinker==1.4
+bitmex
 certifi==2019.6.16
 chardet==3.0.4
 Click==7.0
