@@ -2,15 +2,15 @@
 
 Our long term goal is to simplify this process. If you have tips on how to expedite deployment please let us know.
 
-If you are a beginner user, don't get intimated by this process. Although it uses the command line, it shouldn't be complicated. And you may learn a thing or two.  
+If you are a beginner user, don't get intimated by this process. Although it uses the command line, it shouldn't be complicated. And you may learn a thing or two.
 
 ## Choose your path
 
-- Quick installation: *Just follow the commands*
-  - [Mac OS/X](#quick-installation-mac)
+- Quick installation: _Just follow the commands_
+  - [Mac OS/X | Linux](#quick-installation-mac)
   - [Windows](#quick-installation-windows)
-- Step-by-Step instructions: *detailed explanations*
-  - [Mac OS/X](#step-by-step-instructions-mac-osx)
+- Step-by-Step instructions: _detailed explanations_
+  - [Mac OS/X | Linux](#step-by-step-instructions-mac-osx)
   - [Windows](#step-by-step-instructions-windows)
 
 ## Requirements
@@ -61,11 +61,11 @@ Done!
 ### Step 2 - Install Git command line (skip if installed)
 
 - Verify if git is already installed:
-  
+
   ```console
   $git --status
   ```
-  
+
   If you don't have Git installed, MacOs will prompt you to install.
   Click **Install** and follow the instructions.
 
@@ -88,29 +88,29 @@ Make sure you have Python and that the expected version is available from your c
 $python --version
 ```
 
-You should get some output like  `Python 3.7.x`. If you do not have Python, please install the latest 3.x version from  [python.org](https://python.org/)  or refer to the  [Installing Python](http://docs.python-guide.org/en/latest/starting/installation/)  section of the Hitchhiker’s Guide to Python.
+You should get some output like `Python 3.7.x`. If you do not have Python, please install the latest 3.x version from [python.org](https://python.org/) or refer to the [Installing Python](http://docs.python-guide.org/en/latest/starting/installation/) section of the Hitchhiker’s Guide to Python.
 
 ### Step 5 - Ensure you can run `pip` (skip if pip is installed)
 
-Pip manages Python's libraries. These are like add-ins.  You can check if it's installed by running:
+Pip manages Python's libraries. These are like add-ins. You can check if it's installed by running:
 
 ```console
 $pip --version
 ```
 
-If you installed Python from source, with an installer from  [python.org](https://python.org/), or via  [Homebrew](https://brew.sh/)you should already have pip. If you’re on Linux and installed using your OS package manager, you may have to install pip separately, see  [Installing pip/setuptools/wheel with Linux Package Managers](https://packaging.python.org/guides/installing-using-linux-tools/).
+If you installed Python from source, with an installer from [python.org](https://python.org/), or via [Homebrew](https://brew.sh/)you should already have pip. If you’re on Linux and installed using your OS package manager, you may have to install pip separately, see [Installing pip/setuptools/wheel with Linux Package Managers](https://packaging.python.org/guides/installing-using-linux-tools/).
 
-If  `pip`  isn’t already installed, then first try to bootstrap it from the standard library:
+If `pip` isn’t already installed, then first try to bootstrap it from the standard library:
 
 ```console
 python -m ensurepip --default-pip
 ```
 
-If that still doesn’t allow you to run  `pip`:
+If that still doesn’t allow you to run `pip`:
 
-> - Securely Download  [get-pip.py](https://bootstrap.pypa.io/get-pip.py)  [[1]](https://packaging.python.org/tutorials/installing-packages/#id7)
+> - Securely Download [get-pip.py](https://bootstrap.pypa.io/get-pip.py) [[1]](https://packaging.python.org/tutorials/installing-packages/#id7)
 >
-> - Run  `python  get-pip.py`.  [[2]](https://packaging.python.org/tutorials/installing-packages/#id8)  This will install or upgrade pip. Additionally, it will install  [setuptools](https://packaging.python.org/key_projects/#setuptools)  and  [wheel](https://packaging.python.org/key_projects/#wheel)  if they’re not installed already.
+> - Run `python get-pip.py`. [[2]](https://packaging.python.org/tutorials/installing-packages/#id8) This will install or upgrade pip. Additionally, it will install [setuptools](https://packaging.python.org/key_projects/#setuptools) and [wheel](https://packaging.python.org/key_projects/#wheel) if they’re not installed already.
 
 ### Step 6 - Create a virtual environment
 
@@ -169,7 +169,7 @@ To exit just hit <kbd>ctrl</kbd>+<kbd>c</kbd> at the terminal window.
 
 Done!
 
--------------------------------------------------------
+---
 
 ## Quick Installation (Windows)
 
@@ -202,7 +202,7 @@ Done!
 
 ### Step 1 - Create a folder to store the source code
 
-- Open the command prompt  by clicking Start and entering `cmd` into the search field.
+- Open the command prompt by clicking Start and entering `cmd` into the search field.
 
 - At the command prompt window, create a folder to store the source code. _`c:\git_clones\` is the default but feel free to change this to your preferred folder and location._
 
@@ -217,7 +217,7 @@ Check if git is already installed. Should be under:
 
 #### Start Menu -> Git -> Git CMD
 
- If you don't have Git installed, download Git [here](https://git-scm.com/download/win) and follow the installation instructions.
+If you don't have Git installed, download Git [here](https://git-scm.com/download/win) and follow the installation instructions.
 
 ### Step 3 - Download the source code
 
@@ -239,7 +239,7 @@ Make sure you have Python and that the expected version is available from your c
 c:\git_clones> py --version
 ```
 
-You should get some output like  `Python 3.7x`. If you do not have Python, please install the latest 3.x version from  [python.org](https://python.org/)  or refer to the  [Installing Python](http://docs.python-guide.org/en/latest/starting/installation/)  section of the Hitchhiker’s Guide to Python.
+You should get some output like `Python 3.7x`. If you do not have Python, please install the latest 3.x version from [python.org](https://python.org/) or refer to the [Installing Python](http://docs.python-guide.org/en/latest/starting/installation/) section of the Hitchhiker’s Guide to Python.
 
 If after installation you still can't run:
 
@@ -247,29 +247,29 @@ If after installation you still can't run:
 c:\git_clones> py --version
 ```
 
-You may need to add Python to the [PATH Environment variables]([https://www.pythoncentral.io/add-python-to-path-python-is-not-recognized-as-an-internal-or-external-command/](https://www.pythoncentral.io/add-python-to-path-python-is-not-recognized-as-an-internal-or-external-command/)).
+You may need to add Python to the [PATH Environment variables](<[https://www.pythoncentral.io/add-python-to-path-python-is-not-recognized-as-an-internal-or-external-command/](https://www.pythoncentral.io/add-python-to-path-python-is-not-recognized-as-an-internal-or-external-command/)>).
 
 ### Step 5 - Ensure you can run `pip` (skip if pip is installed)
 
-Pip manages Python's libraries. These are like add-ins.  You can check if it's installed by running:
+Pip manages Python's libraries. These are like add-ins. You can check if it's installed by running:
 
 ```console
 c:\git_clones> pip --version
 ```
 
-If you installed Python from source, with an installer from  [python.org](https://python.org/), or via  [Homebrew](https://brew.sh/)you should already have pip. If you’re on Linux and installed using your OS package manager, you may have to install pip separately, see  [Installing pip/setuptools/wheel with Linux Package Managers](https://packaging.python.org/guides/installing-using-linux-tools/).
+If you installed Python from source, with an installer from [python.org](https://python.org/), or via [Homebrew](https://brew.sh/)you should already have pip. If you’re on Linux and installed using your OS package manager, you may have to install pip separately, see [Installing pip/setuptools/wheel with Linux Package Managers](https://packaging.python.org/guides/installing-using-linux-tools/).
 
-If  `pip`  isn’t already installed, then first try to bootstrap it from the standard library:
+If `pip` isn’t already installed, then first try to bootstrap it from the standard library:
 
 ```console
 c:\> python -m ensurepip --default-pip
 ```
 
-If that still doesn’t allow you to run  `pip`:
+If that still doesn’t allow you to run `pip`:
 
-> - Securely Download  [get-pip.py](https://bootstrap.pypa.io/get-pip.py)  [[1]](https://packaging.python.org/tutorials/installing-packages/#id7)
+> - Securely Download [get-pip.py](https://bootstrap.pypa.io/get-pip.py) [[1]](https://packaging.python.org/tutorials/installing-packages/#id7)
 >
-> - Run  `py  get-pip.py`.  [[2]](https://packaging.python.org/tutorials/installing-packages/#id8)  This will install or upgrade pip. Additionally, it will install  [setuptools](https://packaging.python.org/key_projects/#setuptools)  and  [wheel](https://packaging.python.org/key_projects/#wheel)  if they’re not installed already.
+> - Run `py get-pip.py`. [[2]](https://packaging.python.org/tutorials/installing-packages/#id8) This will install or upgrade pip. Additionally, it will install [setuptools](https://packaging.python.org/key_projects/#setuptools) and [wheel](https://packaging.python.org/key_projects/#wheel) if they’re not installed already.
 
 ### Step 6 - Create a virtual environment
 
