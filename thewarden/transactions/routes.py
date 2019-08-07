@@ -558,6 +558,7 @@ def check_trade_included(id):
 def bitmex_transactions():
     logging.info(f"Started Bitmex Transaction method")
     meta = {}
+    testnet = False
     transactions = {}
     transactions["error"] = ""
     meta["success"] = False
@@ -566,7 +567,7 @@ def bitmex_transactions():
     if ("api_key" in bitmex_credentials) and ("api_secret" in bitmex_credentials):
         data = bitmex_orders(bitmex_credentials['api_key'],
                              bitmex_credentials['api_secret'],
-                             True)
+                             testnet)
         try:
             # Create a DataFrame to return
             data_df = pd.DataFrame.from_dict(data[0])
