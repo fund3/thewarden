@@ -10,6 +10,7 @@ import simplejson
 import numpy as np
 import pandas as pd
 from dateutil import parser
+from bitmex import bitmex
 from dateutil.relativedelta import relativedelta
 from flask import Blueprint, jsonify, render_template, request, flash
 from flask_login import current_user, login_required
@@ -1685,6 +1686,13 @@ def import_transaction():
             cv = 0
 
         # Create the database object
+        # Check if date in epoch or not
+        try:
+            trade_date = datetime.fromtimestamp(
+                int(jsonData[item]["trade_date"]))  # Epoch worked
+        except ValueError:
+            trade_date = parser.parse(jsonData[item]["trade_date"])
+        
         new_trade = Trades(
             user_id=current_user.username,
             trade_inputon=parser.parse(jsonData[item]["trade_inputon"]),
@@ -1694,9 +1702,7 @@ def import_transaction():
             trade_fees=jsonData[item]["trade_fees"],
             trade_asset_ticker=jsonData[item]["trade_asset_ticker"],
             trade_price=price,
-            trade_date=datetime.fromtimestamp(
-                int(jsonData[item]["trade_date"])
-            ),  # epoch date to dateTime
+            trade_date=trade_date,  # epoch date to dateTime
             trade_blockchain_id=jsonData[item]["trade_blockchain_id"],
             trade_account=jsonData[item]["trade_account"],
             trade_notes=jsonData[item]["trade_notes"],
@@ -1892,3 +1898,46 @@ def fx_list():
     list = json.dumps(list)
 
     return list
+
+# ------------------------------------
+# API Helpers for Bitmex start here
+# ------------------------------------
+
+@api.route("/test_bitmex", methods=["GET"])
+# receives api_key and api_secret then saves to a local json for later use
+# returns in message - user details
+def test_bitmex():
+    api_key = request.args.get("api_key")
+    api_secret = request.args.get("api_secret")
+    if (api_key is None) or (api_secret is None):
+        return ({'status': 'error', 'message': 'API credentials not found'})
+   
+    # First test and return result
+    testnet = False
+    mex = bitmex(test=testnet, api_key=api_key, api_secret=api_secret)
+    try:
+        resp = mex.User.User_get().result()[0]
+        # Save locally to json
+        bitmex_data = {"api_key": api_key, "api_secret": api_secret}
+        with open('thewarden/api/bitmex.json', 'w') as fp:
+            json.dump(bitmex_data, fp)
+        logging.info("Credentials saved to bitmex.json")
+        return ({'status': 'success', 'message': resp})
+    except Exception as e:
+        return ({'status': 'error', 'message': f'Error when connecting to Bitmex. Check credentials. Error: {e}'})
+    
+
+
+
+@api.route("/load_bitmex_json", methods=["GET"])
+# returns current stored keys if any
+def load_bitmex_json():
+    # First check if API key and secret are stored locally
+    try:
+        with open('thewarden/api/bitmex.json', 'r') as fp:
+            data = json.load(fp)
+            return (data)
+    except (FileNotFoundError, KeyError):
+        return ({'status': 'error', 'message': 'API credentials not found'})
+
+

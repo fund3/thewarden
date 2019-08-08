@@ -13,7 +13,10 @@ from thewarden import db
 from thewarden.transactions.forms import NewTrade, EditTransaction
 from thewarden.models import Trades, AccountInfo
 from datetime import datetime
-from thewarden.users.utils import cleancsv, generatenav
+from thewarden.users.utils import (cleancsv,
+                                   generatenav,
+                                   bitmex_orders,
+                                   load_bitmex_json)
 
 
 transactions = Blueprint("transactions", __name__)
@@ -535,4 +538,51 @@ def account_positions():
         tickers=tickers,
         account_table=account_table,
         all_accounts=all_accounts,
+    )
+
+
+def check_trade_included(id):
+    # Checks if a transaction id is already in database
+    # Returns True or False
+    df = pd.read_sql_table("trades", db.engine)
+    # Filter only the trades for current user
+    df = df[(df.user_id == current_user.username)]
+    df = df[(df.trade_blockchain_id == id)]
+    if df.empty:
+        return False
+    return True
+
+
+@transactions.route("/bitmex_transactions", methods=["GET", "POST"])
+@login_required
+def bitmex_transactions():
+    logging.info(f"Started Bitmex Transaction method")
+    meta = {}
+    testnet = False
+    transactions = {}
+    transactions["error"] = ""
+    meta["success"] = False
+    meta["n_txs"] = 0
+    bitmex_credentials = load_bitmex_json()
+    if ("api_key" in bitmex_credentials) and ("api_secret" in bitmex_credentials):
+        data = bitmex_orders(bitmex_credentials['api_key'],
+                             bitmex_credentials['api_secret'],
+                             testnet)
+        try:
+            # Create a DataFrame to return
+            data_df = pd.DataFrame.from_dict(data[0])
+            data_df['fiat_fee'] = data_df['execComm'] * data_df['lastPx'] / 100000000
+            # Check if the transactions are included in the database already
+            data_df['exists'] = data_df['execID'].apply(check_trade_included)
+            transactions["data"] = data_df
+            meta["success"] = "success"
+        except ValueError:
+            meta["success"] = "error"
+
+    return render_template(
+        "bitmex_transactions.html",
+        title="Bitmex Transactions",
+        meta=meta,
+        transactions=transactions,
+        bitmex_credentials=bitmex_credentials
     )

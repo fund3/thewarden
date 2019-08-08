@@ -5,7 +5,11 @@ import requests
 import configparser
 import hashlib
 import pickle
+<<<<<<< HEAD
 import csv
+=======
+import json
+>>>>>>> 37267e214634f350768ca274f8c5be4968ba1824
 import pandas as pd
 import numpy as np
 from PIL import Image
@@ -16,7 +20,7 @@ from thewarden import db, mail
 from thewarden.models import Trades, User
 from thewarden.node.utils import tor_request
 from thewarden import mhp as mrh
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # ---------------------------------------------------------
 # Helper Functions start here
@@ -189,8 +193,11 @@ def generate_pos_table(user, fx, hidesmall):
         return (price_data)
 
     def find_price_data_BTC(ticker):
-        price_data = price_list["RAW"][ticker]['BTC']
-        return (price_data)
+        try:
+            price_data = price_list["RAW"][ticker]['BTC']
+            return (price_data)
+        except KeyError:
+            return (0)
 
     consol_table['price_data_USD'] = consol_table['symbol'].\
         apply(find_price_data)
@@ -201,8 +208,11 @@ def generate_pos_table(user, fx, hidesmall):
         consol_table.price_data_USD.map(lambda v: v['PRICE'])
     consol_table['chg_pct_24h'] =\
         consol_table.price_data_USD.map(lambda v: v['CHANGEPCT24HOUR'])
-    consol_table['btc_price'] =\
-        consol_table.price_data_BTC.map(lambda v: v['PRICE'])
+    try:
+        consol_table['btc_price'] =\
+            consol_table.price_data_BTC.map(lambda v: v['PRICE'])
+    except TypeError:
+        consol_table['btc_price'] = 0
 
     consol_table['usd_position'] = consol_table['usd_price'] *\
         consol_table['trade_quantity']
@@ -561,9 +571,7 @@ def generatenav(user, force=False, filter=None):
             # rename index to date to match dailynav name
             prices.index.rename('date', inplace=True)
             prices.columns = [id+'_price']
-            # Ignore times in df to merge - keep only dates
-            # prices.index = prices.index.floor('d')
-
+            
             # Fill dailyNAV with prices for each ticker
             dailynav = pd.merge(dailynav, prices, on='date', how='left')
 
@@ -831,7 +839,85 @@ def alphavantage_historical(id):
             logging.warning(
                 f"[ALPHAVANTAGE] {id} not found as Stock or Crypto" +
                 f" - INVALID TICKER - {e}")
-            return("Invalid Ticker", "error", "empty")
+            # Last Try - look at Bitmex for  this ticker
+            logging.info("Trying Bitmex as a final alternative for this ticker")
+            data = bitmex_gethistory(id)
+            try: 
+                if data == 'error':  #In case a df is returned this raises an error
+                    return("Invalid Ticker", "error", "empty")
+            except ValueError:
+                # Match the AA data and save locally before returning
+                data = data.rename(columns = {'close':'4a. close (USD)'})
+                data['4b. close (USD)'] = data['4a. close (USD)']
+                # Remove tzutc() time type from timestamp (otherwise merging would fail)
+                data['timestamp'] = pd.to_datetime(data['timestamp'], utc = False)
+
+                # Change timestamp column to index
+                data.set_index('timestamp', inplace=True)
+                # Convert to UTC and remove localization
+                data = data.tz_convert(None)
+                meta_data = "Bitmex Metadata not available"
+                
+                # Save locally for reuse today
+                filename = "thewarden/alphavantage_data/" + id + ".aap"
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                data.to_pickle(filename)
+                meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
+                with open(meta_filename, 'wb') as handle:
+                    pickle.dump(meta_data, handle,
+                            protocol=pickle.HIGHEST_PROTOCOL)
+                logging.info(f"[BITMEX] {filename}: Filed saved locally")
+                return (data, "bitmex", meta_data)
+
+
+    return("Invalid Ticker", "error", "empty")
+
+
+def bitmex_gethistory(ticker):
+    # Gets historical prices from bitmex
+    # Saves to folder
+    from bitmex import bitmex
+    testnet = False
+    logging.info(f"[Bitmex] Trying Bitmex for {ticker}")
+    bitmex_credentials = load_bitmex_json()
+    
+    if ("api_key" in bitmex_credentials) and ("api_secret" in bitmex_credentials):
+        try:
+            mex = bitmex(test=testnet,
+                         api_key=bitmex_credentials['api_key'],
+                         api_secret=bitmex_credentials['api_secret'])
+            # Need to paginate results here to get all the history 
+            # Bitmex API end point limits 750 results per call
+            start_bin = 0
+            resp = (mex.Trade.Trade_getBucketed(
+                        symbol=ticker, binSize="1d", count=750, start=start_bin).result())[0]
+            df = pd.DataFrame(resp)
+            last_update = df['timestamp'].iloc[-1]
+            
+            # If last_update is older than 3 days ago, keep building.
+            while last_update < (datetime.now(timezone.utc) - timedelta(days=3)):
+                start_bin += 750
+                resp = (mex.Trade.Trade_getBucketed(
+                                symbol=ticker, binSize="1d", count=750, start=start_bin).result())[0]
+                df = df.append(resp)
+                last_update = df['timestamp'].iloc[-1]
+                # To avoid an infinite loop, check if start_bin 
+                # is higher than 10000 and stop (i.e. 30+yrs of data)
+                if start_bin > 10000:
+                    logging.error("[Bitmex] Something went wrong on price grab loop. Forced quit of loop.")
+                    break
+
+            logging.info(f"[Bitmex] Success. Downloaded data for {ticker}")
+            return(df)
+
+        except Exception as e:
+            logging.error(f"[Bitmex] error: {e}")    
+            return ("error")
+        
+    else:
+        logging.warning(f"[Bitmex] No Credentials Found")
+        return ('error')
+        
 
 
 def send_reset_email(user):
@@ -947,3 +1033,46 @@ def user_fx():
         reader = csv.reader(csvfile)
         fx_dict = {rows[0]: rows[1] for rows in reader}
     return ("USD")
+
+    
+# ------------------------------------
+# Helpers for Bitmex start here
+# ------------------------------------
+
+def save_bitmex_json(api_key, api_secret):
+    # receives api_key and api_secret then saves to a local json for later use
+    if (api_key is None) or (api_secret is None):
+        return ("missing arguments")
+    bitmex_data = {"api_key": api_key, "api_secret": api_secret}
+    with open('thewarden/api/bitmex.json', 'w') as fp:
+        json.dump(bitmex_data, fp)
+        return ("Credentials saved to bitmex.json")
+
+
+def load_bitmex_json():
+    # returns current stored keys if any
+    try:
+        with open('thewarden/api/bitmex.json', 'r') as fp:
+            data = json.load(fp)
+            return (data)
+    except (FileNotFoundError, KeyError):
+        return ({'status': 'error', 'message': 'API credentials not found'})
+
+
+def bitmex_orders(api_key, api_secret, testnet=True):
+    # Returns a json with all Bitmex Order History
+    # Takes arguments: ticker, testnet
+    # reads api credentials from file
+    from bitmex import bitmex
+    try:
+        mex = bitmex(test=testnet, api_key=api_key, api_secret=api_secret)
+    except Exception:
+        return ("Connection Error. Check your connection.")
+    try:
+        resp = mex.Execution.Execution_getTradeHistory(count=500, start=0, reverse=True).result()
+        # resp = mex.User.User_getWalletHistory(count=50000).result()
+        # resp = mex.User.User_getWalletHistory(currency=ticker, count=5000).result()
+    except Exception:
+        resp = "Invalid Credential or Connection Error"
+    return(resp)
+

@@ -1,5 +1,11 @@
 # Release History
 
+## v.12 alpha (released on 8/7/2019)
+
+- Bug fixes and performance enhancements
+- Included Import from Bitmex to import transactions
+- Included pricing feed for Bitmex future contracts
+
 ## v.11 alpha (released on 8/3/2019)
 
 - Many bug fixes and performance enhancements

@@ -1,6 +1,6 @@
 # The WARden
 
-_Version 0.11 Alpha_
+_Version 0.12 Alpha_
 
 **Found this project useful?** \
 _Consider tipping the developer: [tippin.me](https://tippin.me/@alphaazeta)_.

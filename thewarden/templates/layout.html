@@ -140,21 +140,19 @@
 
                         <a class="sidebar-subitem" href="{{ url_for('users.services') }}"><i
                                 class="fas fa-user-secret fa-lg"></i>&nbsp;&nbsp;Privacy Services</a>
+                        <a class="sidebar-subitem fa-lg" href="{{ url_for('transactions.bitmex_transactions') }}"><i
+                                class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;Bitmex Import</a>
 
                         <a class="sidebar-subitem" href="{{ url_for('main.importcsv') }}"><i
-                                class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;Import CSV file</a>
+                                class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;CSV Import</a>
                         <a class="sidebar-subitem fa-lg" href="{{ url_for('main.csvtemplate') }}"><i
                                 class="fas fa-book fa-lg"></i>&nbsp;&nbsp;CSV file instructions</a>
+
                         <a class="sidebar-subitem" id="downloadcsv" href="{{ url_for('main.exportcsv') }}"><i
                                 class="fas fa-download fa-lg"></i>&nbsp;&nbsp;Download transactions</a>
 
                     </div>
                 </div>
-
-
-
-
-
 
                 <!-- TRANSACTIONS MENU + SUBMENUS -->
                 <li>
@@ -265,16 +263,17 @@
     <!-- Main Content -->
     <div id="page-content-wrapper">
         <main role=" main">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            {% for category, message in messages %}
-            <div id="messagealert" class="alert alert-{{ category }}">
-                {{ message }}
-            </div>
-            {% endfor %}
-            {% endif %}
-            {% endwith %}
+
             <div style='padding-top: 70px;'>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div id="messagealert" class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
                 {% block content %}{% endblock %}
             </div>
             <br>
