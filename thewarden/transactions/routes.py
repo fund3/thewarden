@@ -414,13 +414,16 @@ def deltrade():
     if request.method == "GET":
         id = request.args.get("id")
         trade = Trades.query.filter_by(id=id).first()
-        reference_id = trade.trade_reference_id
+        
         if trade is None:
             flash(f"Trade id: {id} not found. Nothing done.", "warning")
             return redirect(url_for("main.home"))
 
         if trade.user_id != current_user.username:
             abort(403)
+
+        reference_id = trade.trade_reference_id
+        
         Trades.query.filter_by(trade_reference_id=reference_id).delete()
         db.session.commit()
         # re-generates the NAV on the background - delete First
