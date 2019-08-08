@@ -67,6 +67,7 @@ def account():
         current_user.aa_apikey = form.alphavantage_apikey.data
         current_user.dojo_apikey = form.dojo_apikey.data
         current_user.dojo_onion = form.dojo_onion.data
+        current_user.image_file = form.basefx.data
         db.session.commit()
         flash("Your account has been updated", "success")
         return redirect(url_for("users.account"))
@@ -77,7 +78,6 @@ def account():
         # If not, default to USD
         fx = fx_list()
         found = [item for item in fx if current_user.image_file in item]
-        print(found)
         if found != []:
             form.basefx.data = current_user.image_file
         else:

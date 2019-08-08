@@ -1,12 +1,12 @@
 import logging
 import os
 from datetime import datetime
-import requests
 import urllib.parse
 from time import time
 from logging.handlers import RotatingFileHandler
+import requests
 
-from flask import Flask
+from flask import Flask, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, current_user
 from flask_mail import Mail
@@ -31,7 +31,7 @@ login_manager = LoginManager()
 # Check size of debug.log file if it exists
 try:
     debugfile = os.stat("debug.log")
-    maxsize = 1 * 1024 * 1024  # 1MB max size - increase if needed more history
+    maxsize = 5 * 1024 * 1024  # 5MB max size - increase if needed more history
     if debugfile.st_size > maxsize:
         print("Startup message: Debug File size is larger than maxsize")
         print("Moving into archive")
@@ -48,19 +48,19 @@ logging.basicConfig(filename="debug.log", level=logging.DEBUG, format=format_str
 handler.setFormatter(format_str)
 logging.captureWarnings(True)
 
-
 # If login required - go to login:
 login_manager.login_view = "users.login"
 # To display messages - info class (Bootstrap)
 login_manager.login_message_category = "info"
 logging.info("Starting main program...")
 
-
 # Tests if IP is being concealled by using Tor
 # Returns Status, IPs (with and withour Tor) and Tor request delay
 # This test should be run here. When put inside node.util
 # it raised errors as node.util uses db that it's still not
 # declared the first time Flask launches.
+
+
 def test_tor():
     response = {}
     logging.info("Testing Tor")
@@ -110,7 +110,7 @@ def test_tor():
         "difference": "-",
         "status": False,
     }
-    logging.warn("Tor seems disabled! Check your Tor connection.")
+    logging.warning("Tor seems disabled! Check your Tor connection.")
     return response
 
 
@@ -119,6 +119,8 @@ tor_test = test_tor()
 TOR = tor_test
 
 # Application Factory
+
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -141,6 +143,19 @@ def create_app(config_class=Config):
     app.register_blueprint(main)
     app.register_blueprint(errors)
     app.register_blueprint(node)
+
+    # This will run only once at the first request
+    @app.before_first_request
+    def before_first_request():
+        if current_user.is_authenticated:
+            from thewarden.users.utils import fx_list
+            fx = fx_list()
+            found = [item for item in fx if current_user.image_file in item]
+            if found == []:
+                current_user.image_file = "USD"
+                db.session.commit()
+                flash("No currency found for portfolio. Defaulted to USD.", "warning")
+
 
     # Jinja2 filter to format time to a nice string
     @app.template_filter()
@@ -218,4 +233,5 @@ def create_app(config_class=Config):
         return str(int(day_diff / 365)) + " years ago"
 
     return app
+
 

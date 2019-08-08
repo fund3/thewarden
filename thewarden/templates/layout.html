@@ -116,11 +116,20 @@
         {% if current_user.is_authenticated %}
         <div id="sidebar-wrapper">
             <ul class="sidebar-nav small">
+                
                 <li>
-                    <strong><a href="/" class="text-white">
+                    <strong><a href="/" class="text-white border-bottom">
                             <i class="fas fa-home fa-2x"></i> &nbsp;&nbsp;&nbsp; Home
-                        </a></strong>
+                            </a></strong>
                 </li>
+                
+                <li><a href="{{ url_for('users.account') }}" class="text-left border-bottom">
+                        <span class="small text-white">Currency&nbsp;</span>
+                        <strong>{{current_user.image_file}}</strong>
+                        <i class="fas fa-exchange-alt text-white small"></i>
+                    </a>
+                </li>
+
 
                 <!-- ACCOUNT TOOLS MENU + SUBMENUS -->
                 <li>
