@@ -5,11 +5,8 @@ import requests
 import configparser
 import hashlib
 import pickle
-<<<<<<< HEAD
 import csv
-=======
 import json
->>>>>>> 37267e214634f350768ca274f8c5be4968ba1824
 import pandas as pd
 import numpy as np
 from PIL import Image
