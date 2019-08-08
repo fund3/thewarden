@@ -1020,16 +1020,22 @@ def price_ondate(ticker, date_input):
     return (idx)
 
 
-def user_fx():
-    fx = current_user.image_file
+def fx_list():
     fx_dict = {}
     with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
         reader = csv.reader(csvfile)
-        fx_dict = {rows[0]: rows[1] for rows in reader}
+        fiat_dict = {rows[0]: (rows[1] + " (fiat)") for rows in reader}
     with open('thewarden/static/csv_files/digital_currency_list.csv', newline='') as csvfile:
         reader = csv.reader(csvfile)
-        fx_dict = {rows[0]: rows[1] for rows in reader}
-    return ("USD")
+        dig_dict = {rows[0]: (rows[1] + " (crypto)") for rows in reader}
+
+    fx_dict = {**fiat_dict, **dig_dict}
+    
+    # Convert dict to list
+    fx_list = [(k, k + ' | ' + v) for k, v in fx_dict.items()]
+    fx_list.sort()
+    return (fx_list)
+
 
     
 # ------------------------------------

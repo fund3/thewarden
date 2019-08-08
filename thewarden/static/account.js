@@ -19,17 +19,16 @@ $(function () {
                 },
 
                 success: function (data) {
-                    console.log(data)
                     response($.map(data, function (item) {
                         return {
-                            label: item,
-                            value: item
+                            label: (item),
+                            value: (item)
                         }
                     }));
                 }
 
             });
         },
-        minLength: 0
+        minLength: 1
     });
 });

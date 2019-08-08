@@ -10,7 +10,7 @@ from thewarden.users.forms import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from thewarden.models import User, Trades, AccountInfo
-from thewarden.users.utils import send_reset_email, user_fx
+from thewarden.users.utils import send_reset_email, fx_list
 
 users = Blueprint("users", __name__)
 
@@ -62,7 +62,6 @@ def logout():
 @login_required
 def account():
     form = UpdateAccountForm()
-    fx = user_fx()
     if form.validate_on_submit():
         current_user.email = form.email.data
         current_user.aa_apikey = form.alphavantage_apikey.data
@@ -74,14 +73,23 @@ def account():
 
     elif request.method == "GET":
         form.email.data = current_user.email
+        # Check if the current value is in list of fx
+        # If not, default to USD
+        fx = fx_list()
+        found = [item for item in fx if current_user.image_file in item]
+        print(found)
+        if found != []:
+            form.basefx.data = current_user.image_file
+        else:
+            form.basefx.data = "USD"
         form.alphavantage_apikey.data = current_user.aa_apikey
         form.sql_uri.data = Config.SQLALCHEMY_DATABASE_URI
         form.sql_uri.render_kw = {"disabled": "disabled"}
         form.dojo_onion.data = current_user.dojo_onion
         form.dojo_apikey.data = current_user.dojo_apikey
-    image_file = url_for("static", filename="images/" + current_user.image_file)
+
     return render_template(
-        "account.html", title="Account", image_file=image_file, form=form
+        "account.html", title="Account", form=form
     )
 
 

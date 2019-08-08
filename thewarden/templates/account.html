@@ -27,16 +27,23 @@
 
                 <div class="form-group">
                     <h5>{{ form.basefx.label(class="form-control-label") }}</h5>
+
+
                     {% if form.basefx.errors %}
                     {{ form.basefx(class="form-control form-control-lg is-invalid") }}
+
                     <div class="invalid-feedback">
                         {% for error in form.basefx.errors %}
                         <span>{{ error }}</span>
                         {% endfor %}
+
                     </div>
                     {% else %}
                     {{ form.basefx(class="form-control form-control-lg") }}
                     {% endif %}
+
+
+
                 </div>
 
 
