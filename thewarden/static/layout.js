@@ -1,5 +1,10 @@
 $(document).ready(function () {
-    BTC_price();
+    // refresh BTC price every 5 seconds
+    window.setInterval(function () {
+        BTC_price();
+    }, 1000);
+
+
 
     $("#menu-toggle").click(function (e) {
         e.preventDefault();
@@ -74,7 +79,6 @@ function BTC_price() {
         url: "/realtime_user",
         success: function (data) {
             if ('cross' in data) {
-                console.log(data)
                 $('#fx_cross').html(data['cross']);
                 $('#fx_rate').html(data['fx_rate'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
                 $('#btc_fx').html(data[data['base']].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));

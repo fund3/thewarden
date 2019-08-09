@@ -245,26 +245,26 @@
 
             <div class="list-group bg-transparent text-white">
                 {%if (current_user.image_file != 'USD')%}
-                <span style="padding-left: 30px;">
+                <span style="padding-left: 30px; color:lightgreen;">
                     FX Cross
                     <span id="fx_cross" style="float:right; padding-right: 35px;">
                         <span class="loadanim small">loading</span>
                     </span>
                 </span>
-                <span style="padding-left: 30px;">
+                <span style="padding-left: 30px; color:lightgreen;">
                     FX Rate
                     <span id="fx_rate" style="float:right; padding-right: 35px;">
                         <span class="loadanim small">loading</span>
                     </span>
                 </span>
-                <span style="padding-left: 30px;">
+                <span style="padding-left: 30px; color:lightgreen;">
                     BTC ({{current_user.image_file}})
                     <span id="btc_fx" style="float:right; padding-right: 35px;">
                         <span class="loadanim small">loading</span>
                     </span>
                 </span>
                 {%endif%}
-                <span style="padding-left: 30px;">
+                <span style="padding-left: 30px; color:lightgreen;">
                     BTC (USD)
                     <span id="btc_usd" style="float:right; padding-right: 35px;">
                         <span class="loadanim small">loading</span>
