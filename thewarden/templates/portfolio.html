@@ -21,8 +21,8 @@
             <tbody>
                 <tr>
                     <td id="pvalue" class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
-                        title="Market Value in $">
-                        $ {{"{:,.0f}".format(portfolio_data.TOTAL.usd_position)}}
+                        title="Market Value in {{current_user.fx() | fxsymbol}}">
+                        {{current_user.fx() | fxsymbol}} {{"{:,.0f}".format(portfolio_data.TOTAL.usd_position)}}
                     </td>
                     <td></td>
                     <td id="pvaluebtc" class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
@@ -36,7 +36,7 @@
                     </td>
                     <td></td>
                     <td id="chg2" class="redgreen border-bottom hinumber text-right">
-                        $ {{"{:+,.0f}".format(portfolio_data.TOTAL.chg_usd_24h)}}
+                        {{current_user.fx() | fxsymbol}} {{"{:+,.0f}".format(portfolio_data.TOTAL.chg_usd_24h)}}
 
                     </td>
 
@@ -130,7 +130,7 @@
                         </th>
 
                         <th class="text-right">
-                            Latest Price (USD)
+                            Latest Price ({{current_user.fx() | fxsymbol}})
                         </th>
 
                         <th class="text-right small">
@@ -140,7 +140,7 @@
 
                         </th>
                         <th class="text-right">
-                            Position (USD)
+                            Position ({{current_user.fx() | fxsymbol}})
                         </th>
                         <th class="text-right small">
                             % of total
@@ -170,7 +170,8 @@
                         </td>
 
                         <td class="text-right align-middle hinumbersmall">
-                            <strong>${{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['PRICE'])}}</strong>
+                            <strong>{{current_user.fx() | fxsymbol}}
+                                {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['PRICE'])}}</strong>
                         </td>
 
                         <td class="text-right small align-middle redgreen">
@@ -187,7 +188,7 @@
                         </td>
 
                         <td class="text-right align-middle">
-                            ${{"{:,.0f}".format(portfolio_data[position]['usd_position'])}}
+                            {{current_user.fx() | fxsymbol}}{{"{:,.0f}".format(portfolio_data[position]['usd_position'])}}
                         </td>
 
                         <td class="text-right small align-middle">
@@ -277,23 +278,26 @@
                             <th class="align-middle">{{position}}</th>
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data[position]['usd_position'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['usd_position'])}}
 
                             </td>
 
 
                             <td class="text-right align-middle redgreen">
-                                $ {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['realized_pnl'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['realized_pnl'])}}
                             </td>
 
                             <td class="text-right align-middle redgreen">
-                                $
+                                {{current_user.fx() | fxsymbol}}
                                 {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['unrealized_pnl'])}}
                             </td>
 
                             <td class="text-right align-middle small">
                                 {% if portfolio_data[position]['small_pos'] == 'False' %}
-                                $ {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['unrealized_be'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['unrealized_be'])}}
                                 {% else %}
                                 ---
                                 {% endif %}
@@ -301,15 +305,18 @@
 
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data[position]['total_fees'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['total_fees'])}}
                             </td>
 
                             <td class="text-right align-middle redgreen">
-                                $ {{"{:,.0f}".format(portfolio_data[position]['total_pnl_net_USD'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['total_pnl_net_USD'])}}
                             </td>
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data[position]['breakeven'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['breakeven'])}}
                             </td>
 
                         </tr>
@@ -320,7 +327,8 @@
                             <th class="align-middle" scope="row">TOTAL</th>
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data['TOTAL']['usd_position'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data['TOTAL']['usd_position'])}}
 
                             </td>
 
@@ -336,11 +344,13 @@
 
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data['TOTAL'].trade_fees)}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data['TOTAL'].trade_fees)}}
                             </td>
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data['TOTAL'].total_pnl_net_USD)}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data['TOTAL'].total_pnl_net_USD)}}
                             </td>
 
                             <td class="text-right small align-middle">
@@ -405,23 +415,26 @@
                             <th class="align-middle">{{position}}</th>
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data[position]['usd_position'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['usd_position'])}}
 
                             </td>
 
 
                             <td class="text-right align-middle redgreen">
-                                $ {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['FIFO']['realized_pnl'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['FIFO']['realized_pnl'])}}
                             </td>
 
                             <td class="text-right align-middle redgreen">
-                                $
+                                {{current_user.fx() | fxsymbol}}
                                 {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['FIFO']['unrealized_pnl'])}}
                             </td>
 
                             <td class="text-right align-middle small">
                                 {% if portfolio_data[position]['small_pos'] == 'False' %}
-                                $ {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['FIFO']['unrealized_be'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['FIFO']['unrealized_be'])}}
                                 {% else %}
                                 ---
                                 {% endif %}
@@ -429,15 +442,18 @@
 
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data[position]['total_fees'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['total_fees'])}}
                             </td>
 
                             <td class="text-right align-middle redgreen">
-                                $ {{"{:,.0f}".format(portfolio_data[position]['total_pnl_net_USD'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['total_pnl_net_USD'])}}
                             </td>
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data[position]['breakeven'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data[position]['breakeven'])}}
                             </td>
 
                         </tr>
@@ -448,7 +464,8 @@
                             <th class="align-middle" scope="row">TOTAL</th>
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data['TOTAL']['usd_position'])}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data['TOTAL']['usd_position'])}}
 
                             </td>
 
@@ -464,11 +481,13 @@
 
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data['TOTAL'].trade_fees)}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data['TOTAL'].trade_fees)}}
                             </td>
 
                             <td class="text-right align-middle">
-                                $ {{"{:,.0f}".format(portfolio_data['TOTAL'].total_pnl_net_USD)}}
+                                {{current_user.fx() | fxsymbol}}
+                                {{"{:,.0f}".format(portfolio_data['TOTAL'].total_pnl_net_USD)}}
                             </td>
 
                             <td class="text-right small align-middle">
@@ -496,7 +515,7 @@
                         </th>
 
                         <th class="text-right">
-                            Price ($)
+                            Price ({{current_user.fx() | fxsymbol}})
                         </th>
 
                         <th class="text-right small">
@@ -541,7 +560,8 @@
                         </th>
 
                         <td class="text-right align-middle hinumbersmall">
-                            <strong> ${{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['PRICE'])}}
+                            <strong> {{current_user.fx() | fxsymbol}}
+                                {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['PRICE'])}}
                             </strong>
                         </td>
 
@@ -559,12 +579,15 @@
                         </td>
 
                         <td class="text-center small">
-                            ${{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['LOWDAY'])}}</br>
-                            ${{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['HIGHDAY'])}}
+                            {{current_user.fx() | fxsymbol}}
+                            {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['LOWDAY'])}}</br>
+                            {{current_user.fx() | fxsymbol}}
+                            {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['HIGHDAY'])}}
                         </td>
 
                         <td class="text-right align-middle small">
-                            ${{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['MKTCAP']/1000000000)}} B
+                            {{current_user.fx() | fxsymbol}}
+                            {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['MKTCAP']/1000000000)}} B
                         </td>
 
                         <td class="text-right align-middle small">
@@ -732,10 +755,24 @@
 
 
 
-
         </div>
         <!-- END Settings Section -->
 
+
+    </div>
+
+
+</div>
+
+<div class='row'>
+    <div class="col-sm-12 text-muted small">
+
+        <span class="text-dark">
+            <span class="fa-lg">({{current_user.fx() | fxsymbol}})</span>
+            <strong>All prices in this page are quoted in
+                {{current_user.fx() | fxsymbol('name_plural')}}
+            </strong>
+        </span>
 
     </div>
 </div>

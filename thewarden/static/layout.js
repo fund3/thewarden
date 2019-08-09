@@ -90,7 +90,7 @@ function BTC_price() {
 
         },
         error: function (xhr, status, error) {
-            $('#fx_cross').html('error');
+            console.log("Error on fx request")
         }
     });
 };

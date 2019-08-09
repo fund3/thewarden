@@ -236,15 +236,15 @@
         <!-- FX Rate -->
         <li class="border-top">
             <span class="text-white">
-                <i class="fas fa-dollar-sign fa-lg"></i>
-                <strong>&nbsp;&nbsp;&nbsp;&nbsp;Base Currency ({{current_user.image_file}})</strong></span>
+                <span class="fa-2x">{{current_user.fx() | fxsymbol}}</span>
+                <strong>&nbsp;&nbsp;&nbsp;&nbsp;Base Currency</strong></span>
         </li>
 
 
         <div class="show" id="collapse_fx">
 
             <div class="list-group bg-transparent text-white">
-                {%if (current_user.image_file != 'USD')%}
+                {%if (current_user.fx() != 'USD')%}
                 <span style="padding-left: 30px; color:lightgreen;">
                     FX Cross
                     <span id="fx_cross" style="float:right; padding-right: 35px;">
@@ -258,7 +258,7 @@
                     </span>
                 </span>
                 <span style="padding-left: 30px; color:lightgreen;">
-                    BTC ({{current_user.image_file}})
+                    BTC ( {{current_user.fx() | fxsymbol}} )
                     <span id="btc_fx" style="float:right; padding-right: 35px;">
                         <span class="loadanim small">loading</span>
                     </span>
@@ -274,7 +274,9 @@
 
             <div class="list-group bg-transparent text-white">
                 <a class="sidebar-subitem" href="{{ url_for('users.account') }}">
-                    <i class="fas fa-exchange-alt fa-lg"></i>&nbsp;&nbsp;Change base currency</a>
+                    <i class="fas fa-exchange-alt fa-lg"></i>&nbsp;&nbsp;Change from
+                    {{current_user.fx() | fxsymbol}}</a>
+
             </div>
 
         </div>

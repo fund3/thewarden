@@ -1,9 +1,9 @@
 import logging
 import os
+import json
 from datetime import datetime
 import urllib.parse
 from time import time
-from logging.handlers import RotatingFileHandler
 import requests
 
 from flask import Flask, flash
@@ -11,8 +11,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_required, current_user
 from flask_mail import Mail
 from flask_migrate import Migrate
-from thewarden.config import Config
+from logging.handlers import RotatingFileHandler
 from sqlalchemy import MetaData
+from thewarden.config import Config
 
 
 naming_convention = {
@@ -156,7 +157,6 @@ def create_app(config_class=Config):
                 db.session.commit()
                 flash("No currency found for portfolio. Defaulted to USD.", "warning")
 
-
     # Jinja2 filter to format time to a nice string
     @app.template_filter()
     # Formating function, takes self +
@@ -186,6 +186,27 @@ def create_app(config_class=Config):
     def epoch(epoch):
         time_r = datetime.fromtimestamp(epoch).strftime("%m-%d-%Y (%H:%M)")
         return time_r
+
+    @app.template_filter()
+    def fxsymbol(fx, output='symbol'):
+        # Gets an FX 3 letter symbol and returns the HTML symbol
+        # Sample outputs are:
+        # "EUR": {
+        # "symbol": "€",
+        # "name": "Euro",
+        # "symbol_native": "€",
+        # "decimal_digits": 2,
+        # "rounding": 0,
+        # "code": "EUR",
+        # "name_plural": "euros"
+        with open('thewarden/static/json_files/currency.json') as fx_json:
+            fx_list = json.load(fx_json)
+        try:
+            out = fx_list[fx][output]
+        except Exception:
+            out = fx
+
+        return (out)
 
     @app.template_filter()
     def time_ago(time=False):
@@ -233,5 +254,3 @@ def create_app(config_class=Config):
         return str(int(day_diff / 365)) + " years ago"
 
     return app
-
-

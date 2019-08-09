@@ -33,7 +33,7 @@ def newtrade():
         accounts.append((item.account_longname, item.account_longname))
     form.trade_account.choices = accounts
     form.cash_account.choices = accounts
-    form.trade_currency.data = current_user.image_file
+    form.trade_currency.data = current_user.fx()
 
     if request.method == "POST":
 

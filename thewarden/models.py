@@ -51,6 +51,9 @@ class User(db.Model, UserMixin):
             return None
         return User.query.get(user_id)
 
+    def fx(self):
+        return (f'{self.image_file}')
+
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
 
