@@ -75,25 +75,32 @@
 
             </div>
 
+            <div class="form-group" id="trade_currency">
+
+                {{ form.trade_currency.label(class="form-control-label") }}
+                {{ form.trade_currency(class="form-control form-control-sm", autocomplete="off", id="fx")}}
+
+            </div>
+
             <div class="form-group" id="trade_price">
 
                 {{ form.trade_price.label(class="form-control-label") }}
                 {{ form.trade_price(class="form-control form-control-sm", autocomplete="off", id="price")}}
-
+                <small class="form-text text-info">Price quoted in the Trade Currency</small>
             </div>
 
             <div class="form-group" id="trade_fees">
 
                 {{ form.trade_fees.label(class="form-control-label") }}
                 {{ form.trade_fees(class="form-control form-control-sm", autocomplete="off", id="fees")}}
-
+                <small class="form-text text-info">Fees quoted in the Trade Currency</small>
             </div>
 
             <div class="form-group" id="cash_value">
 
                 {{ form.cash_value.label(class="form-control-label") }}
                 {{ form.cash_value(class="form-control form-control-sm", id="cash", readonly=true)}}
-
+                <small class="form-text text-info">Fiat Value quoted in the Trade Currency</small>
             </div>
 
             <div class="form-group" id="trade_account">

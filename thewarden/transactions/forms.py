@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-
+from flask_login import current_user
 from thewarden.models import listofcrypto
+from thewarden.users.utils import fx_list
 from wtforms import StringField, SubmitField, SelectField
 from wtforms.validators import DataRequired, ValidationError, Optional
 from wtforms.fields.html5 import DateField
@@ -25,11 +26,12 @@ class NewTrade(FlaskForm):
         choices=[("B", "Buy"), ("S", "Sell"), ("D", "Deposit"), ("W", "Withdraw")],
     )
     trade_quantity = StringField("Quantity", [Optional()])
+    trade_currency = SelectField("Trade Currency", [Optional()], choices=fx_list())
     trade_price = StringField("Price", [Optional()])
-    trade_fees = StringField("Fees in USD", default=0)
+    trade_fees = StringField("Fees", default=0)
     trade_account = StringField("Trade Account")
     cash_account = StringField("Debit (or Credit) Account")
-    cash_value = StringField("Total Cash Amount in USD", default=0)
+    cash_value = StringField("Total Cash Amount", default=0)
     trade_notes = StringField("Trade Notes and Tags")
 
     submit = SubmitField("Insert New Trade")
@@ -90,15 +92,16 @@ class EditTransaction(FlaskForm):
         [Optional()],
         choices=[("B", "Buy"), ("S", "Sell"), ("D", "Deposit"), ("W", "Withdraw")],
     )
+    trade_currency = SelectField("Trade Currency", [Optional()], choices=fx_list())
     trade_quantity = StringField("Quantity", [DataRequired()])
     trade_price = StringField("Price", [DataRequired()])
-    trade_fees = StringField("Fees in USD", default=0)
+    trade_fees = StringField("Fees", default=0)
     trade_account = StringField("Trade Account")
     cash_account = StringField("Debit (or Credit) Account", [Optional()])
     trade_notes = StringField("Trade Notes and Tags")
-    match_asset_ticker = SelectField("Currency", [Optional()], choices=[("USD", "USD")])
+    match_asset_ticker = SelectField("Currency", [Optional()], choices=fx_list())
     trade_type = StringField("Select type of Transaction", [Optional()], default="")
-    cash_value = StringField("Total Cash Amount in USD", default=0)
+    cash_value = StringField("Total Cash Amount", default=0)
 
     submit = SubmitField("Update Transaction")
 

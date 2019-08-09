@@ -33,6 +33,7 @@ def newtrade():
         accounts.append((item.account_longname, item.account_longname))
     form.trade_account.choices = accounts
     form.cash_account.choices = accounts
+    form.trade_currency.data = current_user.image_file
 
     if request.method == "POST":
 
@@ -88,6 +89,7 @@ def newtrade():
                     user_id=current_user.username,
                     trade_date=form.trade_date.data,
                     trade_account=form.trade_account.data,
+                    trade_currency=form.trade_currency.data,
                     trade_asset_ticker=form.trade_asset_ticker.data,
                     trade_quantity=tquantity,
                     trade_operation=form.trade_operation.data,
@@ -117,7 +119,8 @@ def newtrade():
                     user_id=current_user.username,
                     trade_date=form.trade_date.data,
                     trade_account=form.cash_account.data,
-                    trade_asset_ticker="USD",
+                    trade_currency=form.trade_currency.data,
+                    trade_asset_ticker=form.trade_currency.data,
                     trade_operation=acc,
                     trade_price="1",
                     trade_quantity=float(cleancsv(form.cash_value.data)),
@@ -143,7 +146,8 @@ def newtrade():
                     user_id=current_user.username,
                     trade_date=form.trade_date.data,
                     trade_account=form.cash_account.data,
-                    trade_asset_ticker="USD",
+                    trade_currency=form.trade_currency.data,
+                    trade_asset_ticker=form.trade_currency.data,
                     trade_quantity=cv,
                     trade_price=1,
                     trade_operation=form.trade_operation.data,
@@ -257,7 +261,6 @@ def edittransaction():
     if request.method == "POST":
 
         if form.validate_on_submit():
-
             # Write changes to database
             if form.trade_operation.data in ("B", "D"):
                 qop = 1
@@ -318,6 +321,7 @@ def edittransaction():
 
             trade[0].trade_date = form.trade_date.data
             trade[0].trade_asset_ticker = form.trade_asset_ticker.data
+            trade[0].trade_currency = form.trade_currency.data
             trade[0].trade_operation = form.trade_operation.data
             trade[0].trade_quantity = float(form.trade_quantity.data) * qop
             trade[0].trade_price = form.trade_price.data
@@ -328,8 +332,9 @@ def edittransaction():
 
             if matchok:
                 match[0].trade_asset_ticker = form.match_asset_ticker.data
-                if trade_type == "1" and form.trade_asset_ticker.data != "USD":
-                    match[0].trade_asset_ticker = "USD"
+                if trade_type == "1" and form.trade_asset_ticker.data != form.trade_currency.data:
+                    match[0].trade_asset_ticker = form.trade_currency.data
+                match[0].trade_currency = form.trade_currency.data
                 match[0].trade_account = form.cash_account.data
                 match[0].trade_operation = acc
                 match[0].trade_date = form.trade_date.data
@@ -378,11 +383,11 @@ def edittransaction():
 
             return redirect(url_for("main.home"))
 
-        else:
-            flash("Trade edit failed. Something went wrong. Try Again.", "danger")
+        flash("Trade edit failed. Something went wrong. Try Again.", "danger")
 
     # Pre-populate the form
     form.trade_date.data = trade[0].trade_date
+    form.trade_currency.data = trade[0].trade_currency
     form.trade_asset_ticker.data = trade[0].trade_asset_ticker
     form.trade_operation.data = trade[0].trade_operation
     form.trade_quantity.data = abs(float(trade[0].trade_quantity))

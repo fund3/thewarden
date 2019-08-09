@@ -170,9 +170,7 @@ function hideandshow() {
     $('#submit').hide();
     $('#transdesc').text('PLEASE CHOOSE AN OPTION');
     $('#submit_button').hide()
-
   }
-
 
 }
 
@@ -199,7 +197,7 @@ function calccf() {
   }
 
   // fin = fin.value().toLocaleString('en-US', { style: 'decimal', maximumFractionDigits : 2, minimumFractionDigits : 2 })
-  $('#cash').val("$" + fin.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
+  $('#cash').val(fin.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
 
 }
 
