@@ -74,7 +74,8 @@ def rt_price_grab(ticker, user_fx='USD'):
 def cost_calculation(user, ticker):
     # This function calculates the cost basis assuming 3 different methods
     # FIFO, LIFO and avg. cost
-    if ticker == 'USD':
+    found = [item for item in fx_list() if ticker in item]
+    if found != []:
         return (0)
 
     df = pd.read_sql_table('trades', db.engine)
@@ -149,6 +150,27 @@ def cost_calculation(user, ticker):
     return (cost_matrix)
 
 
+def fx_rate():
+    try:
+        # get fx rate
+        fx_rate = rt_price_grab('BTC', current_user.fx())
+        fx_rate['base'] = current_user.fx()
+        fx_rate['fx_rate'] = fx_rate[current_user.fx()] / fx_rate['USD']
+        fx_rate['cross'] = "USD" + " / " + current_user.fx()
+        return json.dumps(fx_rate)
+    except Exception as e:
+        return (f"Error: {e}")
+
+def fx():
+    # Returns a float with the conversion of fx in the format of
+    # Currency / USD
+    try:
+        fx = json.loads(fx_rate())
+        fx = float(json.loads(fx_rate())['fx_rate'])
+    except (AttributeError, KeyError) as e:
+        fx = float(1)
+    return (fx)
+
 def generate_pos_table(user, fx, hidesmall):
     # New version to generate the front page position summary
     df = pd.read_sql_table('trades', db.engine)
@@ -177,14 +199,14 @@ def generate_pos_table(user, fx, hidesmall):
     consol_table['symbol'] = consol_table.index.values
     try:
         consol_table = consol_table.drop('USD')
+        consol_table = consol_table.drop(current_user.fx())
         if consol_table.empty:
             return ("empty", "empty")
 
     except KeyError:
-        logging.info("[generate_pos_table] No USD positions found")
+        logging.info(f"[generate_pos_table] No USD or {current_user.fx()} positions found")
 
-    # Functions to filter and apply to the data
-
+    
     def find_price_data(ticker):
         price_data = price_list["RAW"][ticker]['USD']
         return (price_data)
@@ -195,11 +217,13 @@ def generate_pos_table(user, fx, hidesmall):
             return (price_data)
         except KeyError:
             return (0)
-
+ 
     consol_table['price_data_USD'] = consol_table['symbol'].\
         apply(find_price_data)
     consol_table['price_data_BTC'] = consol_table['symbol'].\
         apply(find_price_data_BTC)
+    consol_table['price_data_fx'] = consol_table['price_data_USD'] 
+    
 
     consol_table['usd_price'] =\
         consol_table.price_data_USD.map(lambda v: v['PRICE'])
@@ -264,8 +288,11 @@ def generate_pos_table(user, fx, hidesmall):
         list_of_tickers = consol_table.index.unique().tolist()
 
     for ticker in list_of_tickers:
-        if ticker == 'USD':
+        # Check if this is a fiat currency. If so, ignore
+        found = [item for item in fx_list() if ticker in item]
+        if found != []:
             continue
+        
         table[ticker] = {}
         table[ticker]['breakeven'] = 0
         if consol_table['small_pos'][ticker] == 'False':
