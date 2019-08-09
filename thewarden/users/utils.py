@@ -59,9 +59,26 @@ def multiple_price_grab(tickers, fx):
     return (data)
 
 
+
+def fx_grab(in_fx, out_fx):
+    from thewarden.node.utils import tor_request
+    # Grab a single conversion rate
+    baseURL =\
+        "https://min-api.cryptocompare.com/data/price?fsym=" + in_fx + \
+        "&tsyms=" + out_fx
+    request = tor_request(baseURL)
+    try:
+        data = request.json()
+        data = float(data[out_fx])
+    except AttributeError:
+        data = "ConnectionError"
+    return (data)
+
+
+
 def rt_price_grab(ticker, user_fx='USD'):
     baseURL =\
-        "https://min-api.cryptocompare.com/data/price?fsym="+ ticker +\
+        "https://min-api.cryptocompare.com/data/price?fsym=" + ticker + \
         "&tsyms=USD,BTC," + user_fx
     request = tor_request(baseURL)
     try:
