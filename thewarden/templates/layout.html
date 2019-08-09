@@ -116,19 +116,13 @@
         {% if current_user.is_authenticated %}
         <div id="sidebar-wrapper">
             <ul class="sidebar-nav small">
-                
+
                 <li>
-                    <strong><a href="/" class="text-white border-bottom">
+                    <strong><a href="/" class="text-white">
                             <i class="fas fa-home fa-2x"></i> &nbsp;&nbsp;&nbsp; Home
-                            </a></strong>
+                        </a></strong>
                 </li>
-                
-                <li><a href="{{ url_for('users.account') }}" class="text-left border-bottom">
-                        <span class="small text-white">Currency&nbsp;</span>
-                        <strong>{{current_user.image_file}}</strong>
-                        <i class="fas fa-exchange-alt text-white small"></i>
-                    </a>
-                </li>
+
 
 
                 <!-- ACCOUNT TOOLS MENU + SUBMENUS -->
@@ -139,7 +133,7 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;Account & Tools
                         <i class="fas fa-caret-down"></i></a>
                 </li>
-                <div class="collapse show" id="collapse_actools">
+                <div class="collapse hide" id="collapse_actools">
                     <div class="list-group bg-transparent text-white">
                         <a class="sidebar-subitem" href="{{ url_for('main.get_started') }}"><i
                                 class="fas fa-play-circle fa-lg"></i>&nbsp;&nbsp;Getting Started</a>
@@ -171,7 +165,7 @@
                         &nbsp;&nbsp;&nbsp;&nbsp;Portfolio Transactions
                         <i class="fas fa-caret-down"></i></a>
                 </li>
-                <div class="collapse show" id="collapse_transactions"">
+                <div class="collapse hide" id="collapse_transactions"">
                     <div class=" list-group bg-transparent text-white">
                     <a class="sidebar-subitem" href="{{ url_for('transactions.list_transactions') }}"><i
                             class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List Transactions</a>
@@ -193,7 +187,7 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;Charts & Analysis
                 <i class="fas fa-caret-down"></i></a>
         </li>
-        <div class="collapse show" id="collapse_charts">
+        <div class="collapse hide" id="collapse_charts">
             <div class="list-group bg-transparent text-white">
                 <a class="sidebar-subitem" href="{{ url_for('portfolio.navchart') }}"><i
                         class="fas fa-chart-area fa-lg"></i>&nbsp;&nbsp;NAV and Cost Chart</a>
@@ -228,40 +222,87 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;Step into the Dojo
                 <i class="fas fa-caret-down"></i></a>
         </li>
-        <div class="collapse show" id="collapse_bitcoin"">
-                            <div class=" list-group bg-transparent text-white">
-            <a class="sidebar-subitem" href="{{ url_for('node.bitcoin_monitor') }}"><i
-                    class="fas fa-tachometer-alt fa-lg"></i>&nbsp;&nbsp;Dashboard</a>
-            <a class="sidebar-subitem" href="{{ url_for('node.bitcoin_addresses') }}"><i
-                    class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List Addresses</a>
-            <a class="sidebar-subitem" href="{{ url_for('node.import_addresses') }}">
-                <i class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;Import Addresses</a>
+        <div class="collapse hide" id="collapse_bitcoin">
+            <div class="list-group bg-transparent text-white">
+                <a class="sidebar-subitem" href="{{ url_for('node.bitcoin_monitor') }}"><i
+                        class="fas fa-tachometer-alt fa-lg"></i>&nbsp;&nbsp;Dashboard</a>
+                <a class="sidebar-subitem" href="{{ url_for('node.bitcoin_addresses') }}"><i
+                        class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List Addresses</a>
+                <a class="sidebar-subitem" href="{{ url_for('node.import_addresses') }}">
+                    <i class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;Import Addresses</a>
+            </div>
+        </div>
 
+        <!-- FX Rate -->
+        <li class="border-top">
+            <span class="text-white">
+                <i class="fas fa-dollar-sign fa-lg"></i>
+                <strong>&nbsp;&nbsp;&nbsp;&nbsp;Base Currency ({{current_user.image_file}})</strong></span>
+        </li>
+
+
+        <div class="show" id="collapse_fx">
+
+            <div class="list-group bg-transparent text-white">
+                {%if (current_user.image_file != 'USD')%}
+                <span style="padding-left: 30px;">
+                    FX Cross
+                    <span id="fx_cross" style="float:right; padding-right: 35px;">
+                        <span class="loadanim small">loading</span>
+                    </span>
+                </span>
+                <span style="padding-left: 30px;">
+                    FX Rate
+                    <span id="fx_rate" style="float:right; padding-right: 35px;">
+                        <span class="loadanim small">loading</span>
+                    </span>
+                </span>
+                <span style="padding-left: 30px;">
+                    BTC ({{current_user.image_file}})
+                    <span id="btc_fx" style="float:right; padding-right: 35px;">
+                        <span class="loadanim small">loading</span>
+                    </span>
+                </span>
+                {%endif%}
+                <span style="padding-left: 30px;">
+                    BTC (USD)
+                    <span id="btc_usd" style="float:right; padding-right: 35px;">
+                        <span class="loadanim small">loading</span>
+                    </span>
+                </span>
+            </div>
+
+            <div class="list-group bg-transparent text-white">
+                <a class="sidebar-subitem" href="{{ url_for('users.account') }}">
+                    <i class="fas fa-exchange-alt fa-lg"></i>&nbsp;&nbsp;Change base currency</a>
+            </div>
 
         </div>
-    </div>
-    <br><br>
 
-    <li>
-        <a href="{{ url_for('main.about') }}" class="text-muted"><i
-                class="fab fa-bitcoin fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;About
-            The WARDen</a>
-    </li>
 
-    <li>
-        <a href="{{ url_for('users.logout') }}" class="text-muted">
-            <i class="fas fa-sign-out-alt fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;Logout
-        </a>
-    </li>
 
-    <li>
-        <a href="https://github.com/pxsocs/thewarden" target='new_page' class="text-muted">
-            <i class="fas fa-question fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;Support
-        </a>
-    </li>
+        <br>
 
-    <br><br><br><br><br><br><br>
-    </ul>
+        <li class="border-top">
+            <a href="{{ url_for('main.about') }}" class="text-muted"><i
+                    class="fab fa-bitcoin fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;About
+                The WARDen</a>
+        </li>
+
+        <li>
+            <a href="{{ url_for('users.logout') }}" class="text-muted">
+                <i class="fas fa-sign-out-alt fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;Logout
+            </a>
+        </li>
+
+        <li>
+            <a href="https://github.com/pxsocs/thewarden" target='new_page' class="text-muted">
+                <i class="fas fa-question fa-lg"></i>&nbsp;&nbsp;&nbsp;&nbsp;Support
+            </a>
+        </li>
+
+        <br><br><br><br><br><br><br>
+        </ul>
 
     </div>
     {% endif %}

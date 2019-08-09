@@ -1941,3 +1941,18 @@ def load_bitmex_json():
         return ({'status': 'error', 'message': 'API credentials not found'})
 
 
+@api.route("/realtime_user", methods=["GET"])
+# Returns current BTC price and FX rate for current user
+def realtime_user():
+    try:
+        # Get the user preferred FX
+        user_fx = current_user.image_file
+        # get fx rate
+        fx_rate = rt_price_grab('BTC', user_fx)
+        fx_rate['base'] = user_fx
+        fx_rate['fx_rate'] = fx_rate[user_fx] / fx_rate['USD']
+        fx_rate['cross'] = "USD" + " / " + user_fx
+        return json.dumps(fx_rate)
+    except Exception as e:
+        return (f"Error: {e}")
+    

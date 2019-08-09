@@ -1,4 +1,6 @@
 $(document).ready(function () {
+    BTC_price();
+
     $("#menu-toggle").click(function (e) {
         e.preventDefault();
         $("#wrapper").toggleClass("toggled");
@@ -62,4 +64,30 @@ $(document).ready(function () {
         }
     });
 });
+
+
+
+function BTC_price() {
+    $.ajax({
+        type: "GET",
+        dataType: 'json',
+        url: "/realtime_user",
+        success: function (data) {
+            if ('cross' in data) {
+                console.log(data)
+                $('#fx_cross').html(data['cross']);
+                $('#fx_rate').html(data['fx_rate'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
+                $('#btc_fx').html(data[data['base']].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
+                $('#btc_usd').html(data['USD'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
+
+            } else {
+                $('#fx_cross').html(data);
+            }
+
+        },
+        error: function (xhr, status, error) {
+            $('#fx_cross').html('error');
+        }
+    });
+};
 

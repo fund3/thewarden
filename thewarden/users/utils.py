@@ -59,10 +59,10 @@ def multiple_price_grab(tickers, fx):
     return (data)
 
 
-def rt_price_grab(ticker):
+def rt_price_grab(ticker, user_fx='USD'):
     baseURL =\
-        "https://min-api.cryptocompare.com/data/price?fsym="+ticker +\
-        "&tsyms=USD,BTC"
+        "https://min-api.cryptocompare.com/data/price?fsym="+ ticker +\
+        "&tsyms=USD,BTC," + user_fx
     request = tor_request(baseURL)
     try:
         data = request.json()
@@ -1024,15 +1024,9 @@ def fx_list():
     fx_dict = {}
     with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
         reader = csv.reader(csvfile)
-        fiat_dict = {rows[0]: (rows[1] + " (fiat)") for rows in reader}
-    with open('thewarden/static/csv_files/digital_currency_list.csv', newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        dig_dict = {rows[0]: (rows[1] + " (crypto)") for rows in reader}
-
-    fx_dict = {**fiat_dict, **dig_dict}
-    
+        fiat_dict = {rows[0]: (rows[1]) for rows in reader}
     # Convert dict to list
-    fx_list = [(k, k + ' | ' + v) for k, v in fx_dict.items()]
+    fx_list = [(k, k + ' | ' + v) for k, v in fiat_dict.items()]
     fx_list.sort()
     return (fx_list)
 
