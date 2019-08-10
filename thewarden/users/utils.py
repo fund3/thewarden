@@ -59,29 +59,6 @@ def multiple_price_grab(tickers, fx):
     return (data)
 
 
-def fx_grab(in_fx, out_fx=None, unix_ts=None):
-    from thewarden.node.utils import tor_request
-    # Grab a single conversion rate on UNIX date
-    # https://min-api.cryptocompare.com/data/pricehistorical?fsym=USD&tsyms=BRL&ts=1452680400
-    if out_fx is None:
-        # This means that all arguments are inside the in_fx as list
-        arg_list = in_fx.split(",")
-        in_fx = arg_list[0]
-        out_fx = arg_list[1]
-        unix_ts = arg_list[2]
-    baseURL =\
-        "https://min-api.cryptocompare.com/data/pricehistorical?fsym=" + in_fx + \
-        "&tsyms=" + out_fx + "&ts=" + unix_ts
-    request = tor_request(baseURL)
-    try:
-        data = request.json()
-        print (data)
-        data = float(data[in_fx][out_fx])
-    except AttributeError:
-        data = "ConnectionError"
-    return (data)
-
-
 def rt_price_grab(ticker, user_fx='USD'):
     baseURL =\
         "https://min-api.cryptocompare.com/data/price?fsym=" + ticker + \
@@ -233,11 +210,13 @@ def generate_pos_table(user, fx, hidesmall):
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == user)]
     df['trade_date'] = pd.to_datetime(df['trade_date'])
-    df['unix_date'] = df['trade_date'].apply(to_epoch)
-    df['args'] = df['trade_currency'] + "," + current_user.fx() + "," + df['unix_date']
-    df['cv_fx'] = df['args'].apply(fx_grab)
-    
-    print(df)
+
+    # let's load a list of currencies needed and merge
+    list_of_fx = df.trade_currency.unique().tolist()
+    if list_of_fx[0] != current_user.fx():
+        # if the only fx in the trades is the same fx
+        # chosen as the default one, no conversions need to be done
+        pass()
 
     # Create string of tickers and grab all prices in one request
     list_of_tickers = df.trade_asset_ticker.unique().tolist()
@@ -795,24 +774,8 @@ def generatenav(user, force=False, filter=None):
     return dailynav
 
 
-def save_picture(form_picture):
-    random_hex = secrets.token_hex(8)
-    _, f_ext = os.path.splitext(form_picture.filename)
-    picture_fn = random_hex + f_ext
-    picture_path = os.path.join(current_app.root_path, 'static/images',
-                                picture_fn)
 
-    # Image is resized to save server space
-    # This is done through a package called Pillow
-
-    output_size = (125, 125)
-    i = Image.open(form_picture)
-    i.thumbnail(output_size)
-    i.save(picture_path)
-    return picture_fn
-
-
-def alphavantage_historical(id):
+def alphavantage_historical(id, to_symbol=None):
     # Downloads Historical prices from Alphavantage
     # Can handle both Stock and Crypto tickers - try stock first, then crypto
     # Returns:
@@ -839,9 +802,14 @@ def alphavantage_historical(id):
     if api_key is None:
         return("API Key is empty", "error", "empty")
 
+    if to_symbol is not None:
+        id = id + "_" + to_symbol
+
     id = id.upper()
+
     filename = "thewarden/alphavantage_data/" + id + ".aap"
     meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
+
     try:
         # Check if saved file is recent enough to be used
         # Local file has to have a modified time in today
@@ -862,13 +830,22 @@ def alphavantage_historical(id):
     except FileNotFoundError:
         logging.info(f"[ALPHAVANTAGE] File not found for {id} - downloading")
 
-    baseURL = "https://www.alphavantage.co/query?"
-    func = "DIGITAL_CURRENCY_DAILY"
-    market = "USD"
-    globalURL = baseURL + "function=" + func + "&symbol=" + id +\
-        "&market=" + market + "&apikey=" + api_key
-    logging.info(f"[ALPHAVANTAGE] {id}: Downloading data")
-    logging.info(f"[ALPHAVANTAGE] Fetching URL: {globalURL}")
+    if to_symbol is None:
+        baseURL = "https://www.alphavantage.co/query?"
+        func = "DIGITAL_CURRENCY_DAILY"
+        market = "USD"
+        globalURL = baseURL + "function=" + func + "&symbol=" + id +\
+            "&market=" + market + "&apikey=" + api_key
+        logging.info(f"[ALPHAVANTAGE] {id}: Downloading data")
+        logging.info(f"[ALPHAVANTAGE] Fetching URL: {globalURL}")
+    else:
+        baseURL = "https://www.alphavantage.co/query?"
+        func = "FX_DAILY"   
+        globalURL = baseURL + "function=" + func + "&from_symbol=" + id +\
+            "&to_symbol=" + to_symbol + "&outputsize=full&apikey=" + api_key
+        logging.info(f"[ALPHAVANTAGE - FX] {id}: Downloading data")
+        logging.info(f"[ALPHAVANTAGE - FX] Fetching URL: {globalURL}")
+    
     try:
         logging.info(f"[ALPHAVANTAGE] Requesting URL: {globalURL}")
         request = tor_request(globalURL)
@@ -877,6 +854,26 @@ def alphavantage_historical(id):
                       "while trying to download prices")
         return("Connection Error", 'error', 'empty')
     data = request.json()
+    # if FX request
+    try:
+        if to_symbol is not None:
+            meta_data = (data['Meta Data'])
+            logging.info(f"[ALPHAVANTAGE FX] Downloaded historical price for {id}")
+            df = pd.DataFrame.from_dict(data[
+                'Time Series FX (Daily)'],
+                orient="index")
+            # Save locally for reuse today
+            filename = "thewarden/alphavantage_data/" + id + ".aap"
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            df.to_pickle(filename)
+            meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
+            with open(meta_filename, 'wb') as handle:
+                pickle.dump(meta_data, handle,
+                            protocol=pickle.HIGHEST_PROTOCOL)
+            logging.info(f"[ALPHAVANTAGE FX] {filename}: Filed saved locally")
+            return (df, 'FX', meta_data)
+    except KeyError:
+        return("Invalid FX Ticker", "error", "empty")
     # Try first as a crypto request
     try:
         meta_data = (data['Meta Data'])
@@ -1090,9 +1087,13 @@ def heatmap_generator():
     return (heatmap, heatmap_stats, years, cols)
 
 
-def price_ondate(ticker, date_input):
+def price_ondate(ticker, date_input, to_symbol=None):
     # Returns the price of a ticker on a given date
-    local_json, message, error = alphavantage_historical(ticker)
+    # if to_symbol is passed, it assumes FX and ticker is from_symbol
+    if to_symbol is not None:
+        local_json, message, error = alphavantage_historical(ticker, to_symbol)
+    else:
+        local_json, message, error = alphavantage_historical(ticker)
     if message == 'error':
         return local_json
     try:
