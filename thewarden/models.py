@@ -85,6 +85,17 @@ class Trades(db.Model):
     trade_blockchain_id = db.Column(db.String(150))
     cash_value = db.Column(db.Float, nullable=False)
 
+    def cv_fx(self, fx='USD'):
+        # Get fx for this trade date and return in requested currency
+        # First get the fx value on this date
+        # fx_grab(in_fx, out_fx, unix_ts)
+        from thewarden.users.utils import fx_grab
+        if current_user is None:
+            pass
+        cv = fx_grab(self.trade_currency, current_user.fx(), 1452680400)
+        print(fx + " - " + self.trade_currency + " : " + str(cv))
+        return (cv)
+
     def __repr__(self):
         return f"Trades('{self.trade_date}', '{self.trade_asset_ticker}', \
                         '{self.trade_quantity}', '{self.trade_price}', \

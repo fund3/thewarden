@@ -59,16 +59,24 @@ def multiple_price_grab(tickers, fx):
     return (data)
 
 
-def fx_grab(in_fx, out_fx):
+def fx_grab(in_fx, out_fx=None, unix_ts=None):
     from thewarden.node.utils import tor_request
-    # Grab a single conversion rate
+    # Grab a single conversion rate on UNIX date
+    # https://min-api.cryptocompare.com/data/pricehistorical?fsym=USD&tsyms=BRL&ts=1452680400
+    if out_fx is None:
+        # This means that all arguments are inside the in_fx as list
+        arg_list = in_fx.split(",")
+        in_fx = arg_list[0]
+        out_fx = arg_list[1]
+        unix_ts = arg_list[2]
     baseURL =\
-        "https://min-api.cryptocompare.com/data/price?fsym=" + in_fx + \
-        "&tsyms=" + out_fx
+        "https://min-api.cryptocompare.com/data/pricehistorical?fsym=" + in_fx + \
+        "&tsyms=" + out_fx + "&ts=" + unix_ts
     request = tor_request(baseURL)
     try:
         data = request.json()
-        data = float(data[out_fx])
+        print (data)
+        data = float(data[in_fx][out_fx])
     except AttributeError:
         data = "ConnectionError"
     return (data)
@@ -216,14 +224,23 @@ def fx():
     return (float(fx_rate()['fx_rate']))
 
 
+def to_epoch(in_date):
+    return str(int((in_date - datetime(1970,1,1)).total_seconds()))
+
+
 def generate_pos_table(user, fx, hidesmall):
     # New version to generate the front page position summary
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == user)]
     df['trade_date'] = pd.to_datetime(df['trade_date'])
-    list_of_tickers = df.trade_asset_ticker.unique().tolist()
+    df['unix_date'] = df['trade_date'].apply(to_epoch)
+    df['args'] = df['trade_currency'] + "," + current_user.fx() + "," + df['unix_date']
+    df['cv_fx'] = df['args'].apply(fx_grab)
+    
+    print(df)
 
     # Create string of tickers and grab all prices in one request
+    list_of_tickers = df.trade_asset_ticker.unique().tolist()
     ticker_str = ""
     for ticker in list_of_tickers:
         ticker_str = ticker_str + "," + ticker
@@ -266,10 +283,12 @@ def generate_pos_table(user, fx, hidesmall):
         apply(find_price_data)
     consol_table['price_data_BTC'] = consol_table['symbol'].\
         apply(find_price_data_BTC)
-    consol_table['price_data_fx'] = consol_table['price_data_USD']
 
     consol_table['usd_price'] =\
         consol_table.price_data_USD.map(lambda v: v['PRICE'])
+
+    consol_table['fx_price'] = consol_table['usd_price'] * current_user.fx_rate_USD()
+
     consol_table['chg_pct_24h'] =\
         consol_table.price_data_USD.map(lambda v: v['CHANGEPCT24HOUR'])
     try:
@@ -280,18 +299,24 @@ def generate_pos_table(user, fx, hidesmall):
 
     consol_table['usd_position'] = consol_table['usd_price'] *\
         consol_table['trade_quantity']
+    consol_table['btc_position'] = consol_table['btc_price'] *\
+        consol_table['trade_quantity']
+    consol_table['fx_position'] = consol_table['usd_position'] * current_user.fx_rate_USD()
 
     consol_table['chg_usd_24h'] =\
         consol_table['chg_pct_24h']/100*consol_table['usd_position']
+    consol_table['chg_fx_24h'] =\
+        consol_table['chg_pct_24h']/100*consol_table['fx_position']
 
-    consol_table['btc_position'] = consol_table['btc_price'] *\
-        consol_table['trade_quantity']
     consol_table['usd_perc'] = consol_table['usd_position']\
         / consol_table['usd_position'].sum()
     consol_table['btc_perc'] = consol_table['btc_position']\
         / consol_table['btc_position'].sum()
-    consol_table.loc[consol_table.usd_perc <= 0.01, 'small_pos'] = 'True'
-    consol_table.loc[consol_table.usd_perc >= 0.01, 'small_pos'] = 'False'
+    consol_table['fx_perc'] = consol_table['fx_position']\
+        / consol_table['fx_position'].sum()
+
+    consol_table.loc[consol_table.fx_perc <= 0.01, 'small_pos'] = 'True'
+    consol_table.loc[consol_table.fx_perc >= 0.01, 'small_pos'] = 'False'
 
     # Should rename this to breakeven:
     consol_table['average_cost'] = consol_table['cash_value']\
