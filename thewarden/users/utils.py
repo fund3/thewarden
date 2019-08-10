@@ -10,7 +10,7 @@ import json
 import pandas as pd
 import numpy as np
 from PIL import Image
-from flask import url_for, current_app
+from flask import url_for, current_app, flash
 from flask_mail import Message
 from flask_login import current_user, login_required
 from thewarden import db, mail
@@ -59,7 +59,6 @@ def multiple_price_grab(tickers, fx):
     return (data)
 
 
-
 def fx_grab(in_fx, out_fx):
     from thewarden.node.utils import tor_request
     # Grab a single conversion rate
@@ -73,7 +72,6 @@ def fx_grab(in_fx, out_fx):
     except AttributeError:
         data = "ConnectionError"
     return (data)
-
 
 
 def rt_price_grab(ticker, user_fx='USD'):
@@ -168,25 +166,55 @@ def cost_calculation(user, ticker):
 
 
 def fx_rate():
+    # To avoid multiple requests to grab a new FX, the data is
+    # saved to a local json file and only refreshed if older than
+    # REFRESH seconds
+    REFRESH = 60
+    filename = "thewarden/dailydata/" + current_user.fx() + ".json"
+    logging.info(f"[FX] Requesting data for {current_user.fx()}")
+    try:
+        # Check if NAV saved file is recent enough to be used
+        # Local file has to have a saved time less than RENEW_NAV min old
+        # See config.ini to change RENEW_NAV
+        modified = datetime.utcfromtimestamp(os.path.getmtime(filename))
+        elapsed_seconds = (datetime.utcnow() - modified).total_seconds()
+        logging.info(f"[FX] Last time file was modified {modified} is " +
+                     f" {elapsed_seconds} seconds ago")
+        if (elapsed_seconds) < int(REFRESH):
+            with open(filename, 'r') as json_data:
+                rate = json.load(json_data)
+            logging.info(f"[FX] Success: Open {filename} - no need to request")
+            return (rate)
+        else:
+            logging.info("[FX] File found but too old - sending request")
+
+    except FileNotFoundError:
+        logging.warn(f"[FX] File not found" +
+                     " - rebuilding")
     try:
         # get fx rate
-        fx_rate = rt_price_grab('BTC', current_user.fx())
-        fx_rate['base'] = current_user.fx()
-        fx_rate['fx_rate'] = fx_rate[current_user.fx()] / fx_rate['USD']
-        fx_rate['cross'] = "USD" + " / " + current_user.fx()
-        return json.dumps(fx_rate)
+        rate = rt_price_grab('BTC', current_user.fx())
+        rate['base'] = current_user.fx()
+        rate['fx_rate'] = rate[current_user.fx()] / rate['USD']
+        rate['cross'] = "USD" + " / " + current_user.fx()
+        with open(filename, 'w') as outfile:
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            json.dump(rate, outfile)
+            logging.info("[FX] Success - requested fx and saved")
+        return (rate)
     except Exception as e:
-        return (f"Error: {e}")
+        rate = {}
+        flash(f"An error occured getting fx rate: {e}", "danger")
+        rate['error'] = (f"Error: {e}")
+        rate['fx_rate'] = 1
+        return json.dumps(rate)
+
 
 def fx():
     # Returns a float with the conversion of fx in the format of
     # Currency / USD
-    try:
-        fx = json.loads(fx_rate())
-        fx = float(json.loads(fx_rate())['fx_rate'])
-    except (AttributeError, KeyError) as e:
-        fx = float(1)
-    return (fx)
+    return (float(fx_rate()['fx_rate']))
+
 
 def generate_pos_table(user, fx, hidesmall):
     # New version to generate the front page position summary
@@ -223,7 +251,6 @@ def generate_pos_table(user, fx, hidesmall):
     except KeyError:
         logging.info(f"[generate_pos_table] No USD or {current_user.fx()} positions found")
 
-    
     def find_price_data(ticker):
         price_data = price_list["RAW"][ticker]['USD']
         return (price_data)
@@ -234,13 +261,12 @@ def generate_pos_table(user, fx, hidesmall):
             return (price_data)
         except KeyError:
             return (0)
- 
+
     consol_table['price_data_USD'] = consol_table['symbol'].\
         apply(find_price_data)
     consol_table['price_data_BTC'] = consol_table['symbol'].\
         apply(find_price_data_BTC)
-    consol_table['price_data_fx'] = consol_table['price_data_USD'] 
-    
+    consol_table['price_data_fx'] = consol_table['price_data_USD']
 
     consol_table['usd_price'] =\
         consol_table.price_data_USD.map(lambda v: v['PRICE'])
@@ -309,7 +335,7 @@ def generate_pos_table(user, fx, hidesmall):
         found = [item for item in fx_list() if ticker in item]
         if found != []:
             continue
-        
+
         table[ticker] = {}
         table[ticker]['breakeven'] = 0
         if consol_table['small_pos'][ticker] == 'False':
@@ -612,7 +638,7 @@ def generatenav(user, force=False, filter=None):
             # rename index to date to match dailynav name
             prices.index.rename('date', inplace=True)
             prices.columns = [id+'_price']
-            
+
             # Fill dailyNAV with prices for each ticker
             dailynav = pd.merge(dailynav, prices, on='date', how='left')
 
@@ -883,22 +909,22 @@ def alphavantage_historical(id):
             # Last Try - look at Bitmex for  this ticker
             logging.info("Trying Bitmex as a final alternative for this ticker")
             data = bitmex_gethistory(id)
-            try: 
-                if data == 'error':  #In case a df is returned this raises an error
+            try:
+                if data == 'error':  # In case a df is returned this raises an error
                     return("Invalid Ticker", "error", "empty")
             except ValueError:
                 # Match the AA data and save locally before returning
-                data = data.rename(columns = {'close':'4a. close (USD)'})
+                data = data.rename(columns={'close': '4a. close (USD)'})
                 data['4b. close (USD)'] = data['4a. close (USD)']
                 # Remove tzutc() time type from timestamp (otherwise merging would fail)
-                data['timestamp'] = pd.to_datetime(data['timestamp'], utc = False)
+                data['timestamp'] = pd.to_datetime(data['timestamp'], utc=False)
 
                 # Change timestamp column to index
                 data.set_index('timestamp', inplace=True)
                 # Convert to UTC and remove localization
                 data = data.tz_convert(None)
                 meta_data = "Bitmex Metadata not available"
-                
+
                 # Save locally for reuse today
                 filename = "thewarden/alphavantage_data/" + id + ".aap"
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -906,10 +932,9 @@ def alphavantage_historical(id):
                 meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
                 with open(meta_filename, 'wb') as handle:
                     pickle.dump(meta_data, handle,
-                            protocol=pickle.HIGHEST_PROTOCOL)
+                                protocol=pickle.HIGHEST_PROTOCOL)
                 logging.info(f"[BITMEX] {filename}: Filed saved locally")
                 return (data, "bitmex", meta_data)
-
 
     return("Invalid Ticker", "error", "empty")
 
@@ -921,28 +946,28 @@ def bitmex_gethistory(ticker):
     testnet = False
     logging.info(f"[Bitmex] Trying Bitmex for {ticker}")
     bitmex_credentials = load_bitmex_json()
-    
+
     if ("api_key" in bitmex_credentials) and ("api_secret" in bitmex_credentials):
         try:
             mex = bitmex(test=testnet,
                          api_key=bitmex_credentials['api_key'],
                          api_secret=bitmex_credentials['api_secret'])
-            # Need to paginate results here to get all the history 
+            # Need to paginate results here to get all the history
             # Bitmex API end point limits 750 results per call
             start_bin = 0
             resp = (mex.Trade.Trade_getBucketed(
-                        symbol=ticker, binSize="1d", count=750, start=start_bin).result())[0]
+                symbol=ticker, binSize="1d", count=750, start=start_bin).result())[0]
             df = pd.DataFrame(resp)
             last_update = df['timestamp'].iloc[-1]
-            
+
             # If last_update is older than 3 days ago, keep building.
             while last_update < (datetime.now(timezone.utc) - timedelta(days=3)):
                 start_bin += 750
                 resp = (mex.Trade.Trade_getBucketed(
-                                symbol=ticker, binSize="1d", count=750, start=start_bin).result())[0]
+                    symbol=ticker, binSize="1d", count=750, start=start_bin).result())[0]
                 df = df.append(resp)
                 last_update = df['timestamp'].iloc[-1]
-                # To avoid an infinite loop, check if start_bin 
+                # To avoid an infinite loop, check if start_bin
                 # is higher than 10000 and stop (i.e. 30+yrs of data)
                 if start_bin > 10000:
                     logging.error("[Bitmex] Something went wrong on price grab loop. Forced quit of loop.")
@@ -952,13 +977,12 @@ def bitmex_gethistory(ticker):
             return(df)
 
         except Exception as e:
-            logging.error(f"[Bitmex] error: {e}")    
+            logging.error(f"[Bitmex] error: {e}")
             return ("error")
-        
+
     else:
         logging.warning(f"[Bitmex] No Credentials Found")
         return ('error')
-        
 
 
 def send_reset_email(user):
@@ -1075,7 +1099,6 @@ def fx_list():
     return (fx_list)
 
 
-    
 # ------------------------------------
 # Helpers for Bitmex start here
 # ------------------------------------
@@ -1116,4 +1139,3 @@ def bitmex_orders(api_key, api_secret, testnet=True):
     except Exception:
         resp = "Invalid Credential or Connection Error"
     return(resp)
-

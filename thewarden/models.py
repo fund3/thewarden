@@ -1,7 +1,9 @@
-from datetime import datetime
+import logging
+import os
+from datetime import datetime, timedelta, timezone
 from thewarden import db, login_manager
 from flask import current_app
-from flask_login import UserMixin  # Manages session (anon, etc)
+from flask_login import current_user, UserMixin  # Manages session (anon, etc)
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 
@@ -53,6 +55,14 @@ class User(db.Model, UserMixin):
 
     def fx(self):
         return (f'{self.image_file}')
+
+    def fx_rate_USD(self):
+        # Returns the current fx matrix for this user
+        if self is not None:
+            from thewarden.users.utils import fx
+            return (fx())
+        else:
+            return (1)
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
