@@ -29,11 +29,10 @@ from datetime import datetime, timedelta, timezone
 # --------------------------------------------
 config = configparser.ConfigParser()
 config.read('config.ini')
-
 try:
     RENEW_NAV = config['MAIN']['RENEW_NAV']
 except KeyError:
-    RENEW_NAV = 60
+    RENEW_NAV = 10
     logging.error("Could not find RENEW_NAV at config.ini. Defaulting to 60.")
 try:
     PORTFOLIO_MIN_SIZE_NAV = config['MAIN']['PORTFOLIO_MIN_SIZE_NAV']
@@ -207,16 +206,53 @@ def to_epoch(in_date):
 
 def generate_pos_table(user, fx, hidesmall):
     # New version to generate the front page position summary
+    # Get all transactions from db and format
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == user)]
     df['trade_date'] = pd.to_datetime(df['trade_date'])
-
+    df = df.set_index('trade_date')
+    # Ignore times in df to merge - keep only dates
+    df.index = df.index.floor('d')
+    df.index.rename('date', inplace=True)
     # let's load a list of currencies needed and merge
     list_of_fx = df.trade_currency.unique().tolist()
-    if list_of_fx[0] != current_user.fx():
-        # if the only fx in the trades is the same fx
-        # chosen as the default one, no conversions need to be done
-        pass()
+    # loop through currency list
+    for currency in list_of_fx:
+        if currency == current_user.fx():
+            logging.info(f"[fx] no need to convert {currency}, this is in local currency")
+            continue
+        logging.info(f"[fx] requesting historical FX prices for {currency}")
+        # Make a price request
+        local_json, _, _ = alphavantage_historical(current_user.fx(), currency)
+        try:
+            # Format and merge into the trades table
+            prices = pd.DataFrame(local_json)
+            prices.reset_index(inplace=True)
+            # Reassign index to the date column
+            prices = prices.set_index(
+                list(prices.columns[[0]]))
+            prices = prices['4. close']
+            # convert string date to datetime
+            prices.index = pd.to_datetime(prices.index)
+            # Make sure this is a dataframe so it can be merged later
+            if type(prices) != type(df):
+                prices = prices.to_frame()
+            # rename index to date to match dailynav name
+            prices.index.rename('date', inplace=True)
+            prices.columns = [currency]
+            # Fill dailyNAV with prices for each ticker
+            df = pd.merge(df, prices, on='date', how='left')
+        except Exception as e:
+            logging.error(f"[FX] Could not get prices for {currency}" + 
+                        "- defaulting to 1 but this may create calculation problems - " + 
+                        "Error: {e}")
+            df[currency] = 1
+    # The currenct fx needs no conversion, set to 1
+    df[current_user.fx()] = 1
+    # Now create a cash value in the preferred currency terms
+    df['fx'] = df.apply(lambda x: x[x['trade_currency']], axis=1)
+    df['cash_value_fx'] = df['fx'].astype(float) * df['cash_value'].astype(float)
+    df['trade_fees_fx'] = df['fx'].astype(float) * df['trade_fees'].astype(float)
 
     # Create string of tickers and grab all prices in one request
     list_of_tickers = df.trade_asset_ticker.unique().tolist()
@@ -228,14 +264,17 @@ def generate_pos_table(user, fx, hidesmall):
         return ("ConnectionError", "ConnectionError")
 
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
-        ["cash_value", "trade_fees", "trade_quantity"]].sum()
+        ["cash_value", "trade_fees", "trade_quantity", "cash_value_fx", 
+        "trade_fees_fx"]].sum()
 
     summary_table['count'] = df.groupby([
         'trade_asset_ticker', 'trade_operation'])[
         "cash_value"].count()
 
     consol_table = df.groupby(['trade_asset_ticker'])[
-        ["cash_value", "trade_fees", "trade_quantity"]].sum()
+        ["cash_value", "trade_fees", 
+        "trade_quantity","cash_value_fx", 
+        "trade_fees_fx"]].sum()
 
     consol_table['symbol'] = consol_table.index.values
     try:
@@ -265,7 +304,6 @@ def generate_pos_table(user, fx, hidesmall):
 
     consol_table['usd_price'] =\
         consol_table.price_data_USD.map(lambda v: v['PRICE'])
-
     consol_table['fx_price'] = consol_table['usd_price'] * current_user.fx_rate_USD()
 
     consol_table['chg_pct_24h'] =\
@@ -300,32 +338,51 @@ def generate_pos_table(user, fx, hidesmall):
     # Should rename this to breakeven:
     consol_table['average_cost'] = consol_table['cash_value']\
         / consol_table['trade_quantity']
+    consol_table['average_cost_fx'] = consol_table['cash_value_fx']\
+        / consol_table['trade_quantity']
 
     consol_table['total_pnl_gross_USD'] = consol_table['usd_position'] -\
         consol_table['cash_value']
+    consol_table['total_pnl_gross_fx'] = consol_table['fx_position'] -\
+        consol_table['cash_value_fx']
+
     consol_table['total_pnl_net_USD'] = consol_table['usd_position'] -\
         consol_table['cash_value'] - consol_table['trade_fees']
+    consol_table['total_pnl_net_fx'] = consol_table['fx_position'] -\
+        consol_table['cash_value_fx'] - consol_table['trade_fees_fx']
 
     summary_table['symbol_operation'] = summary_table.index.values
     # This is wrong:
     summary_table['average_price'] = summary_table['cash_value'] /\
+        summary_table['trade_quantity']
+    summary_table['average_price_fx'] = summary_table['cash_value_fx'] /\
         summary_table['trade_quantity']
 
     # create a dictionary in a better format to deliver to html table
     table = {}
     table['TOTAL'] = {}
     table['TOTAL']['cash_flow_value'] = summary_table.sum()['cash_value']
+    table['TOTAL']['cash_flow_value_fx'] = summary_table.sum()['cash_value_fx']
     table['TOTAL']['trade_fees'] = summary_table.sum()['trade_fees']
+    table['TOTAL']['trade_fees_fx'] = summary_table.sum()['trade_fees_fx']
     table['TOTAL']['trade_count'] = summary_table.sum()['count']
     table['TOTAL']['usd_position'] = consol_table.sum()['usd_position']
     table['TOTAL']['btc_position'] = consol_table.sum()['btc_position']
+    table['TOTAL']['fx_position'] = consol_table.sum()['fx_position']
     table['TOTAL']['chg_usd_24h'] = consol_table.sum()['chg_usd_24h']
+    table['TOTAL']['chg_fx_24h'] = consol_table.sum()['chg_fx_24h']
     table['TOTAL']['chg_perc_24h'] = ((table['TOTAL']['chg_usd_24h']
                                        / table['TOTAL']['usd_position']))*100
+    table['TOTAL']['chg_perc_24h_fx'] = ((table['TOTAL']['chg_fx_24h']
+                                       / table['TOTAL']['fx_position']))*100
     table['TOTAL']['total_pnl_gross_USD'] =\
         consol_table.sum()['total_pnl_gross_USD']
+    table['TOTAL']['total_pnl_gross_fx'] =\
+        consol_table.sum()['total_pnl_gross_fx']
     table['TOTAL']['total_pnl_net_USD'] =\
         consol_table.sum()['total_pnl_net_USD']
+    table['TOTAL']['total_pnl_net_fx'] =\
+        consol_table.sum()['total_pnl_net_fx']
     table['TOTAL']['refresh_time'] = datetime.now()
     pie_data = []
 
@@ -344,12 +401,13 @@ def generate_pos_table(user, fx, hidesmall):
         table[ticker]['breakeven'] = 0
         if consol_table['small_pos'][ticker] == 'False':
             tmp_dict = {}
-            tmp_dict['y'] = consol_table['usd_perc'][ticker]*100
+            tmp_dict['y'] = consol_table['fx_perc'][ticker]*100
             tmp_dict['name'] = ticker
             pie_data.append(tmp_dict)
             table[ticker]['breakeven'] = \
-                consol_table['price_data_USD'][ticker]['PRICE'] -\
-                (consol_table['total_pnl_net_USD'][ticker] /
+                (consol_table['price_data_USD'][ticker]['PRICE'] *
+                current_user.fx_rate_USD())-\
+                (consol_table['total_pnl_net_fx'][ticker] /
                  consol_table['trade_quantity'][ticker])
 
         table[ticker]['cost_matrix'] = cost_calculation(user, ticker)
@@ -380,11 +438,15 @@ def generate_pos_table(user, fx, hidesmall):
 
         table[ticker]['position'] = consol_table['trade_quantity'][ticker]
         table[ticker]['usd_position'] = consol_table['usd_position'][ticker]
+        table[ticker]['fx_position'] = consol_table['fx_position'][ticker]
         table[ticker]['chg_pct_24h'] = consol_table['chg_pct_24h'][ticker]
         table[ticker]['chg_usd_24h'] = consol_table['chg_usd_24h'][ticker]
+        table[ticker]['chg_fx_24h'] = consol_table['chg_fx_24h'][ticker]
         table[ticker]['usd_perc'] = consol_table['usd_perc'][ticker]
         table[ticker]['btc_perc'] = consol_table['btc_perc'][ticker]
+        table[ticker]['fx_perc'] = consol_table['fx_perc'][ticker]
         table[ticker]['total_fees'] = consol_table['trade_fees'][ticker]
+        table[ticker]['total_fees_fx'] = consol_table['trade_fees_fx'][ticker]
 
         table[ticker]['usd_price_data'] =\
             consol_table['price_data_USD'][ticker]
@@ -392,23 +454,31 @@ def generate_pos_table(user, fx, hidesmall):
             (datetime.utcfromtimestamp(
                 table[ticker]['usd_price_data']['LASTUPDATE']).strftime
                 ('%H:%M:%S'))
-
         table[ticker]['btc_price'] = consol_table['price_data_BTC'][ticker]
         table[ticker]['total_pnl_gross_USD'] =\
             consol_table['total_pnl_gross_USD'][ticker]
+        table[ticker]['total_pnl_gross_fx'] =\
+            consol_table['total_pnl_gross_fx'][ticker]
         table[ticker]['total_pnl_net_USD'] =\
             consol_table['total_pnl_net_USD'][ticker]
+        table[ticker]['total_pnl_net_fx'] =\
+            consol_table['total_pnl_net_fx'][ticker]
         table[ticker]['small_pos'] = consol_table['small_pos'][ticker]
         table[ticker]['cash_flow_value'] =\
             summary_table['cash_value'][ticker].to_dict()
+        table[ticker]['cash_flow_value_fx'] =\
+            summary_table['cash_value_fx'][ticker].to_dict()
         table[ticker]['trade_fees'] = \
             summary_table['trade_fees'][ticker].to_dict()
+        table[ticker]['trade_fees_fx'] = \
+            summary_table['trade_fees_fx'][ticker].to_dict()
         table[ticker]['trade_quantity'] = \
             summary_table['trade_quantity'][ticker].to_dict()
         table[ticker]['count'] = summary_table['count'][ticker].to_dict()
         table[ticker]['average_price'] = \
             summary_table['average_price'][ticker].to_dict()
-
+        table[ticker]['average_price_fx'] = \
+            summary_table['average_price_fx'][ticker].to_dict()
     return(table, pie_data)
 
 
@@ -803,6 +873,7 @@ def alphavantage_historical(id, to_symbol=None):
         return("API Key is empty", "error", "empty")
 
     if to_symbol is not None:
+        from_symbol = id
         id = id + "_" + to_symbol
 
     id = id.upper()
@@ -841,8 +912,9 @@ def alphavantage_historical(id, to_symbol=None):
     else:
         baseURL = "https://www.alphavantage.co/query?"
         func = "FX_DAILY"   
-        globalURL = baseURL + "function=" + func + "&from_symbol=" + id +\
+        globalURL = baseURL + "function=" + func + "&from_symbol=" + from_symbol +\
             "&to_symbol=" + to_symbol + "&outputsize=full&apikey=" + api_key
+        print (globalURL)
         logging.info(f"[ALPHAVANTAGE - FX] {id}: Downloading data")
         logging.info(f"[ALPHAVANTAGE - FX] Fetching URL: {globalURL}")
     
