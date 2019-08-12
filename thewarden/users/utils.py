@@ -249,7 +249,6 @@ def to_epoch(in_date):
 
 
 def generate_pos_table(user, fx, hidesmall):
-    # New version to generate the front page position summary
     # Get all transactions from db and format
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == user)]
@@ -258,6 +257,8 @@ def generate_pos_table(user, fx, hidesmall):
     # Ignore times in df to merge - keep only dates
     df.index = df.index.floor('d')
     df.index.rename('date', inplace=True)
+    
+    # Need to get currencies into the df in order to normalize
     # let's load a list of currencies needed and merge
     list_of_fx = df.trade_currency.unique().tolist()
     # loop through currency list
@@ -295,8 +296,8 @@ def generate_pos_table(user, fx, hidesmall):
     df[current_user.fx()] = 1
     # Now create a cash value in the preferred currency terms
     df['fx'] = df.apply(lambda x: x[x['trade_currency']], axis=1)
-    df['cash_value_fx'] = df['fx'].astype(float) * df['cash_value'].astype(float)
-    df['trade_fees_fx'] = df['fx'].astype(float) * df['trade_fees'].astype(float)
+    df['cash_value_fx'] = df['cash_value'].astype(float) / df['fx'].astype(float)
+    df['trade_fees_fx'] = df['trade_fees'].astype(float) / df['fx'].astype(float)
 
     # Create string of tickers and grab all prices in one request
     list_of_tickers = df.trade_asset_ticker.unique().tolist()
@@ -308,16 +309,16 @@ def generate_pos_table(user, fx, hidesmall):
         return ("ConnectionError", "ConnectionError")
 
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
-        ["cash_value", "trade_fees", "trade_quantity", "cash_value_fx", 
+        ["cash_value", "trade_fees", "trade_quantity", "cash_value_fx",
         "trade_fees_fx"]].sum()
 
     summary_table['count'] = df.groupby([
         'trade_asset_ticker', 'trade_operation'])[
-        "cash_value"].count()
+        "cash_value_fx"].count()
 
     consol_table = df.groupby(['trade_asset_ticker'])[
-        ["cash_value", "trade_fees", 
-        "trade_quantity","cash_value_fx", 
+        ["cash_value", "trade_fees",
+        "trade_quantity","cash_value_fx",
         "trade_fees_fx"]].sum()
 
     consol_table['symbol'] = consol_table.index.values
@@ -960,7 +961,6 @@ def alphavantage_historical(id, to_symbol=None):
         func = "FX_DAILY"   
         globalURL = baseURL + "function=" + func + "&from_symbol=" + from_symbol +\
             "&to_symbol=" + to_symbol + "&outputsize=full&apikey=" + api_key
-        print (globalURL)
         logging.info(f"[ALPHAVANTAGE - FX] {id}: Downloading data")
         logging.info(f"[ALPHAVANTAGE - FX] Fetching URL: {globalURL}")
     
