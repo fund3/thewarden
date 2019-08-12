@@ -110,7 +110,6 @@ def rt_price_grab(ticker, user_fx='USD'):
 
 @MWT(timeout=40)
 def cost_calculation(user, ticker):
-    print ("Running cost_calc")
     # This function calculates the cost basis assuming 3 different methods
     # FIFO, LIFO and avg. cost
     # found = [item for item in fx_list() if ticker in item]
@@ -188,7 +187,7 @@ def cost_calculation(user, ticker):
     return (cost_matrix)
 
 
-@MWT(timeout=60)
+@MWT(timeout=10)
 def fx_rate():
     # To avoid multiple requests to grab a new FX, the data is
     # saved to a local json file and only refreshed if older than
@@ -235,7 +234,7 @@ def fx_rate():
         return json.dumps(rate)
 
 
-@MWT(timeout=60)
+@MWT(timeout=10)
 def fx():
     # Returns a float with the conversion of fx in the format of
     # Currency / USD
@@ -245,13 +244,12 @@ def fx():
 def to_epoch(in_date):
     return str(int((in_date - datetime(1970,1,1)).total_seconds()))
 
-@MWT(timeout=40)
+@MWT(timeout=10)
 def transactions_fx():
     # Gets the transaction table and fills with fx information
     # Note that it uses the currency exchange for the date of transaction
     
     # Get all transactions from db and format
-    print ("runnin transaction_fx - called from: " + inspect.stack()[1].function)
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == current_user.username)]
     df['trade_date'] = pd.to_datetime(df['trade_date'])
@@ -282,7 +280,7 @@ def transactions_fx():
     df['trade_fees_fx'] = df['trade_fees'].astype(float) / df['fx'].astype(float)
     return (df)
 
-@MWT(timeout=20)
+@MWT(timeout=10)
 def generate_pos_table(user, fx, hidesmall):
     # This function creates all relevant data for the main page
     # Including current positions, cost and other market info
@@ -533,7 +531,7 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
 
 
 @login_required
-@MWT(timeout=60)
+@MWT(timeout=10)
 def generatenav(user, force=False, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
     # Variables
