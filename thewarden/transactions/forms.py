@@ -16,7 +16,7 @@ class NewTrade(FlaskForm):
     )
 
     trade_type = SelectField(
-        "Select type of Transaction", [Optional()], choices=transtypes, default=""
+        "Select type of Transaction", [Optional()], choices=transtypes, default="2"
     )
     trade_date = DateField("Trade Date", [DataRequired()])
     trade_asset_ticker = StringField("Crypto Asset", [Optional()])

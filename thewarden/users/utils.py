@@ -80,9 +80,48 @@ def cost_calculation(user, ticker):
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == user)]
     df = df[(df.trade_asset_ticker == ticker)]
+    # Normalize all cash flows to current fx
+    list_of_fx = df.trade_currency.unique().tolist()
+    for currency in list_of_fx:
+        if currency == current_user.fx():
+            logging.info(f"[fx] no need to convert {currency}, this is in local currency")
+            continue
+        logging.info(f"[fx] requesting historical FX prices for {currency}")
+        # Make a price request
+        local_json, _, _ = alphavantage_historical(current_user.fx(), currency)
+        try:
+            # Format and merge into the trades table
+            prices = pd.DataFrame(local_json)
+            prices.reset_index(inplace=True)
+            # Reassign index to the date column
+            prices = prices.set_index(
+                list(prices.columns[[0]]))
+            prices = prices['4. close']
+            # convert string date to datetime
+            prices.index = pd.to_datetime(prices.index)
+            # Make sure this is a dataframe so it can be merged later
+            if type(prices) != type(df):
+                prices = prices.to_frame()
+            # rename index to date to match dailynav name
+            prices.index.rename('date', inplace=True)
+            prices.columns = [currency]
+            # Fill dailyNAV with prices for each ticker
+            df = pd.merge(df, prices, on='date', how='left')
+        except Exception as e:
+            logging.error(f"[FX] Could not get prices for {currency}" + 
+                        "- defaulting to 1 but this may create calculation problems - " + 
+                        "Error: {e}")
+            df[currency] = 1
+    # The currenct fx needs no conversion, set to 1
+    df[current_user.fx()] = 1
+    # Now create a cash value in the preferred currency terms
+    df['fx'] = df.apply(lambda x: x[x['trade_currency']], axis=1)
+    df['cash_value_fx'] = df['fx'].astype(float) * df['cash_value'].astype(float)
+    df['trade_fees_fx'] = df['fx'].astype(float) * df['trade_fees'].astype(float)
+
     # Find current open position on asset
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
-        ["cash_value", "trade_fees", "trade_quantity"]].sum()
+        ["cash_value", "cash_value_fx", "trade_fees", "trade_quantity"]].sum()
     open_position = summary_table.sum()['trade_quantity']
 
     # Drop Deposits and Withdraws - keep only Buy and Sells
@@ -109,8 +148,10 @@ def cost_calculation(user, ticker):
     if fifo_df['acum_Q'].count() == 1:
         fifo_df['Q'] = fifo_df['acum_Q']
     # Adjust Cash Value only to account for needed position
-    fifo_df['adjusted_cv'] = fifo_df['cash_value'] * fifo_df['Q'] /\
+    fifo_df['adjusted_cv'] = fifo_df['cash_value_fx'] * fifo_df['Q'] /\
         fifo_df['trade_quantity']
+
+    print (fifo_df)
 
     cost_matrix['FIFO'] = {}
     cost_matrix['FIFO']['cash'] = fifo_df['adjusted_cv'].sum()
@@ -135,7 +176,7 @@ def cost_calculation(user, ticker):
     if lifo_df['acum_Q'].count() == 1:
         lifo_df['Q'] = lifo_df['acum_Q']
     # Adjust Cash Value only to account for needed position
-    lifo_df['adjusted_cv'] = lifo_df['cash_value'] * lifo_df['Q'] /\
+    lifo_df['adjusted_cv'] = lifo_df['cash_value_fx'] * lifo_df['Q'] /\
         lifo_df['trade_quantity']
 
     cost_matrix['LIFO'] = {}
@@ -412,27 +453,29 @@ def generate_pos_table(user, fx, hidesmall):
 
         table[ticker]['cost_matrix'] = cost_calculation(user, ticker)
         table[ticker]['cost_matrix']['LIFO']['unrealized_pnl'] = \
-            (consol_table['usd_price'][ticker] -
+            (consol_table['fx_price'][ticker] -
              table[ticker]['cost_matrix']['LIFO']['average_cost']) * \
             consol_table['trade_quantity'][ticker]
         table[ticker]['cost_matrix']['FIFO']['unrealized_pnl'] = \
-            (consol_table['usd_price'][ticker] -
+            (consol_table['fx_price'][ticker] -
              table[ticker]['cost_matrix']['FIFO']['average_cost']) * \
             consol_table['trade_quantity'][ticker]
 
         table[ticker]['cost_matrix']['LIFO']['realized_pnl'] = \
-            consol_table['total_pnl_net_USD'][ticker] -\
+            consol_table['total_pnl_net_fx'][ticker] -\
             table[ticker]['cost_matrix']['LIFO']['unrealized_pnl']
         table[ticker]['cost_matrix']['FIFO']['realized_pnl'] = \
-            consol_table['total_pnl_net_USD'][ticker] -\
+            consol_table['total_pnl_net_fx'][ticker] -\
             table[ticker]['cost_matrix']['FIFO']['unrealized_pnl']
 
         table[ticker]['cost_matrix']['LIFO']['unrealized_be'] =\
-            consol_table['price_data_USD'][ticker]['PRICE'] -\
+            (consol_table['price_data_USD'][ticker]['PRICE'] *
+            current_user.fx_rate_USD()) - \
             (table[ticker]['cost_matrix']['LIFO']['unrealized_pnl'] /
              consol_table['trade_quantity'][ticker])
         table[ticker]['cost_matrix']['FIFO']['unrealized_be'] =\
-            consol_table['price_data_USD'][ticker]['PRICE'] -\
+            (consol_table['price_data_USD'][ticker]['PRICE'] *
+            current_user.fx_rate_USD()) - \
             (table[ticker]['cost_matrix']['FIFO']['unrealized_pnl'] /
              consol_table['trade_quantity'][ticker])
 
