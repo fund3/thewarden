@@ -5,8 +5,10 @@ import requests
 import configparser
 import hashlib
 import pickle
+import time
 import csv
 import json
+import inspect
 import pandas as pd
 import numpy as np
 from PIL import Image
@@ -41,6 +43,42 @@ except KeyError:
     logging.error("Could not find PORTFOLIO_MIN_SIZE_NAV at config.ini." +
                   " Defaulting to 5.")
 
+class MWT(object):
+    # Decorator that caches the result of a function until a given timeout (in seconds)
+    # Helpful when running complicated calculations that are used more than once
+    # Source: http://code.activestate.com/recipes/325905-memoize-decorator-with-timeout/
+    _caches = {}
+    _timeouts = {}
+
+    def __init__(self,timeout=2):
+        self.timeout = timeout
+
+    def collect(self):
+        # Clear cache of results which have timed out
+        for func in self._caches:
+            cache = {}
+            for key in self._caches[func]:
+                if (time.time() - self._caches[func][key][1]) < self._timeouts[func]:
+                    cache[key] = self._caches[func][key]
+            self._caches[func] = cache
+
+    def __call__(self, f):
+        self.cache = self._caches[f] = {}
+        self._timeouts[f] = self.timeout
+
+        def func(*args, **kwargs):
+            kw = sorted(kwargs.items())
+            key = (args, tuple(kw))
+            try:
+                v = self.cache[key]
+                if (time.time() - v[1]) > self.timeout:
+                    raise KeyError
+            except KeyError:
+                v = self.cache[key] = f(*args,**kwargs),time.time()
+            return v[0]
+        func.func_name = f.__name__
+
+        return func
 
 def multiple_price_grab(tickers, fx):
     # tickers should be in comma sep string format like "BTC,ETH,LTC"
@@ -70,60 +108,18 @@ def rt_price_grab(ticker, user_fx='USD'):
     return (data)
 
 
+@MWT(timeout=40)
 def cost_calculation(user, ticker):
+    print ("Running cost_calc")
     # This function calculates the cost basis assuming 3 different methods
     # FIFO, LIFO and avg. cost
-    found = [item for item in fx_list() if ticker in item]
-    if found != []:
-        return (0)
+    # found = [item for item in fx_list() if ticker in item]
+    # if found != []:
+    #     return (0)
 
-    df = pd.read_sql_table('trades', db.engine)
-    df = df[(df.user_id == user)]
-    df = df[(df.trade_asset_ticker == ticker)]
-    df = df.set_index('trade_date')
-    # Ignore times in df to merge - keep only dates
-    df.index.rename('date', inplace=True)
-    # Normalize all cash flows to current fx
-    list_of_fx = df.trade_currency.unique().tolist()
-    
-    for currency in list_of_fx:
-        if currency == current_user.fx():
-            logging.info(f"[fx] no need to convert {currency}, this is in local currency")
-            continue
-        logging.info(f"[fx] requesting historical FX prices for {currency}")
-        # Make a price request
-        local_json, _, _ = alphavantage_historical(current_user.fx(), currency)
-        try:
-            # Format and merge into the trades table
-            prices = pd.DataFrame(local_json)
-            prices.reset_index(inplace=True)
-            # Reassign index to the date column
-            prices = prices.set_index(
-                list(prices.columns[[0]]))
-            prices = prices['4. close']
-            # convert string date to datetime
-            prices.index = pd.to_datetime(prices.index)
-            # Make sure this is a dataframe so it can be merged later
-            if type(prices) != type(df):
-                prices = prices.to_frame()
-            # rename index to date to match dailynav name
-            prices.index.rename('date', inplace=True)
-            prices.columns = [currency]
-            # Fill dailyNAV with prices for each ticker
-            df = pd.merge(df, prices, on='date', how='left')
-        except Exception as e:
-            logging.error(f"[FX] Could not get prices for {currency}" + 
-                        "- defaulting to 1 but this may create calculation problems - " + 
-                        "Error: {e}")
-            df[currency] = 1
-    # The currenct fx needs no conversion, set to 1
-    df[current_user.fx()] = 1
-    
-    # Now create a cash value in the preferred currency terms
-    df['fx'] = df.apply(lambda x: x[x['trade_currency']], axis=1)
-    df['cash_value_fx'] = df['cash_value'].astype(float) / df['fx'].astype(float)
-    df['trade_fees_fx'] = df['trade_fees'].astype(float) / df['fx'].astype(float)
-    
+    # Gets all transactions in local currency terms
+    df = transactions_fx()
+
     # Find current open position on asset
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
         ["cash_value", "cash_value_fx", "trade_fees", "trade_quantity"]].sum()
@@ -189,16 +185,17 @@ def cost_calculation(user, ticker):
     cost_matrix['LIFO']['count'] = int(lifo_df['trade_operation'].count())
     cost_matrix['LIFO']['average_cost'] = lifo_df['adjusted_cv'].sum()\
         / open_position
-
     return (cost_matrix)
 
 
+@MWT(timeout=60)
 def fx_rate():
     # To avoid multiple requests to grab a new FX, the data is
     # saved to a local json file and only refreshed if older than
+    # This grabs the current currency against USD
     # REFRESH seconds
     REFRESH = 60
-    filename = "thewarden/dailydata/" + current_user.fx() + ".json"
+    filename = "thewarden/dailydata/USD_" + current_user.fx() + ".json"
     logging.info(f"[FX] Requesting data for {current_user.fx()}")
     try:
         # Check if NAV saved file is recent enough to be used
@@ -238,6 +235,7 @@ def fx_rate():
         return json.dumps(rate)
 
 
+@MWT(timeout=60)
 def fx():
     # Returns a float with the conversion of fx in the format of
     # Currency / USD
@@ -247,58 +245,51 @@ def fx():
 def to_epoch(in_date):
     return str(int((in_date - datetime(1970,1,1)).total_seconds()))
 
-
-def generate_pos_table(user, fx, hidesmall):
+@MWT(timeout=40)
+def transactions_fx():
+    # Gets the transaction table and fills with fx information
+    # Note that it uses the currency exchange for the date of transaction
+    
     # Get all transactions from db and format
+    print ("runnin transaction_fx - called from: " + inspect.stack()[1].function)
     df = pd.read_sql_table('trades', db.engine)
-    df = df[(df.user_id == user)]
+    df = df[(df.user_id == current_user.username)]
     df['trade_date'] = pd.to_datetime(df['trade_date'])
     df = df.set_index('trade_date')
     # Ignore times in df to merge - keep only dates
     df.index = df.index.floor('d')
     df.index.rename('date', inplace=True)
-    
+    # The current fx needs no conversion, set to 1
+    df[current_user.fx()] = 1
     # Need to get currencies into the df in order to normalize
     # let's load a list of currencies needed and merge
     list_of_fx = df.trade_currency.unique().tolist()
+    
     # loop through currency list
     for currency in list_of_fx:
         if currency == current_user.fx():
-            logging.info(f"[fx] no need to convert {currency}, this is in local currency")
             continue
         logging.info(f"[fx] requesting historical FX prices for {currency}")
         # Make a price request
-        local_json, _, _ = alphavantage_historical(current_user.fx(), currency)
-        try:
-            # Format and merge into the trades table
-            prices = pd.DataFrame(local_json)
-            prices.reset_index(inplace=True)
-            # Reassign index to the date column
-            prices = prices.set_index(
-                list(prices.columns[[0]]))
-            prices = prices['4. close']
-            # convert string date to datetime
-            prices.index = pd.to_datetime(prices.index)
-            # Make sure this is a dataframe so it can be merged later
-            if type(prices) != type(df):
-                prices = prices.to_frame()
-            # rename index to date to match dailynav name
-            prices.index.rename('date', inplace=True)
-            prices.columns = [currency]
-            # Fill dailyNAV with prices for each ticker
-            df = pd.merge(df, prices, on='date', how='left')
-        except Exception as e:
-            logging.error(f"[FX] Could not get prices for {currency}" + 
-                        "- defaulting to 1 but this may create calculation problems - " + 
-                        "Error: {e}")
-            df[currency] = 1
-    # The currenct fx needs no conversion, set to 1
-    df[current_user.fx()] = 1
+        def find_fx(row):
+            return price_ondate(current_user.fx(), row.name, row['trade_currency'])
+        df[currency] = df.apply(find_fx, axis=1)
+
     # Now create a cash value in the preferred currency terms
+
     df['fx'] = df.apply(lambda x: x[x['trade_currency']], axis=1)
     df['cash_value_fx'] = df['cash_value'].astype(float) / df['fx'].astype(float)
     df['trade_fees_fx'] = df['trade_fees'].astype(float) / df['fx'].astype(float)
+    return (df)
 
+@MWT(timeout=20)
+def generate_pos_table(user, fx, hidesmall):
+    # This function creates all relevant data for the main page
+    # Including current positions, cost and other market info
+    
+    # Gets all transactions
+    df = transactions_fx()
+    print ("Running gen_pos table")
     # Create string of tickers and grab all prices in one request
     list_of_tickers = df.trade_asset_ticker.unique().tolist()
     ticker_str = ""
@@ -541,120 +532,8 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     return(str)
 
 
-def generatepnltable(user, ticker, method, start_date=0, end_date=99999):
-    # MARK FOR DELETION OR RESTRUCTURE
-    # start by reading a pandas dataframe from the dbase
-    # methods can be FIFO, LIFO or AVERAGE
-    # defaults to AVERAGE
-    df = pd.read_sql_table('trades', db.engine)
-    df = df[(df.user_id == user)]
-    df = df[(df.trade_asset_ticker == ticker)]
-    # Filter only buy and sells, ignore deposit / withdraw
-    df = df[(df.trade_operation == "B") | (df.trade_operation == "S")]
-    df['trade_date'] = pd.to_datetime(df['trade_date'])
-    tmpdf = df.copy()
-
-    # Since tmpdf is a copy of df, Pandas may generate warnings
-    # when changing tmpdf but not df. Weird but more info here:
-    # https://goo.gl/FLguwy
-    pd.options.mode.chained_assignment = None  # default='warn'
-
-    tmpdf.set_index('trade_date', inplace=True)
-    if method == "FIFO":
-        tmpdf.sort_index(inplace=True)
-    if method == "LIFO":
-        tmpdf.sort_index(inplace=True, ascending=False)
-
-    currentpos = 0
-    realpnl = {}
-    metadata = {}
-
-    # Interact through all transactions looking for changes in sign
-    for index, row in df.iterrows():
-
-        if currentpos == 0:
-            currentpos = currentpos + float(row['trade_quantity'])
-            continue
-
-        # Look for a change in direction (reducing position)
-        direction = row['trade_quantity'] / abs(row['trade_quantity'])
-        possign = currentpos / abs(currentpos)
-
-        quantity = abs(float(row['trade_quantity']))
-
-        currentpos = currentpos + float(row['trade_quantity'])
-
-        # This means we are only adding to the position, do nothing
-        if direction == possign:
-            continue
-
-        realpnl[row['trade_reference_id']] = []
-        # create an empty dic for metadata on this unwind
-
-        metadata[row['trade_reference_id']] = {}
-        metadata[row['trade_reference_id']]['method'] = method
-        metadata[row['trade_reference_id']]['start_date'] = start_date
-        metadata[row['trade_reference_id']]['end_date'] = end_date
-        unwinddate = row['trade_date']
-        unwindvalue = abs(float(row['trade_quantity']) * float(row[
-            'trade_price']))
-        metadata[row['trade_reference_id']]['unwind_value'] = unwindvalue
-
-        # Start looping through transactions to look for unwinds until
-        # all quantities are done
-        cumcf = 0
-        while quantity != 0:
-            rowquant = abs(float(tmpdf.iloc[0].trade_quantity))
-            rowcf = abs(float(tmpdf.iloc[0].cash_value))
-
-            # If looped through all trades and hit end of list
-            # No more unwinds, adjust position
-            if tmpdf.iloc[0].trade_reference_id == row['trade_reference_id']:
-                # This means the loop completed and the current transaction is
-                # larger than all previous transactions. For example:
-                # B 10 , B 10, S 30
-                tmpdf.drop(tmpdf.head(1).index, inplace=True)
-                currentpos = quantity
-                break
-
-            # find match trades for this unwind
-            # and store under a dic with trade_id of realized trade
-
-            # if this transaction is not enough to match unwind
-            # take the full row out
-            if rowquant <= quantity:
-                recordtrade = {}
-                recordtrade["id"] = tmpdf.iloc[0].trade_reference_id
-                recordtrade["holding_period"] = (unwinddate -
-                                                 tmpdf.iloc[0].name).days
-                quantity = quantity - rowquant
-                recordtrade["cumquant"] = quantity
-                realpnl[row['trade_reference_id']].append(recordtrade)
-                cumcf = cumcf + rowcf
-                tmpdf.drop(tmpdf.head(1).index, inplace=True)
-
-            # This transaction has enough quantity - unwind partially only
-            else:
-                # Adjust the CF to reflect only partially
-                cumcf = cumcf + (rowcf * quantity / rowquant)
-                #  CHECK THIS:
-                tmpdf.iloc[0].trade_quantity = quantity
-                recordtrade = {}
-                recordtrade["id"] = tmpdf.iloc[0].trade_reference_id
-                recordtrade["holding_period"] = (unwinddate -
-                                                 tmpdf.iloc[0].name).days
-                quantity = 0
-                recordtrade["cumquant"] = quantity
-                realpnl[row['trade_reference_id']].append(recordtrade)
-                tmpdf.iloc[0].trade_quantity = rowquant - quantity
-
-        metadata[row['trade_reference_id']]['match_value'] = cumcf
-        metadata[row['trade_reference_id']]['realpnl'] = unwindvalue - cumcf
-
-    return (realpnl, metadata)
-
-
 @login_required
+@MWT(timeout=60)
 def generatenav(user, force=False, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
     # Variables
@@ -1139,7 +1018,7 @@ def send_reset_email(user):
                 '''
     mail.send(msg)
 
-
+@MWT(timeout=20)
 def heatmap_generator():
     # If no Transactions for this user, return empty.html
     transactions = Trades.query.filter_by(user_id=current_user.username).order_by(
@@ -1208,6 +1087,7 @@ def heatmap_generator():
 def price_ondate(ticker, date_input, to_symbol=None):
     # Returns the price of a ticker on a given date
     # if to_symbol is passed, it assumes FX and ticker is from_symbol
+    
     if to_symbol is not None:
         local_json, message, error = alphavantage_historical(ticker, to_symbol)
     else:
@@ -1220,18 +1100,21 @@ def price_ondate(ticker, date_input, to_symbol=None):
         # Reassign index to the date column
         prices = prices.set_index(
             list(prices.columns[[0]]))
-        prices = prices['4a. close (USD)']
+        if to_symbol is None:
+            prices = prices['4a. close (USD)']
+        else:
+            prices = prices['4. close']
         # convert string date to datetime
         prices.index = pd.to_datetime(prices.index)
         # rename index to date to match dailynav name
         prices.index.rename('date', inplace=True)
         idx = prices[prices.index.get_loc(date_input, method='nearest')]
-    except KeyError:
+    except KeyError as e:
+        print (e)
         return ("0")
-
     return (idx)
 
-
+@MWT(timeout=60)
 def fx_list():
     fx_dict = {}
     with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
