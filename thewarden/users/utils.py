@@ -80,8 +80,12 @@ def cost_calculation(user, ticker):
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == user)]
     df = df[(df.trade_asset_ticker == ticker)]
+    df = df.set_index('trade_date')
+    # Ignore times in df to merge - keep only dates
+    df.index.rename('date', inplace=True)
     # Normalize all cash flows to current fx
     list_of_fx = df.trade_currency.unique().tolist()
+    
     for currency in list_of_fx:
         if currency == current_user.fx():
             logging.info(f"[fx] no need to convert {currency}, this is in local currency")
@@ -114,11 +118,12 @@ def cost_calculation(user, ticker):
             df[currency] = 1
     # The currenct fx needs no conversion, set to 1
     df[current_user.fx()] = 1
+    
     # Now create a cash value in the preferred currency terms
     df['fx'] = df.apply(lambda x: x[x['trade_currency']], axis=1)
-    df['cash_value_fx'] = df['fx'].astype(float) * df['cash_value'].astype(float)
-    df['trade_fees_fx'] = df['fx'].astype(float) * df['trade_fees'].astype(float)
-
+    df['cash_value_fx'] = df['cash_value'].astype(float) / df['fx'].astype(float)
+    df['trade_fees_fx'] = df['trade_fees'].astype(float) / df['fx'].astype(float)
+    
     # Find current open position on asset
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
         ["cash_value", "cash_value_fx", "trade_fees", "trade_quantity"]].sum()
@@ -137,7 +142,7 @@ def cost_calculation(user, ticker):
     # FIFO
     # ---------------------------------------------------
 
-    fifo_df = df.sort_values(by=['trade_date'], ascending=True)
+    fifo_df = df.sort_index(ascending=False)
 
     fifo_df['acum_Q'] = fifo_df['trade_quantity'].cumsum()
     fifo_df['acum_Q'] = np.where(fifo_df['acum_Q'] < open_position,
@@ -145,17 +150,15 @@ def cost_calculation(user, ticker):
     # Keep only the number of rows needed for open position
     fifo_df = fifo_df.drop_duplicates(subset="acum_Q", keep='first')
     fifo_df['Q'] = fifo_df['acum_Q'].diff()
-    if fifo_df['acum_Q'].count() == 1:
-        fifo_df['Q'] = fifo_df['acum_Q']
+    fifo_df['Q'] = fifo_df['Q'].fillna(fifo_df['trade_quantity'])
+    # if fifo_df['acum_Q'].count() == 1:
+    #     fifo_df['Q'] = fifo_df['acum_Q']
     # Adjust Cash Value only to account for needed position
     fifo_df['adjusted_cv'] = fifo_df['cash_value_fx'] * fifo_df['Q'] /\
         fifo_df['trade_quantity']
 
-    print (fifo_df)
-
     cost_matrix['FIFO'] = {}
     cost_matrix['FIFO']['cash'] = fifo_df['adjusted_cv'].sum()
-
     cost_matrix['FIFO']['quantity'] = open_position
     cost_matrix['FIFO']['count'] = int(fifo_df['trade_operation'].count())
     cost_matrix['FIFO']['average_cost'] = fifo_df['adjusted_cv'].sum()\
@@ -165,7 +168,7 @@ def cost_calculation(user, ticker):
     #  LIFO
     # ---------------------------------------------------
 
-    lifo_df = df.sort_values(by=['trade_date'], ascending=False)
+    lifo_df = df.sort_index(ascending=True)
 
     lifo_df['acum_Q'] = lifo_df['trade_quantity'].cumsum()
     lifo_df['acum_Q'] = np.where(lifo_df['acum_Q'] < open_position,
@@ -173,15 +176,15 @@ def cost_calculation(user, ticker):
     # Keep only the number of rows needed for open position
     lifo_df = lifo_df.drop_duplicates(subset="acum_Q", keep='first')
     lifo_df['Q'] = lifo_df['acum_Q'].diff()
-    if lifo_df['acum_Q'].count() == 1:
-        lifo_df['Q'] = lifo_df['acum_Q']
+    lifo_df['Q'] = lifo_df['Q'].fillna(lifo_df['trade_quantity'])
+    # if lifo_df['acum_Q'].count() == 1:
+    #     lifo_df['Q'] = lifo_df['acum_Q']
     # Adjust Cash Value only to account for needed position
     lifo_df['adjusted_cv'] = lifo_df['cash_value_fx'] * lifo_df['Q'] /\
         lifo_df['trade_quantity']
 
     cost_matrix['LIFO'] = {}
     cost_matrix['LIFO']['cash'] = lifo_df['adjusted_cv'].sum()
-
     cost_matrix['LIFO']['quantity'] = open_position
     cost_matrix['LIFO']['count'] = int(lifo_df['trade_operation'].count())
     cost_matrix['LIFO']['average_cost'] = lifo_df['adjusted_cv'].sum()\

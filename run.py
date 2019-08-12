@@ -43,8 +43,6 @@ app = create_app()
 app.app_context().push()
 migrate = Migrate(app, db, render_as_batch=True)
 
-# upgrade()
-
 
 @app.shell_context_processor
 def make_shell_context():
