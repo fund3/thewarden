@@ -988,7 +988,7 @@ def transactionsandcost_json():
     # Filter only buy and sells, ignore deposit / withdraw
     # For now, including Deposits and Withdrawns as well but
     # may consider only B and S as line below.
-    # df = df[(df.trade_operation == "B") | (df.trade_operation == "S")]
+    df = df[(df.trade_operation == "B") | (df.trade_operation == "S")]
     df.drop("user_id", axis=1, inplace=True)
     # Create a cash_flow column - so we can calculate
     # average price for days with multiple buys and/or sells

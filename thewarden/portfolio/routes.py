@@ -5,7 +5,8 @@ from flask_login import current_user, login_required
 from thewarden.models import Trades, User
 from datetime import datetime
 from thewarden.users.utils import (
-    generatenav, generate_pos_table, heatmap_generator)
+    generatenav, generate_pos_table, heatmap_generator,
+    fxsymbol)
 
 portfolio = Blueprint("portfolio", __name__)
 
@@ -32,7 +33,8 @@ def portfolio_main():
     transactions = Trades.query.filter_by(user_id=current_user.username)
     if transactions.count() == 0:
         return render_template("empty.html")
-    portfolio_data, pie_data = generate_pos_table(user, "USD", False)
+    # Keep the line below as USD - prices are gathered in USD then converted
+    portfolio_data, pie_data = generate_pos_table(user, 'USD', False)
     if portfolio_data == "empty":
         return render_template("empty.html")
     if portfolio_data == "ConnectionError":
@@ -51,17 +53,17 @@ def portfolio_main():
 @login_required
 def navchart():
     data = generatenav(current_user.username)
-    navchart = data[["NAV"]].copy()
+    navchart = data[["NAV_fx"]].copy()
     # dates need to be in Epoch time for Highcharts
     navchart.index = (navchart.index - datetime(1970, 1, 1)).total_seconds()
     navchart.index = navchart.index * 1000
     navchart.index = navchart.index.astype(np.int64)
     navchart = navchart.to_dict()
-    navchart = navchart["NAV"]
+    navchart = navchart["NAV_fx"]
 
-    port_value_chart = data[["PORT_cash_value", "PORT_usd_pos", "PORT_ac_CFs"]].copy()
-    port_value_chart["ac_pnl"] = (
-        port_value_chart["PORT_usd_pos"] - port_value_chart["PORT_ac_CFs"]
+    port_value_chart = data[["PORT_cash_value_fx", "PORT_fx_pos", "PORT_ac_CFs_fx"]].copy()
+    port_value_chart["ac_pnl_fx"] = (
+        port_value_chart["PORT_fx_pos"] - port_value_chart["PORT_ac_CFs_fx"]
     )
     # dates need to be in Epoch time for Highcharts
     port_value_chart.index = (
@@ -76,6 +78,7 @@ def navchart():
         title="NAV Historical Chart",
         navchart=navchart,
         port_value_chart=port_value_chart,
+        fx=fxsymbol(current_user.fx())
     )
 
 

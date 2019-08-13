@@ -11,6 +11,8 @@ import json
 import inspect
 import pandas as pd
 import numpy as np
+import functools
+import collections
 from PIL import Image
 from flask import url_for, current_app, flash
 from flask_mail import Message
@@ -18,8 +20,11 @@ from flask_login import current_user, login_required
 from thewarden import db, mail
 from thewarden.models import Trades, User
 from thewarden.node.utils import tor_request
+from thewarden.users.pd_cache import pd_cache
 from thewarden import mhp as mrh
 from datetime import datetime, timedelta, timezone
+
+
 
 # ---------------------------------------------------------
 # Helper Functions start here
@@ -42,6 +47,41 @@ except KeyError:
     PORTFOLIO_MIN_SIZE_NAV = 5
     logging.error("Could not find PORTFOLIO_MIN_SIZE_NAV at config.ini." +
                   " Defaulting to 5.")
+
+
+def timing(method):
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+        print('Function', method.__name__, 'time:', round((te -ts)*1000,1), 'ms')
+        print()
+        return result
+    return timed
+
+
+class memoized(object):
+    # Decorator. Caches a function's return value each time it is called.
+    # If called later with the same arguments, the cached value is returned
+    # (not reevaluated).
+    def __init__(self, func):
+        self.func = func
+        self.cache = {}
+    def __call__(self, *args):
+        if not isinstance(args, collections.Hashable):
+            # uncacheable. a list, for instance.
+            # better to not cache than blow up.
+            return self.func(*args)
+        if args in self.cache:
+            return self.cache[args]
+        else:
+            value = self.func(*args)
+            self.cache[args] = value
+            return value
+    def __repr__(self):
+        return self.func.__doc__
+    def __get__(self, obj, objtype):
+        return functools.partial(self.__call__, obj)
 
 class MWT(object):
     # Decorator that caches the result of a function until a given timeout (in seconds)
@@ -80,6 +120,9 @@ class MWT(object):
 
         return func
 
+
+@memoized
+@timing
 def multiple_price_grab(tickers, fx):
     # tickers should be in comma sep string format like "BTC,ETH,LTC"
     baseURL = \
@@ -108,7 +151,9 @@ def rt_price_grab(ticker, user_fx='USD'):
     return (data)
 
 
-@MWT(timeout=40)
+
+@MWT(timeout=30)
+@timing
 def cost_calculation(user, ticker):
     # This function calculates the cost basis assuming 3 different methods
     # FIFO, LIFO and avg. cost
@@ -187,7 +232,8 @@ def cost_calculation(user, ticker):
     return (cost_matrix)
 
 
-@MWT(timeout=10)
+@MWT(timeout=30)
+@timing
 def fx_rate():
     # To avoid multiple requests to grab a new FX, the data is
     # saved to a local json file and only refreshed if older than
@@ -240,7 +286,7 @@ def fx():
     # Currency / USD
     return (float(fx_rate()['fx_rate']))
 
-
+@memoized
 def to_epoch(in_date):
     return str(int((in_date - datetime(1970,1,1)).total_seconds()))
 
@@ -249,15 +295,15 @@ def find_fx(row, fx=None):
     return price_ondate(current_user.fx(), row.name, row['trade_currency'])
             
 
-
-@MWT(timeout=10)
+@MWT(timeout=20)
+@timing
 def transactions_fx():
     # Gets the transaction table and fills with fx information
     # Note that it uses the currency exchange for the date of transaction
-    
     # Get all transactions from db and format
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == current_user.username)]
+    df = df[(df.trade_operation == "B") | (df.trade_operation == "S")]
     df['trade_date'] = pd.to_datetime(df['trade_date'])
     df = df.set_index('trade_date')
     # Ignore times in df to merge - keep only dates
@@ -273,18 +319,19 @@ def transactions_fx():
     for currency in list_of_fx:
         if currency == current_user.fx():
             continue
-        logging.info(f"[fx] requesting historical FX prices for {currency}")
         # Make a price request
         df[currency] = df.apply(find_fx, axis=1)
 
     # Now create a cash value in the preferred currency terms
-
     df['fx'] = df.apply(lambda x: x[x['trade_currency']], axis=1)
     df['cash_value_fx'] = df['cash_value'].astype(float) / df['fx'].astype(float)
     df['trade_fees_fx'] = df['trade_fees'].astype(float) / df['fx'].astype(float)
+    print(df)
     return (df)
 
-@MWT(timeout=10)
+
+@MWT(timeout=5)
+@timing
 def generate_pos_table(user, fx, hidesmall):
     # This function creates all relevant data for the main page
     # Including current positions, cost and other market info
@@ -322,7 +369,7 @@ def generate_pos_table(user, fx, hidesmall):
 
     except KeyError:
         logging.info(f"[generate_pos_table] No USD or {current_user.fx()} positions found")
-
+    
     def find_price_data(ticker):
         price_data = price_list["RAW"][ticker]['USD']
         return (price_data)
@@ -489,10 +536,11 @@ def generate_pos_table(user, fx, hidesmall):
 
         table[ticker]['usd_price_data'] =\
             consol_table['price_data_USD'][ticker]
-        table[ticker]['usd_price_data']['LASTUPDATE'] =\
-            (datetime.utcfromtimestamp(
-                table[ticker]['usd_price_data']['LASTUPDATE']).strftime
-                ('%H:%M:%S'))
+        try:    
+            table[ticker]['usd_price_data']['LASTUPDATE'] =\
+                    (datetime.utcfromtimestamp(table[ticker]['usd_price_data']['LASTUPDATE']).strftime('%H:%M:%S'))
+        except TypeError:
+            table[ticker]['usd_price_data']['LASTUPDATE'] = 0
         table[ticker]['btc_price'] = consol_table['price_data_BTC'][ticker]
         table[ticker]['total_pnl_gross_USD'] =\
             consol_table['total_pnl_gross_USD'][ticker]
@@ -521,6 +569,7 @@ def generate_pos_table(user, fx, hidesmall):
     return(table, pie_data)
 
 
+@memoized
 def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     if text is None:
         return (0)
@@ -533,8 +582,8 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     return(str)
 
 
-# @login_required
-@MWT(timeout=10)
+@MWT(timeout=20)
+@timing
 def generatenav(user, force=False, filter=None):
 
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
@@ -593,6 +642,7 @@ def generatenav(user, force=False, filter=None):
 
     # Pandas dataframe with transactions
     df = transactions_fx()
+    
     if filter:
         df = df.query(filter)
     logging.info("[generatenav] Success - read trades from database")
@@ -1164,11 +1214,13 @@ def price_ondate(ticker, date_input, to_symbol=None):
         # rename index to date to match dailynav name
         prices.index.rename('date', inplace=True)
         idx = prices[prices.index.get_loc(date_input, method='nearest')]
-    except KeyError as e:
+    except KeyError:
         return ("0")
+    
     return (idx)
 
-@MWT(timeout=60)
+
+@memoized
 def fx_list():
     fx_dict = {}
     with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
@@ -1220,3 +1272,24 @@ def bitmex_orders(api_key, api_secret, testnet=True):
     except Exception:
         resp = "Invalid Credential or Connection Error"
     return(resp)
+
+
+def fxsymbol(fx, output='symbol'):
+    # Gets an FX 3 letter symbol and returns the HTML symbol
+    # Sample outputs are:
+    # "EUR": {
+    # "symbol": "€",
+    # "name": "Euro",
+    # "symbol_native": "€",
+    # "decimal_digits": 2,
+    # "rounding": 0,
+    # "code": "EUR",
+    # "name_plural": "euros"
+    with open('thewarden/static/json_files/currency.json') as fx_json:
+        fx_list = json.load(fx_json)
+    try:
+        out = fx_list[fx][output]
+    except Exception:
+        out = fx
+
+    return (out)

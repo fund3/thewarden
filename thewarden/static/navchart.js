@@ -7,7 +7,7 @@ function createcharts(data) {
 
     var myChart = Highcharts.stockChart('portchart', {
         credits: {
-            text: "Historical Portfolio Chart"
+            text: "Historical Portfolio Chart (" + fx + ")"
         },
         chart: {
             zoomType: 'x',
@@ -46,7 +46,7 @@ function createcharts(data) {
             },
             {
                 title: {
-                    text: 'Portfolio Market Value and Cost Basis'
+                    text: 'Portfolio Market Value and Cost Basis (' + fx + ')'
                 },
                 lineWidth: 4,
                 top: '35%',
@@ -56,7 +56,7 @@ function createcharts(data) {
                 endOnTick: false
             }, {
                 title: {
-                    text: 'PnL compared to Cost basis'
+                    text: 'PnL compared to Cost basis (' + fx + ')'
                 },
                 lineWidth: 2,
                 top: '70%',
@@ -119,15 +119,15 @@ function createcharts(data) {
                 dataGrouping: {
                     enabled: false
                 },
-                name: 'Portfolio Value',
+                name: 'Portfolio Value (' + fx + ')',
                 yAxis: 1,
                 // The line below maps the dictionary coming from Python into
                 // the data needed for highcharts. It's weird but the *1 is
                 // needed, otherwise the date does not show on chart.
-                data: Object.keys(portchartjs['PORT_usd_pos']).map((key) => [((key * 1)), portchartjs['PORT_usd_pos'][key]]),
+                data: Object.keys(portchartjs['PORT_fx_pos']).map((key) => [((key * 1)), portchartjs['PORT_fx_pos'][key]]),
                 turboThreshold: 0,
                 tooltip: {
-                    pointFormat: "Portfolio Market Value: ${point.y:,.0f}"
+                    pointFormat: "Portfolio Market Value: " + fx + " {point.y:,.0f}"
                 },
             },
             {
@@ -143,10 +143,10 @@ function createcharts(data) {
                 // The line below maps the dictionary coming from Python into
                 // the data needed for highcharts. It's weird but the *1 is
                 // needed, otherwise the date does not show on chart.
-                data: Object.keys(portchartjs['PORT_ac_CFs']).map((key) => [((key * 1)), portchartjs['PORT_ac_CFs'][key]]),
+                data: Object.keys(portchartjs['PORT_ac_CFs_fx']).map((key) => [((key * 1)), portchartjs['PORT_ac_CFs_fx'][key]]),
                 turboThreshold: 0,
                 tooltip: {
-                    pointFormat: "Portfolio Cost Basis: ${point.y:,.0f}"
+                    pointFormat: "Portfolio Cost Basis: " + fx + "{point.y:,.0f}"
                 },
             },
             {
@@ -159,10 +159,10 @@ function createcharts(data) {
                 // The line below maps the dictionary coming from Python into
                 // the data needed for highcharts. It's weird but the *1 is
                 // needed, otherwise the date does not show on chart.
-                data: Object.keys(portchartjs['ac_pnl']).map((key) => [((key * 1)), portchartjs['ac_pnl'][key]]),
+                data: Object.keys(portchartjs['ac_pnl_fx']).map((key) => [((key * 1)), portchartjs['ac_pnl_fx'][key]]),
                 turboThreshold: 0,
                 tooltip: {
-                    pointFormat: "PnL compared to Cost Basis: ${point.y:,.0f}"
+                    pointFormat: "PnL compared to Cost Basis: " + fx + "{point.y:,.0f}"
                 },
             }
         ]

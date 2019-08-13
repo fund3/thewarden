@@ -521,7 +521,7 @@ def account_positions():
     ].sum()
     # All accounts
     all_accounts = (
-        account_table.query("trade_asset_ticker != 'USD'")
+        account_table.query("trade_asset_ticker != '"+current_user.fx()+"'")
         .index.get_level_values("trade_account")
         .unique()
         .tolist()
