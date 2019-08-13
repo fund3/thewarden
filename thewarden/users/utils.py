@@ -5,14 +5,10 @@ import requests
 import configparser
 import hashlib
 import pickle
-import time
 import csv
 import json
-import inspect
 import pandas as pd
 import numpy as np
-import functools
-import collections
 from PIL import Image
 from flask import url_for, current_app, flash
 from flask_mail import Message
@@ -20,11 +16,9 @@ from flask_login import current_user, login_required
 from thewarden import db, mail
 from thewarden.models import Trades, User
 from thewarden.node.utils import tor_request
-from thewarden.users.pd_cache import pd_cache
+from thewarden.users.decorators import pd_cache, timing, memoized, MWT
 from thewarden import mhp as mrh
 from datetime import datetime, timedelta, timezone
-
-
 
 # ---------------------------------------------------------
 # Helper Functions start here
@@ -47,78 +41,6 @@ except KeyError:
     PORTFOLIO_MIN_SIZE_NAV = 5
     logging.error("Could not find PORTFOLIO_MIN_SIZE_NAV at config.ini." +
                   " Defaulting to 5.")
-
-
-def timing(method):
-    def timed(*args, **kw):
-        ts = time.time()
-        result = method(*args, **kw)
-        te = time.time()
-        print('Function', method.__name__, 'time:', round((te -ts)*1000,1), 'ms')
-        print()
-        return result
-    return timed
-
-
-class memoized(object):
-    # Decorator. Caches a function's return value each time it is called.
-    # If called later with the same arguments, the cached value is returned
-    # (not reevaluated).
-    def __init__(self, func):
-        self.func = func
-        self.cache = {}
-    def __call__(self, *args):
-        if not isinstance(args, collections.Hashable):
-            # uncacheable. a list, for instance.
-            # better to not cache than blow up.
-            return self.func(*args)
-        if args in self.cache:
-            return self.cache[args]
-        else:
-            value = self.func(*args)
-            self.cache[args] = value
-            return value
-    def __repr__(self):
-        return self.func.__doc__
-    def __get__(self, obj, objtype):
-        return functools.partial(self.__call__, obj)
-
-class MWT(object):
-    # Decorator that caches the result of a function until a given timeout (in seconds)
-    # Helpful when running complicated calculations that are used more than once
-    # Source: http://code.activestate.com/recipes/325905-memoize-decorator-with-timeout/
-    _caches = {}
-    _timeouts = {}
-
-    def __init__(self,timeout=2):
-        self.timeout = timeout
-
-    def collect(self):
-        # Clear cache of results which have timed out
-        for func in self._caches:
-            cache = {}
-            for key in self._caches[func]:
-                if (time.time() - self._caches[func][key][1]) < self._timeouts[func]:
-                    cache[key] = self._caches[func][key]
-            self._caches[func] = cache
-
-    def __call__(self, f):
-        self.cache = self._caches[f] = {}
-        self._timeouts[f] = self.timeout
-
-        def func(*args, **kwargs):
-            kw = sorted(kwargs.items())
-            key = (args, tuple(kw))
-            try:
-                v = self.cache[key]
-                if (time.time() - v[1]) > self.timeout:
-                    raise KeyError
-            except KeyError:
-                v = self.cache[key] = f(*args,**kwargs),time.time()
-            return v[0]
-        func.func_name = f.__name__
-
-        return func
 
 
 @memoized
@@ -326,7 +248,6 @@ def transactions_fx():
     df['fx'] = df.apply(lambda x: x[x['trade_currency']], axis=1)
     df['cash_value_fx'] = df['cash_value'].astype(float) / df['fx'].astype(float)
     df['trade_fees_fx'] = df['trade_fees'].astype(float) / df['fx'].astype(float)
-    print(df)
     return (df)
 
 
@@ -585,7 +506,6 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
 @MWT(timeout=20)
 @timing
 def generatenav(user, force=False, filter=None):
-
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
     # Variables
     # Portfolios smaller than this size do not account for NAV calculations
@@ -684,7 +604,6 @@ def generatenav(user, force=False, filter=None):
         dailynav['fx'].fillna(method='ffill', inplace=True)
     else:
         dailynav['fx'] = 1
-
 
     # Create a dataframe for each position's prices
     for id in tickers:
@@ -795,7 +714,7 @@ def generatenav(user, force=False, filter=None):
             continue
         dailynav['PORT_cash_value'] = dailynav['PORT_cash_value'] +\
             dailynav[id+'_cash_value']
-        dailynav['PORT_cash_value_fx'] = dailynav['PORT_cash_value'] +\
+        dailynav['PORT_cash_value_fx'] = dailynav['PORT_cash_value_fx'] +\
             dailynav[id+'_cash_value_fx']
 
     # Now that we have the full portfolio value each day, calculate alloc %
@@ -876,6 +795,7 @@ def generatenav(user, force=False, filter=None):
     return dailynav
 
 
+@MWT(timeout=120)
 def alphavantage_historical(id, to_symbol=None):
     # Downloads Historical prices from Alphavantage
     # Can handle both Stock and Crypto tickers - try stock first, then crypto
@@ -1189,6 +1109,7 @@ def heatmap_generator():
     return (heatmap, heatmap_stats, years, cols)
 
 
+@memoized
 def price_ondate(ticker, date_input, to_symbol=None):
     # Returns the price of a ticker on a given date
     # if to_symbol is passed, it assumes FX and ticker is from_symbol
@@ -1198,7 +1119,8 @@ def price_ondate(ticker, date_input, to_symbol=None):
     else:
         local_json, message, error = alphavantage_historical(ticker)
     if message == 'error':
-        return local_json
+        return 'error'
+    
     try:
         prices = pd.DataFrame(local_json)
         prices.reset_index(inplace=True)

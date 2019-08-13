@@ -36,6 +36,7 @@ from thewarden.node.utils import (
     dojo_get_hd,
     tor_request,
 )
+from thewarden.users.decorators import MWT, memoized
 
 api = Blueprint("api", __name__)
 
@@ -276,13 +277,14 @@ def portstats():
     return simplejson.dumps(meta, ignore_nan=True)
 
 
+@MWT(20)
 @api.route("/navchartdatajson", methods=["GET", "POST"])
 @login_required
 #  Creates a table with dates and NAV values
 def navchartdatajson():
     data = generatenav(current_user.username)
     # Generate data for NAV chart
-    navchart = data[["NAV_fx"]].copy()
+    navchart = data[["NAV_fx"]]
     # dates need to be in Epoch time for Highcharts
     navchart.index = (navchart.index - datetime(1970, 1, 1)).total_seconds()
     navchart.index = navchart.index * 1000
@@ -710,6 +712,7 @@ def portfolio_compare_json():
     return nav_only.to_json()
 
 
+@MWT(20)
 @api.route("/generatenav_json", methods=["GET", "POST"])
 @login_required
 # Creates a table with dates and NAV values
@@ -728,6 +731,7 @@ def generatenav_json():
         return nav.to_json()
 
 
+@MWT(10)
 @api.route("/portfolio_tickers_json", methods=["GET", "POST"])
 @login_required
 # Returns a list of all tickers ever traded in this portfolio
@@ -1449,6 +1453,7 @@ def drawdown_json():
     return simplejson.dumps(return_list)
 
 
+@MWT(10)
 @api.route("/test_tor", methods=["GET"])
 # Tests for Tor and sends back stats
 # response = {
@@ -1464,6 +1469,7 @@ def test_tor_api():
     return simplejson.dumps(response)
 
 
+@MWT(10)
 @api.route("/test_dojo", methods=["GET"])
 # Test for DOJO and makes some tests
 def test_dojo():
@@ -1940,7 +1946,7 @@ def load_bitmex_json():
     except (FileNotFoundError, KeyError):
         return ({'status': 'error', 'message': 'API credentials not found'})
 
-
+@MWT(20)
 @api.route("/realtime_user", methods=["GET"])
 # Returns current BTC price and FX rate for current user
 def realtime_user():

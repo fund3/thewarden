@@ -2,80 +2,14 @@ import requests
 import logging
 import time
 import pandas as pd
-import functools
-import collections
 from thewarden.models import User
 from flask_login import current_user
 from flask import flash, Markup, current_app
+from thewarden.users.decorators import pd_cache, timing, memoized, MWT
 
 
-class MWT(object):
-    # Decorator that caches the result of a function until a given timeout (in seconds)
-    # Helpful when running complicated calculations that are used more than once
-    # Source: http://code.activestate.com/recipes/325905-memoize-decorator-with-timeout/
-    _caches = {}
-    _timeouts = {}
-
-    def __init__(self, timeout=2):
-        self.timeout = timeout
-
-    def collect(self):
-        # Clear cache of results which have timed out
-        for func in self._caches:
-            cache = {}
-            for key in self._caches[func]:
-                if (time.time() - self._caches[func][key][1]) < self._timeouts[func]:
-                    cache[key] = self._caches[func][key]
-            self._caches[func] = cache
-
-    def __call__(self, f):
-        self.cache = self._caches[f] = {}
-        self._timeouts[f] = self.timeout
-
-        def func(*args, **kwargs):
-            kw = sorted(kwargs.items())
-            key = (args, tuple(kw))
-            try:
-                v = self.cache[key]
-                if (time.time() - v[1]) > self.timeout:
-                    raise KeyError
-            except KeyError:
-                v = self.cache[key] = f(*args, **kwargs), time.time()
-            return v[0]
-        func.func_name = f.__name__
-
-        return func
-
-
-class memoized(object):
-    # Decorator. Caches a function's return value each time it is called.
-    # If called later with the same arguments, the cached value is returned
-    # (not reevaluated).
-    def __init__(self, func):
-        self.func = func
-        self.cache = {}
-
-    def __call__(self, *args):
-        if not isinstance(args, collections.Hashable):
-            # uncacheable. a list, for instance.
-            # better to not cache than blow up.
-            return self.func(*args)
-        if args in self.cache:
-            return self.cache[args]
-        else:
-            value = self.func(*args)
-            self.cache[args] = value
-            return value
-
-    def __repr__(self):
-        return self.func.__doc__
-
-    def __get__(self, obj, objtype):
-        return functools.partial(self.__call__, obj)
-
-
-@MWT(20)
-# Requests within 20sec of each other will return the same result
+@MWT(30)
+# Requests within 30sec of each other will return the same result
 # This is an optimization variable, too short and the app will run
 # slow, too high and the data refresh will suffer.
 # Default=20
