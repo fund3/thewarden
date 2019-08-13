@@ -9,6 +9,8 @@ ToDos.txt
 alpha.db
 *.db
 bitmex.json
+.pd_cache/
+*.pkl
 
 # Packages #
 ############
