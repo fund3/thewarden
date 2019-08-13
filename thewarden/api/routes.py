@@ -220,43 +220,43 @@ def portstats():
 
     meta["start_date"] = (data.index.min()).date().strftime("%B %d, %Y")
     meta["end_date"] = data.index.max().date().strftime("%B %d, %Y")
-    meta["start_nav"] = data["NAV"][0]
-    meta["end_nav"] = data["NAV"][-1].astype(float)
-    meta["max_nav"] = data["NAV"].max().astype(float)
-    meta["max_nav_date"] = data[data["NAV"] == data["NAV"].max()].index.strftime(
+    meta["start_nav"] = data["NAV_fx"][0]
+    meta["end_nav"] = data["NAV_fx"][-1].astype(float)
+    meta["max_nav"] = data["NAV_fx"].max().astype(float)
+    meta["max_nav_date"] = data[data["NAV_fx"] == data["NAV_fx"].max()].index.strftime(
         "%B %d, %Y")[0]
-    meta["min_nav"] = data["NAV"].min().astype(float)
-    meta["min_nav_date"] = data[data["NAV"] == data["NAV"].min()].index.strftime(
+    meta["min_nav"] = data["NAV_fx"].min().astype(float)
+    meta["min_nav_date"] = data[data["NAV_fx"] == data["NAV_fx"].min()].index.strftime(
         "%B %d, %Y")[0]
-    meta["end_portvalue"] = data["PORT_usd_pos"][-1].astype(float)
-    meta["max_portvalue"] = data["PORT_usd_pos"].max().astype(float)
+    meta["end_portvalue"] = data["PORT_fx_pos"][-1].astype(float)
+    meta["max_portvalue"] = data["PORT_fx_pos"].max().astype(float)
     meta["max_port_date"] = data[
-        data["PORT_usd_pos"] == data["PORT_usd_pos"].max()
+        data["PORT_fx_pos"] == data["PORT_fx_pos"].max()
     ].index.strftime("%B %d, %Y")[0]
-    meta["min_portvalue"] = round(data["PORT_usd_pos"].min(), 0).astype(float)
+    meta["min_portvalue"] = round(data["PORT_fx_pos"].min(), 0).astype(float)
     meta["min_port_date"] = data[
-        data["PORT_usd_pos"] == data["PORT_usd_pos"].min()
+        data["PORT_fx_pos"] == data["PORT_fx_pos"].min()
     ].index.strftime("%B %d, %Y")[0]
     meta["return_SI"] = (meta["end_nav"] / meta["start_nav"]) - 1
     # Temporary fix for an issue with portfolios that are just too new
     # Create a function to handle this
     try:
-        meta["return_1d"] = (meta["end_nav"] / data["NAV"][-2]) - 1
+        meta["return_1d"] = (meta["end_nav"] / data["NAV_fx"][-2]) - 1
     except IndexError:
         meta["return_1d"] = "-"
 
     try:
-        meta["return_1wk"] = (meta["end_nav"] / data["NAV"][-7]) - 1
+        meta["return_1wk"] = (meta["end_nav"] / data["NAV_fx"][-7]) - 1
     except IndexError:
         meta["return_1wk"] = "-"
 
     try:
-        meta["return_30d"] = (meta["end_nav"] / data["NAV"][-30]) - 1
+        meta["return_30d"] = (meta["end_nav"] / data["NAV_fx"][-30]) - 1
     except IndexError:
         meta["return_30d"] = "-"
 
     try:
-        meta["return_90d"] = (meta["end_nav"] / data["NAV"][-90]) - 1
+        meta["return_90d"] = (meta["end_nav"] / data["NAV_fx"][-90]) - 1
     except IndexError:
         meta["return_90d"] = "-"
 
@@ -282,13 +282,13 @@ def portstats():
 def navchartdatajson():
     data = generatenav(current_user.username)
     # Generate data for NAV chart
-    navchart = data[["NAV"]].copy()
+    navchart = data[["NAV_fx"]].copy()
     # dates need to be in Epoch time for Highcharts
     navchart.index = (navchart.index - datetime(1970, 1, 1)).total_seconds()
     navchart.index = navchart.index * 1000
     navchart.index = navchart.index.astype(np.int64)
     navchart = navchart.to_dict()
-    navchart = navchart["NAV"]
+    navchart = navchart["NAV_fx"]
     navchart = json.dumps(navchart)
     return navchart
 
