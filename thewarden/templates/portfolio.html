@@ -649,7 +649,11 @@
                         <td id='min_nav' class="text-right"> <img class="mx-auto d-block"
                                 src="static/images/loading3.gif" width="15" height="15"></img> </td>
                     </tr>
+                    {% if current_user.fx()!='USD'%}
                     <tr>
+                        {%else%}
+                    <tr hidden>
+                        {%endif%}
                         <td>Portfolio Value (USD)</td>
                         <td id='end_portvalue_usd' class="text-right"> <img class="mx-auto d-block"
                                 src="static/images/loading3.gif" width="15" height="15"></img> </td>

@@ -84,10 +84,12 @@ def cost_calculation(user, ticker):
 
     # Gets all transactions in local currency terms
     df = transactions_fx()
+    df = df[(df.trade_asset_ticker == ticker)]
 
     # Find current open position on asset
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
         ["cash_value", "cash_value_fx", "trade_fees", "trade_quantity"]].sum()
+
     open_position = summary_table.sum()['trade_quantity']
 
     # Drop Deposits and Withdraws - keep only Buy and Sells
@@ -102,9 +104,7 @@ def cost_calculation(user, ticker):
     # ---------------------------------------------------
     # FIFO
     # ---------------------------------------------------
-
     fifo_df = df.sort_index(ascending=False)
-
     fifo_df['acum_Q'] = fifo_df['trade_quantity'].cumsum()
     fifo_df['acum_Q'] = np.where(fifo_df['acum_Q'] < open_position,
                                  fifo_df['acum_Q'], open_position)
@@ -127,9 +127,7 @@ def cost_calculation(user, ticker):
     # ---------------------------------------------------
     #  LIFO
     # ---------------------------------------------------
-
     lifo_df = df.sort_index(ascending=True)
-
     lifo_df['acum_Q'] = lifo_df['trade_quantity'].cumsum()
     lifo_df['acum_Q'] = np.where(lifo_df['acum_Q'] < open_position,
                                  lifo_df['acum_Q'], open_position)
@@ -223,7 +221,7 @@ def transactions_fx():
     # Get all transactions from db and format
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == current_user.username)]
-    df = df[(df.trade_operation == "B") | (df.trade_operation == "S")]
+    # df = df[(df.trade_operation == "B") | (df.trade_operation == "S")]
     df['trade_date'] = pd.to_datetime(df['trade_date'])
     df = df.set_index('trade_date')
     # Ignore times in df to merge - keep only dates
@@ -234,14 +232,12 @@ def transactions_fx():
     # Need to get currencies into the df in order to normalize
     # let's load a list of currencies needed and merge
     list_of_fx = df.trade_currency.unique().tolist()
-
     # loop through currency list
     for currency in list_of_fx:
         if currency == current_user.fx():
             continue
         # Make a price request
         df[currency] = df.apply(find_fx, axis=1)
-
     # Now create a cash value in the preferred currency terms
     df['fx'] = df.apply(lambda x: x[x['trade_currency']], axis=1)
     df['cash_value_fx'] = df['cash_value'].astype(float) / df['fx'].astype(float)
@@ -504,7 +500,7 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     return(str)
 
 
-@MWT(timeout=20)
+@MWT(timeout=120)
 @timing
 def generatenav(user, force=False, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
@@ -1130,6 +1126,7 @@ def heatmap_generator():
 
     return (heatmap, heatmap_stats, years, cols)
 
+
 @memoized
 def price_ondate(ticker, date_input, to_symbol=None):
     # Returns the price of a ticker on a given date
@@ -1169,6 +1166,27 @@ def fx_list():
     fx_list = [(k, k + ' | ' + v) for k, v in fiat_dict.items()]
     fx_list.sort()
     return (fx_list)
+
+
+def fxsymbol(fx, output='symbol'):
+    # Gets an FX 3 letter symbol and returns the HTML symbol
+    # Sample outputs are:
+    # "EUR": {
+    # "symbol": "€",
+    # "name": "Euro",
+    # "symbol_native": "€",
+    # "decimal_digits": 2,
+    # "rounding": 0,
+    # "code": "EUR",
+    # "name_plural": "euros"
+    with open('thewarden/static/json_files/currency.json') as fx_json:
+        fx_list = json.load(fx_json)
+    try:
+        out = fx_list[fx][output]
+    except Exception:
+        out = fx
+
+    return (out)
 
 
 # ------------------------------------
@@ -1212,23 +1230,3 @@ def bitmex_orders(api_key, api_secret, testnet=True):
         resp = "Invalid Credential or Connection Error"
     return(resp)
 
-
-def fxsymbol(fx, output='symbol'):
-    # Gets an FX 3 letter symbol and returns the HTML symbol
-    # Sample outputs are:
-    # "EUR": {
-    # "symbol": "€",
-    # "name": "Euro",
-    # "symbol_native": "€",
-    # "decimal_digits": 2,
-    # "rounding": 0,
-    # "code": "EUR",
-    # "name_plural": "euros"
-    with open('thewarden/static/json_files/currency.json') as fx_json:
-        fx_list = json.load(fx_json)
-    try:
-        out = fx_list[fx][output]
-    except Exception:
-        out = fx
-
-    return (out)

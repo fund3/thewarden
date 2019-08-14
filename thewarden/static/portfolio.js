@@ -16,15 +16,15 @@ $(document).ready(function () {
 
     // Show / hide small and closed positions on button click
     $('.small_pos').toggle(100);
-    $('.fifo_costtable').toggle();
+    $('.lifo_costtable').toggle();
 
     $('#myonoffswitch').on('click', function () {
         $('.small_pos').toggle(100);
     });
 
     $('#myfifolifoswitch').on('click', function () {
-        $('.lifo_costtable').toggle();
         $('.fifo_costtable').toggle();
+        $('.lifo_costtable').toggle();
         $('#acc_method').html(function (i, text) {
             return text === 'Method: LIFO (Last-in First-Out)' ? 'Method: FIFO (First-in First-Out)' : 'Method: LIFO (Last-in First-Out)';
         });
