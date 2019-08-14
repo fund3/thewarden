@@ -1,6 +1,6 @@
 # When creating packages, the import app below gets from
 # __init__.py file`
-
+from flask import request
 from flask_migrate import Migrate
 from thewarden import create_app, db
 from thewarden.models import listofcrypto, User, Trades, AccountInfo, Contact
@@ -10,7 +10,7 @@ print("\033[1;32;40m")
 for _ in range(50):
     print("")
 print(
-    """
+    f"""
 \033[1;32;40m
 -----------------------------------------------------------------
       _   _           __        ___    ____     _            
@@ -28,6 +28,8 @@ print(
    You can access it at your browser
    Just go to:
    \033[1;32;40mhttp://127.0.0.1:5000/
+   \033[1;37;40mTo change the IP:
+   \033[1;32;40mpython run.py --host [host_ip]
    \033[1;37;40mTO EXIT HIT CTRL+C a couple of times
    You can minimize this window now...
 
