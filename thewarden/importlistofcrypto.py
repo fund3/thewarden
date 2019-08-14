@@ -5,7 +5,6 @@
 # to run just execute
 # $ python importlistofcrypto.py
 
-
 import requests
 import os
 from flask import Flask

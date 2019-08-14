@@ -12,7 +12,7 @@ from thewarden.transactions.forms import NewTrade, EditTransaction
 from thewarden.models import Trades, AccountInfo
 from datetime import datetime
 from thewarden.users.utils import (cleancsv, generatenav, bitmex_orders,
-                                   load_bitmex_json)
+                                   load_bitmex_json, regenerate_nav)
 
 transactions = Blueprint("transactions", __name__)
 
@@ -95,6 +95,7 @@ def newtrade():
                 if not cvfail:
                     db.session.add(trade)
                     db.session.commit()
+                    regenerate_nav()
 
             if form.trade_type.data == "1":
                 # First side is done, now for the matching side-financial only
@@ -125,6 +126,7 @@ def newtrade():
                 )
                 db.session.add(trade)
                 db.session.commit()
+                regenerate_nav()
 
             if form.trade_type.data == "3":
                 # Cash Only Transaction
@@ -153,27 +155,7 @@ def newtrade():
                 if not cvfail:
                     db.session.add(trade)
                     db.session.commit()
-
-                    # re-generates the NAV on the background - delete First
-                    # the local NAV file so it's not used.
-                    usernamehash = hashlib.sha256(
-                        current_user.username.encode("utf-8")).hexdigest()
-                    filename = "thewarden/nav_data/" + usernamehash + ".nav"
-                    logging.info(f"[newtrade] {filename} marked for deletion.")
-                    # Since this function can be run as a thread,
-                    # it's safer to delete the current NAV file if it exists.
-                    # This avoids other tasks reading the local file which
-                    # is outdated
-                    try:
-                        os.remove(filename)
-                        logging.info("[newtrade] Local NAV file deleted")
-                    except OSError:
-                        logging.info("[newtrade] Local NAV file not found" +
-                                     " for removal - continuing")
-                    generatenav_thread = threading.Thread(
-                        target=generatenav, args=(current_user.username, True))
-                    logging.info("Change to database - generate NAV")
-                    generatenav_thread.start()
+                    regenerate_nav()
 
             if not cvfail:
                 flash("Trade included", "success")
@@ -288,27 +270,6 @@ def edittransaction():
                 cvfail = True
                 cv = 0
 
-                # re-generates the NAV on the background - delete First
-                # the local NAV file so it's not used.
-                usernamehash = hashlib.sha256(
-                    current_user.username.encode("utf-8")).hexdigest()
-                filename = "thewarden/nav_data/" + usernamehash + ".nav"
-                logging.info(f"[edittrade] {filename} marked for deletion.")
-                # Since this function can be run as a thread,
-                # it's safer to delete the current NAV file if it exists.
-                # This avoids other tasks reading the local file which
-                # is outdated
-                try:
-                    os.remove(filename)
-                    logging.info("[edittrade] Local NAV file deleted")
-                except OSError:
-                    logging.info("[edittrade] Local NAV file not found" +
-                                 " for removal - continuing")
-                generatenav_thread = threading.Thread(
-                    target=generatenav, args=(current_user.username, True))
-                logging.info("[edittrade] Change to database - generate NAV")
-                generatenav_thread.start()
-
             trade[0].trade_date = form.trade_date.data
             trade[0].trade_asset_ticker = form.trade_asset_ticker.data
             trade[0].trade_currency = form.trade_currency.data
@@ -336,28 +297,7 @@ def edittransaction():
 
             if not cvfail:
                 db.session.commit()
-                # re-generates the NAV on the background
-                logging.info("Change to database - generate NAV")
-                # re-generates the NAV on the background - delete First
-                # the local NAV file so it's not used.
-                usernamehash = hashlib.sha256(
-                    current_user.username.encode("utf-8")).hexdigest()
-                filename = "thewarden/nav_data/" + usernamehash + ".nav"
-                logging.info(f"[edittrade] {filename} marked for deletion.")
-                # Since this function can be run as a thread,
-                # it's safer to delete the current NAV file if it exists.
-                # This avoids other tasks reading the local file which
-                # is outdated
-                try:
-                    os.remove(filename)
-                    logging.info("[edittrade] Local NAV file deleted")
-                except OSError:
-                    logging.info("[edittrade] Local NAV file not found" +
-                                 " for removal - continuing")
-                generatenav_thread = threading.Thread(
-                    target=generatenav, args=(current_user.username, True))
-                logging.info("[edittrade] Change to database - generate NAV")
-                generatenav_thread.start()
+                regenerate_nav()
                 flash("Trade edit successful", "success")
 
             return redirect(url_for("main.home"))
@@ -410,28 +350,7 @@ def deltrade():
 
         Trades.query.filter_by(trade_reference_id=reference_id).delete()
         db.session.commit()
-        # re-generates the NAV on the background - delete First
-        # the local NAV file so it's not used.
-        usernamehash = hashlib.sha256(
-            current_user.username.encode("utf-8")).hexdigest()
-        filename = "thewarden/nav_data/" + usernamehash + ".nav"
-        logging.info(f"[deltrade] {filename} marked for deletion.")
-        # Since this function can be run as a thread,
-        # it's safer to delete the current NAV file if it exists.
-        # This avoids other tasks reading the local file which
-        # is outdated
-        try:
-            os.remove(filename)
-            logging.info("[deltrade] Local NAV file deleted")
-        except OSError:
-            logging.info("[deltrade] Local NAV file not found" +
-                         " for removal - continuing")
-        generatenav_thread = threading.Thread(target=generatenav,
-                                              args=(current_user.username,
-                                                    True))
-        logging.info("Change to database - generate NAV")
-        generatenav_thread.start()
-
+        regenerate_nav()
         flash("Trade deleted", "danger")
         return redirect(url_for("main.home"))
 
@@ -454,27 +373,7 @@ def delalltrades():
     if request.method == "GET":
         Trades.query.filter_by(user_id=current_user.username).delete()
         db.session.commit()
-        # re-generates the NAV on the background - delete First
-        # the local NAV file so it's not used.
-        usernamehash = hashlib.sha256(
-            current_user.username.encode("utf-8")).hexdigest()
-        filename = "thewarden/nav_data/" + usernamehash + ".nav"
-        logging.info(f"[delalltrades] {filename} marked for deletion.")
-        # Since this function can be run as a thread,
-        # it's safer to delete the current NAV file if it exists.
-        # This avoids other tasks reading the local file which
-        # is outdated
-        try:
-            os.remove(filename)
-            logging.info("[dellalltrades] Local NAV file deleted")
-        except OSError:
-            logging.info("[delalltrades] Local NAV file not found" +
-                         " for removal - continuing")
-        generatenav_thread = threading.Thread(target=generatenav,
-                                              args=(current_user.username,
-                                                    True))
-        logging.info("Change to database - generate NAV")
-        generatenav_thread.start()
+        regenerate_nav()
         flash("ALL TRANSACTIONS WERE DELETED", "danger")
         return redirect(url_for("main.home"))
 

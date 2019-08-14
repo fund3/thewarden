@@ -22,7 +22,9 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():
         hash = generate_password_hash(form.password.data)
-        user = User(username=form.username.data, email=form.email.data, password=hash)
+        user = User(username=form.username.data,
+                    email=form.email.data,
+                    password=hash)
         db.session.add(user)
         db.session.commit()
         flash(f"Account created for {form.username.data}.", "success")
@@ -68,7 +70,9 @@ def account():
             current_user.image_file = form.basefx.data
             generatenav(current_user, True)
             db.session.commit()
-            flash(f"NAV recalculated to use {form.basefx.data} as a base currency", "success")
+            flash(
+                f"NAV recalculated to use {form.basefx.data} as a base currency",
+                "success")
         current_user.email = form.email.data
         current_user.aa_apikey = form.alphavantage_apikey.data
         current_user.dojo_apikey = form.dojo_apikey.data
@@ -94,9 +98,7 @@ def account():
         form.dojo_onion.data = current_user.dojo_onion
         form.dojo_apikey.data = current_user.dojo_apikey
 
-    return render_template(
-        "account.html", title="Account", form=form
-    )
+    return render_template("account.html", title="Account", form=form)
 
 
 @users.route("/delacc", methods=["GET"])
@@ -127,11 +129,14 @@ def reset_request():
         user = User.query.filter_by(email=form.email.data).first()
         send_reset_email(user)
         flash(
-            "An email has been sent with instructions to reset your" + " password.",
+            "An email has been sent with instructions to reset your" +
+            " password.",
             "info",
         )
         return redirect(url_for("users.login"))
-    return render_template("reset_request.html", title="Reset Password", form=form)
+    return render_template("reset_request.html",
+                           title="Reset Password",
+                           form=form)
 
 
 @users.route("/reset_password/<token>", methods=["GET", "POST"])
@@ -147,9 +152,12 @@ def reset_token(token):
         hash = generate_password_hash(form.password.data)
         user.password = hash
         db.session.commit()
-        flash("Your password has been updated! You are now able to log in", "success")
+        flash("Your password has been updated! You are now able to log in",
+              "success")
         return redirect(url_for("users.login"))
-    return render_template("reset_token.html", title="Reset Password", form=form)
+    return render_template("reset_token.html",
+                           title="Reset Password",
+                           form=form)
 
 
 @users.route("/services", methods=["GET"])

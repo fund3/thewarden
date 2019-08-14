@@ -794,6 +794,27 @@ def generatenav(user, force=False, filter=None):
     return dailynav
 
 
+def regenerate_nav():
+    # re-generates the NAV on the background - delete First
+    # the local NAV file so it's not used.
+    usernamehash = hashlib.sha256(
+        current_user.username.encode("utf-8")).hexdigest()
+    filename = "thewarden/nav_data/" + usernamehash + ".nav"
+    logging.info(f"[newtrade] {filename} marked for deletion.")
+    # Since this function can be run as a thread,
+    # it's safer to delete the current NAV file if it exists.
+    # This avoids other tasks reading the local file which
+    # is outdated
+    try:
+        os.remove(filename)
+        logging.info("[newtrade] Local NAV file deleted")
+    except OSError:
+        logging.info("[newtrade] Local NAV file not found" +
+                     " for removal - continuing")
+    generatenav(current_user.username, True)
+    logging.info("Change to database - generate NAV")
+
+
 def alphavantage_historical(id, to_symbol=None):
     # Downloads Historical prices from Alphavantage
     # Can handle both Stock and Crypto tickers - try stock first, then crypto
@@ -845,7 +866,7 @@ def alphavantage_historical(id, to_symbol=None):
             return (id_pickle, "downloaded", meta_pickle)
         else:
             logging.info("[ALPHAVANTAGE] File found but too old" +
-                         " - downloading a fresh one.")
+                            " - downloading a fresh one.")
 
     except FileNotFoundError:
         logging.info(f"[ALPHAVANTAGE] File not found for {id} - downloading")
@@ -871,7 +892,7 @@ def alphavantage_historical(id, to_symbol=None):
         request = tor_request(globalURL)
     except requests.exceptions.ConnectionError:
         logging.error("[ALPHAVANTAGE] Connection ERROR " +
-                      "while trying to download prices")
+                        "while trying to download prices")
         return("Connection Error", 'error', 'empty')
     data = request.json()
     # if FX request
@@ -923,7 +944,7 @@ def alphavantage_historical(id, to_symbol=None):
             request = tor_request(globalURL)
         except requests.exceptions.ConnectionError:
             logging.error("[ALPHAVANTAGE] Connection ERROR while" +
-                          " trying to download prices")
+                            " trying to download prices")
             return("Connection Error", "error", "empty")
         data = request.json()
         try:

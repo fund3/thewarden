@@ -26,6 +26,7 @@ from thewarden.users.utils import (
     heatmap_generator,
     rt_price_grab,
     price_ondate,
+    regenerate_nav
 )
 from thewarden.node.utils import (
     dojo_auth,
@@ -345,6 +346,7 @@ def manage_custody():
                 )
                 db.session.add(trade)
                 db.session.commit()
+                regenerate_nav()
 
             except KeyError:
                 tradedetails = "Error"
@@ -384,6 +386,7 @@ def manage_custody():
                 )
                 db.session.add(trade)
                 db.session.commit()
+                regenerate_nav()
 
                 # Now the new Account
                 if float(quant_before) < 0:
@@ -407,6 +410,7 @@ def manage_custody():
                 )
                 db.session.add(trade_2)
                 db.session.commit()
+                regenerate_nav()
 
             except KeyError:
                 tradedetails = "Error"
@@ -444,6 +448,7 @@ def manage_custody():
                 )
                 db.session.add(trade)
                 db.session.commit()
+                regenerate_nav()
 
             except KeyError:
                 tradedetails = "Error"
@@ -483,6 +488,7 @@ def manage_custody():
                 )
                 db.session.add(trade)
                 db.session.commit()
+                regenerate_nav()
 
                 # Now the new Account
                 if float(quant_before) < 0:
@@ -506,6 +512,7 @@ def manage_custody():
                 )
                 db.session.add(trade_2)
                 db.session.commit()
+                regenerate_nav()
 
             except KeyError:
                 tradedetails = "Error"
@@ -547,6 +554,7 @@ def manage_custody():
                 )
                 db.session.add(trade)
                 db.session.commit()
+                regenerate_nav()
 
             except KeyError:
                 tradedetails = "Error"
@@ -1590,6 +1598,7 @@ def get_address():
             else:
                 change = False
             db.session.commit()
+            regenerate_nav()
             success = True
             return jsonify(
                 {
@@ -1626,6 +1635,7 @@ def get_address():
         else:
             change = False
         db.session.commit()
+        regenerate_nav()
         success = True
 
         return jsonify(
@@ -1719,6 +1729,7 @@ def import_transaction():
         try:
             db.session.add(new_trade)
             db.session.commit()
+            regenerate_nav()
             flash(
                 f"Transaction included. {transaction_id[0:6]}...", "success")
         except Exception as e:
@@ -1821,6 +1832,7 @@ def addresses_importer():
         try:
             db.session.add(bitcoin_address)
             db.session.commit()
+            regenerate_nav()
             address_info["message"] = "Found and Imported"
         except Exception as e:
             logging.info(f"Error importing: {e}")
@@ -1865,6 +1877,7 @@ def test_aakey():
             # Success - store this in database
             current_user.aa_apikey = api_key
             db.session.commit()
+            regenerate_nav()
         except AttributeError:
             data["message"] = api_request
     return json.dumps(data)
@@ -1918,7 +1931,7 @@ def test_bitmex():
     api_secret = request.args.get("api_secret")
     if (api_key is None) or (api_secret is None):
         return ({'status': 'error', 'message': 'API credentials not found'})
-   
+
     # First test and return result
     testnet = False
     mex = bitmex(test=testnet, api_key=api_key, api_secret=api_secret)
@@ -1931,7 +1944,7 @@ def test_bitmex():
         logging.info("Credentials saved to bitmex.json")
         return ({'status': 'success', 'message': resp})
     except Exception as e:
-        return ({'status': 'error', 'message': f'Error when connecting to Bitmex. Check credentials. Error: {e}'})    
+        return ({'status': 'error', 'message': f'Error when connecting to Bitmex. Check credentials. Error: {e}'})
 
 
 @api.route("/load_bitmex_json", methods=["GET"])
@@ -1959,4 +1972,4 @@ def realtime_user():
         return json.dumps(fx_rate)
     except Exception as e:
         return (f"Error: {e}")
-    
+

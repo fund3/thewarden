@@ -19,7 +19,7 @@ from thewarden.main.forms import ImportCSV, ContactForm
 from thewarden.models import Trades, listofcrypto, AccountInfo, Contact, User
 from datetime import datetime
 import dateutil.parser as parser
-from thewarden.users.utils import generatenav, cleancsv
+from thewarden.users.utils import generatenav, cleancsv, regenerate_nav
 
 main = Blueprint("main", __name__)
 
@@ -75,9 +75,9 @@ def contact():
                 message=form.message.data,
             )
         else:
-            message = Contact(
-                user_id=0, email=form.email.data, message=form.message.data
-            )
+            message = Contact(user_id=0,
+                              email=form.email.data,
+                              message=form.message.data)
 
         db.session.add(message)
         db.session.commit()
@@ -93,20 +93,14 @@ def contact():
 @login_required
 # Download all transactions in CSV format
 def exportcsv():
-    transactions = Trades.query.filter_by(user_id=current_user.username).order_by(
-        Trades.trade_date
-    )
+    transactions = Trades.query.filter_by(
+        user_id=current_user.username).order_by(Trades.trade_date)
 
     if transactions.count() == 0:
         return render_template("empty.html")
 
-    filename = (
-        "./thewarden/dailydata/" +
-        current_user.username +
-        "_" +
-        datetime.now().strftime("%Y%m%d") +
-        ".csv"
-    )
+    filename = ("./thewarden/dailydata/" + current_user.username + "_" +
+                datetime.now().strftime("%Y%m%d") + ".csv")
     os.makedirs(os.path.dirname(filename), exist_ok=True)
 
     with open(filename, "w") as f:
@@ -127,28 +121,21 @@ def exportcsv():
 
         writer.writeheader()
         for item in transactions:
-            writer.writerow(
-                {
-                    "TimeStamp": item.trade_date,
-                    "Account": item.trade_account,
-                    "Operator": item.trade_operation,
-                    "Asset": item.trade_asset_ticker,
-                    "Quantity": item.trade_quantity,
-                    "Price": item.trade_price,
-                    "Fee": item.trade_fees,
-                    "Cash_Value": item.cash_value,
-                    "Notes": item.trade_notes,
-                    "trade_reference_id": item.trade_reference_id,
-                }
-            )
+            writer.writerow({
+                "TimeStamp": item.trade_date,
+                "Account": item.trade_account,
+                "Operator": item.trade_operation,
+                "Asset": item.trade_asset_ticker,
+                "Quantity": item.trade_quantity,
+                "Price": item.trade_price,
+                "Fee": item.trade_fees,
+                "Cash_Value": item.cash_value,
+                "Notes": item.trade_notes,
+                "trade_reference_id": item.trade_reference_id,
+            })
 
-    filename = (
-        "./dailydata/" +
-        current_user.username +
-        "_" +
-        datetime.now().strftime("%Y%m%d") +
-        ".csv"
-    )
+    filename = ("./dailydata/" + current_user.username + "_" +
+                datetime.now().strftime("%Y%m%d") + ".csv")
 
     return send_file(filename, as_attachment=True)
 
@@ -167,9 +154,8 @@ def importcsv():
                 if form.csvfile.data:
                     test_file = "./thewarden/dailydata/test.csv"
                     os.makedirs(os.path.dirname(test_file), exist_ok=True)
-                    form.csvfile.data.save(
-                        "./thewarden/dailydata/" + form.csvfile.data.filename
-                    )
+                    form.csvfile.data.save("./thewarden/dailydata/" +
+                                           form.csvfile.data.filename)
                     csv_reader = open(
                         "./thewarden/dailydata/" + form.csvfile.data.filename,
                         "r",
@@ -184,7 +170,8 @@ def importcsv():
                     form=form,
                     csv=csv_reader,
                     csvfile=csvfile,
-                    filename="./thewarden/dailydata/" + form.csvfile.data.filename,
+                    filename="./thewarden/dailydata/" +
+                    form.csvfile.data.filename,
                 )
     if request.method == "GET":
         filename = request.args.get("f")
@@ -197,8 +184,8 @@ def importcsv():
             a = 0  # skip first line where field names are
 
             accounts = AccountInfo.query.filter_by(
-                user_id=current_user.username
-            ).order_by(AccountInfo.account_longname)
+                user_id=current_user.username).order_by(
+                    AccountInfo.account_longname)
 
             for line in csv_reader:
                 if a != 0:
@@ -260,8 +247,7 @@ def importcsv():
                         errors = errors + 1
                         errorlist.append(
                             f"Quantity error on line {a} - quantity \
-                            {items[4]} could not be converted"
-                        )
+                            {items[4]} could not be converted")
 
                     # Import Price
                     try:
@@ -272,10 +258,8 @@ def importcsv():
                     except ValueError:
                         price = 0
                         errors = errors + 1
-                        errorlist.append(
-                            f"Price error on line {a} - price \
-                            {items[5]} could not be converted"
-                        )
+                        errorlist.append(f"Price error on line {a} - price \
+                            {items[5]} could not be converted")
 
                     # Import Fees
                     try:
@@ -288,8 +272,7 @@ def importcsv():
                         errors = errors + 1
                         errorlist.append(
                             f"error #{errors}: Fee error on line {a} - Fee --\
-                            {items[6]}-- could not be converted"
-                        )
+                            {items[6]}-- could not be converted")
 
                     # Import Notes
                     try:
@@ -309,13 +292,13 @@ def importcsv():
                     try:
                         ticker = items[3].replace(" ", "")
                         if ticker != "USD":
-                            listcrypto = listofcrypto.query.filter_by(symbol=ticker)
+                            listcrypto = listofcrypto.query.filter_by(
+                                symbol=ticker)
                             if listcrypto is None:
                                 errors = errors + 1
                                 errorlist.append(
                                     f"ticker {ticker} in line {a} \
-                                    imported but not found in pricing list"
-                                )
+                                    imported but not found in pricing list")
 
                     except ValueError:
                         ticker = ""
@@ -341,8 +324,7 @@ def importcsv():
                         errorlist.append(
                             f"error #{errors}: Cash_Value error on line \
                              {a} - Cash_Value --{items[7]}-- could not \
-                             be converted"
-                        )
+                             be converted")
 
                     trade = Trades(
                         user_id=current_user.username,
@@ -358,17 +340,17 @@ def importcsv():
                         trade_reference_id=tradeid,
                     )
                     db.session.add(trade)
-
                     db.session.commit()
+                    regenerate_nav()
 
                     # Check if current account is in list, if not, include
 
-                    curacc = accounts.filter_by(account_longname=account).first()
+                    curacc = accounts.filter_by(
+                        account_longname=account).first()
 
                     if not curacc:
-                        account = AccountInfo(
-                            user_id=current_user.username, account_longname=account
-                        )
+                        account = AccountInfo(user_id=current_user.username,
+                                              account_longname=account)
                         db.session.add(account)
                         db.session.commit()
 
@@ -378,8 +360,7 @@ def importcsv():
             # re-generates the NAV on the background - delete First
             # the local NAV file so it's not used.
             usernamehash = hashlib.sha256(
-                current_user.username.encode("utf-8")
-            ).hexdigest()
+                current_user.username.encode("utf-8")).hexdigest()
             filename = "thewarden/nav_data/" + usernamehash + ".nav"
             logging.info(f"[newtrade] {filename} marked for deletion.")
             # Since this function can be run as a thread,
@@ -390,12 +371,11 @@ def importcsv():
                 os.remove(filename)
                 logging.info("[importcsv] Local NAV file deleted")
             except OSError:
-                logging.info(
-                    "[importcsv] Local NAV file not found" + " for removal - continuing"
-                )
-            generatenav_thread = threading.Thread(
-                target=generatenav, args=(current_user.username, True)
-            )
+                logging.info("[importcsv] Local NAV file not found" +
+                             " for removal - continuing")
+            generatenav_thread = threading.Thread(target=generatenav,
+                                                  args=(current_user.username,
+                                                        True))
             logging.info("[importcsv] Change to database - generate NAV")
             generatenav_thread.start()
 
@@ -414,7 +394,9 @@ def importcsv():
 
             return redirect(url_for("main.home"))
 
-    return render_template("importcsv.html", title="Import CSV File", form=form)
+    return render_template("importcsv.html",
+                           title="Import CSV File",
+                           form=form)
 
 
 @main.route("/csvtemplate")
