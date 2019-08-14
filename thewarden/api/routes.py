@@ -285,7 +285,6 @@ def portstats():
 #  Creates a table with dates and NAV values
 def navchartdatajson():
     data = generatenav(current_user.username)
-    print (data)
     # Generate data for NAV chart
     navchart = data[["NAV_fx"]]
     # dates need to be in Epoch time for Highcharts
