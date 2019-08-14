@@ -1,5 +1,13 @@
 # Release History
 
+## v.13 alpha (TBD)
+
+- Support to include trades in any fiat currency
+- Realtime pricing of currencies + change base currency of portfolio.
+- Fixed issues afecting NAV generation
+- Fixed formatting issues
+- Optimized calculation intensive methods to remember recent values (memoization)
+
 ## v.12 alpha (released on 8/7/2019)
 
 - Bug fixes and performance enhancements
