@@ -500,7 +500,7 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     return(str)
 
 
-@MWT(timeout=120)
+@MWT(timeout=10)
 @timing
 def generatenav(user, force=False, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
@@ -648,10 +648,12 @@ def generatenav(user, force=False, filter=None):
             # Now let's find trades for this ticker and include in dailynav
             tradedf = df[['trade_asset_ticker',
                           'trade_quantity', 'cash_value', 'cash_value_fx']]
-            # Filter trades only for this ticker
+            print (tradedf)
+                          # Filter trades only for this ticker
             tradedf = tradedf[tradedf['trade_asset_ticker'] == id]
             # consolidate all trades in a single date Input
             tradedf = tradedf.groupby(level=0).sum()
+
             tradedf.sort_index(ascending=True, inplace=True)
             # include column to cumsum quant
             tradedf['cum_quant'] = tradedf['trade_quantity'].cumsum()
@@ -810,6 +812,8 @@ def regenerate_nav():
         logging.info("[newtrade] Local NAV file not found" +
                      " for removal - continuing")
     generatenav(current_user.username, True)
+    # clear key memoized functions
+
     logging.info("Change to database - generate NAV")
 
 

@@ -62,12 +62,16 @@
                     <td class="align-middle text-center small" scope="row">{{transaction.trade_operation}}</td>
                     <td class="align-middle text-right" scope="row">{{"{:,.2f}".format(transaction.trade_quantity)}}
                     </td>
-                    <td class="align-middle text-right" scope="row">${{"{:,.2f}".format(transaction.trade_price)}}</td>
+                    <td class="align-middle text-right" scope="row">
+                        {{transaction.trade_currency | fxsymbol}}
+                        {{"{:,.2f}".format(transaction.trade_price)}}</td>
                     <td class="align-middle text-right small" scope="row">
                         {{transaction.trade_currency}}
                     </td>
 
-                    <td class="align-middle text-right small" scope="row">${{"{:,.2f}".format(transaction.trade_fees)}}
+                    <td class="align-middle text-right small" scope="row">
+                        {{transaction.trade_currency | fxsymbol}}
+                        {{"{:,.2f}".format(transaction.trade_fees)}}
                     </td>
                     <td class="align-middle text-left" scope="row">{{transaction.trade_account}}</td>
 
