@@ -1,10 +1,10 @@
-import logging
-import os
-from datetime import datetime, timedelta, timezone
-from thewarden import db, login_manager
+from datetime import datetime
+
 from flask import current_app
-from flask_login import current_user, UserMixin  # Manages session (anon, etc)
+from flask_login import UserMixin  # Manages session (anon, etc)
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+
+from thewarden import db, login_manager
 
 
 @login_manager.user_loader

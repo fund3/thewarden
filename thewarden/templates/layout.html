@@ -125,37 +125,6 @@
 
 
 
-                <!-- ACCOUNT TOOLS MENU + SUBMENUS -->
-                <li>
-                    <a data-toggle="collapse" href="#collapse_actools" role="button" aria-expanded="true"
-                        aria-controls="collapse_actools">
-                        <i class="fas fa-tools fa-lg"></i>
-                        &nbsp;&nbsp;&nbsp;&nbsp;Account & Tools
-                        <i class="fas fa-caret-down"></i></a>
-                </li>
-                <div class="collapse hide" id="collapse_actools">
-                    <div class="list-group bg-transparent text-white">
-                        <a class="sidebar-subitem" href="{{ url_for('main.get_started') }}"><i
-                                class="fas fa-play-circle fa-lg"></i>&nbsp;&nbsp;Getting Started</a>
-
-                        <a class="sidebar-subitem" href="{{ url_for('users.account') }}"><i
-                                class="fas fa-users-cog fa-lg"></i>&nbsp;&nbsp;Manage User Account</a>
-
-                        <a class="sidebar-subitem" href="{{ url_for('users.services') }}"><i
-                                class="fas fa-user-secret fa-lg"></i>&nbsp;&nbsp;Privacy Services</a>
-                        <a class="sidebar-subitem fa-lg" href="{{ url_for('transactions.bitmex_transactions') }}"><i
-                                class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;Bitmex Import</a>
-
-                        <a class="sidebar-subitem" href="{{ url_for('main.importcsv') }}"><i
-                                class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;CSV Import</a>
-                        <a class="sidebar-subitem fa-lg" href="{{ url_for('main.csvtemplate') }}"><i
-                                class="fas fa-book fa-lg"></i>&nbsp;&nbsp;CSV file instructions</a>
-
-                        <a class="sidebar-subitem" id="downloadcsv" href="{{ url_for('main.exportcsv') }}"><i
-                                class="fas fa-download fa-lg"></i>&nbsp;&nbsp;Download transactions</a>
-
-                    </div>
-                </div>
 
                 <!-- TRANSACTIONS MENU + SUBMENUS -->
                 <li>
@@ -233,13 +202,48 @@
             </div>
         </div>
 
+        <!-- ACCOUNT TOOLS MENU + SUBMENUS -->
+        <li>
+            <a data-toggle="collapse" href="#collapse_actools" role="button" aria-expanded="true"
+                aria-controls="collapse_actools">
+                <i class="fas fa-tools fa-lg"></i>
+                &nbsp;&nbsp;&nbsp;&nbsp;Account & Tools
+                <i class="fas fa-caret-down"></i></a>
+        </li>
+        <div class="collapse hide" id="collapse_actools">
+            <div class="list-group bg-transparent text-white">
+                <a class="sidebar-subitem" href="{{ url_for('main.get_started') }}"><i
+                        class="fas fa-play-circle fa-lg"></i>&nbsp;&nbsp;Getting Started</a>
+
+                <a class="sidebar-subitem" href="{{ url_for('users.account') }}"><i
+                        class="fas fa-users-cog fa-lg"></i>&nbsp;&nbsp;Manage User Account</a>
+
+                <a class="sidebar-subitem" href="{{ url_for('users.services') }}"><i
+                        class="fas fa-user-secret fa-lg"></i>&nbsp;&nbsp;Privacy Services</a>
+                <a class="sidebar-subitem fa-lg" href="{{ url_for('transactions.bitmex_transactions') }}"><i
+                        class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;Bitmex Import</a>
+
+                <a class="sidebar-subitem" href="{{ url_for('main.importcsv') }}"><i
+                        class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;CSV Import</a>
+                <a class="sidebar-subitem fa-lg" href="{{ url_for('main.csvtemplate') }}"><i
+                        class="fas fa-book fa-lg"></i>&nbsp;&nbsp;CSV file instructions</a>
+
+                <a class="sidebar-subitem" id="downloadcsv" href="{{ url_for('main.exportcsv') }}"><i
+                        class="fas fa-download fa-lg"></i>&nbsp;&nbsp;Download transactions</a>
+
+            </div>
+        </div>
+
+
         <!-- FX Rate -->
         <li class="border-top">
             <span class="text-white">
                 <span class="fa-2x">{{current_user.fx() | fxsymbol}}</span>
-                <strong>&nbsp;&nbsp;&nbsp;&nbsp;Base Currency</strong></span>
+                <strong>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Base Currency
+                </strong>
+            </span>
         </li>
-
 
         <div class="show" id="collapse_fx">
 
@@ -315,8 +319,7 @@
     <!-- Main Content -->
     <div id="page-content-wrapper">
         <main role=" main">
-
-            <div style='padding-top: 70px;'>
+            <div style='padding-top: 30px;'>
                 {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                 {% for category, message in messages %}
@@ -326,11 +329,11 @@
                 {% endfor %}
                 {% endif %}
                 {% endwith %}
-                {% block content %}{% endblock %}
+                {% block content %}
+                {% endblock %}
             </div>
             <br>
         </main>
-
     </div>
     <!-- END MAIN CONTENT -->
 

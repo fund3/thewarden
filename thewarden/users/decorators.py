@@ -1,16 +1,18 @@
-from functools import wraps
-import pandas as pd
-import os
-from glob import glob
+import collections
+import functools
 import hashlib
 import inspect
+import os
 import time
-import functools
-import collections
+from functools import wraps
+from glob import glob
+
+import pandas as pd
 
 
 def pd_cache(func):
     # Caches a Pandas DF into file for later use
+    # Memoization version for pandas DF
     try:
         os.mkdir('.pd_cache')
     except FileExistsError:
@@ -34,6 +36,7 @@ def pd_cache(func):
         df = func(*args, **kw)
         df.to_pickle(f)
         return df
+
     return cache
 
 
@@ -49,8 +52,10 @@ def timing(method):
         ts = time.time()
         result = method(*args, **kw)
         te = time.time()
-        print('Function', method.__name__, 'time:', round((te - ts)*1000, 1), 'ms')
+        print('Function', method.__name__, 'time:', round((te - ts) * 1000, 1),
+              'ms')
         return result
+
     return timed
 
 
@@ -59,6 +64,7 @@ class memoized(object):
     # If called later with the same arguments, the cached value is returned
     # (not reevaluated).
     def __init__(self, func):
+        # Initiliaze Memoization for this function
         self.func = func
         self.cache = {}
 
@@ -80,6 +86,12 @@ class memoized(object):
     def __get__(self, obj, objtype):
         return functools.partial(self.__call__, obj)
 
+    # Clears the cache - called when there are changes that may affect the result
+    # of the function
+    def clear_mem(self):
+        print(f"cleared Cache for {self.func}")
+        self.cache = {}
+
 
 class MWT(object):
     # Decorator that caches the result of a function until a given timeout (in seconds)
@@ -96,7 +108,8 @@ class MWT(object):
         for func in self._caches:
             cache = {}
             for key in self._caches[func]:
-                if (time.time() - self._caches[func][key][1]) < self._timeouts[func]:
+                if (time.time() -
+                        self._caches[func][key][1]) < self._timeouts[func]:
                     cache[key] = self._caches[func][key]
             self._caches[func] = cache
 
@@ -108,12 +121,15 @@ class MWT(object):
             kw = sorted(kwargs.items())
             key = (args, tuple(kw))
             try:
+                # Using memoized function only if still on time
                 v = self.cache[key]
                 if (time.time() - v[1]) > self.timeout:
                     raise KeyError
             except KeyError:
+                # Need to recalculate
                 v = self.cache[key] = f(*args, **kwargs), time.time()
             return v[0]
+
         func.func_name = f.__name__
 
         return func

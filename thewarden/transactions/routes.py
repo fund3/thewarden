@@ -4,20 +4,15 @@ import logging
 import threading
 import hashlib
 import pandas as pd
-from flask import (render_template,
-                   url_for, flash,
-                   redirect, request,
-                   abort, Blueprint)
+from flask import (render_template, url_for, flash, redirect, request, abort,
+                   Blueprint)
 from flask_login import current_user, login_required
 from thewarden import db
 from thewarden.transactions.forms import NewTrade, EditTransaction
 from thewarden.models import Trades, AccountInfo
 from datetime import datetime
-from thewarden.users.utils import (cleancsv,
-                                   generatenav,
-                                   bitmex_orders,
+from thewarden.users.utils import (cleancsv, generatenav, bitmex_orders,
                                    load_bitmex_json)
-
 
 transactions = Blueprint("transactions", __name__)
 
@@ -33,11 +28,11 @@ def newtrade():
         accounts.append((item.account_longname, item.account_longname))
     form.trade_account.choices = accounts
     form.cash_account.choices = accounts
-    form.trade_currency.data = current_user.fx()
 
     if request.method == "POST":
 
         if form.validate_on_submit():
+            print(form.trade_currency.data)
             # Need to include two sides of trade:
             if form.trade_operation.data in ("B", "D"):
                 qop = 1
@@ -45,9 +40,10 @@ def newtrade():
                 qop = -1
             else:
                 qop = 0
-                flash("Trade Operation Error. Should be B, S, D or W.", "warning")
+                flash("Trade Operation Error. Should be B, S, D or W.",
+                      "warning")
 
-            # Create a unique ID
+            # Create a unique ID for this transaction
             random_hex = secrets.token_hex(21)
 
             # Calculate Trade's cash value
@@ -62,7 +58,7 @@ def newtrade():
 
                 except ValueError:
                     flash(
-                        "Error on calculating cash amount \
+                        "Error on calculating fiat amount \
                     for transaction - TRADE NOT included",
                         "danger",
                     )
@@ -71,12 +67,9 @@ def newtrade():
 
             # Check what type of trade this is
             # Cash and/or Asset
-
             if form.trade_type.data == "1" or form.trade_type.data == "2":
-
                 try:
                     tquantity = float(form.trade_quantity.data) * qop
-
                 except ValueError:
                     tquantity = 0
 
@@ -138,7 +131,8 @@ def newtrade():
                 try:
                     cv = qop * (float(cleancsv(form.cash_value.data)))
                 except ValueError:
-                    flash("Error on calculating cash amount for transaction", "warning")
+                    flash("Error on calculating cash amount for transaction",
+                          "warning")
                     cv = 0
                     cvfail = True
 
@@ -163,8 +157,7 @@ def newtrade():
                     # re-generates the NAV on the background - delete First
                     # the local NAV file so it's not used.
                     usernamehash = hashlib.sha256(
-                        current_user.username.encode("utf-8")
-                    ).hexdigest()
+                        current_user.username.encode("utf-8")).hexdigest()
                     filename = "thewarden/nav_data/" + usernamehash + ".nav"
                     logging.info(f"[newtrade] {filename} marked for deletion.")
                     # Since this function can be run as a thread,
@@ -175,13 +168,10 @@ def newtrade():
                         os.remove(filename)
                         logging.info("[newtrade] Local NAV file deleted")
                     except OSError:
-                        logging.info(
-                            "[newtrade] Local NAV file not found"
-                            + " for removal - continuing"
-                        )
+                        logging.info("[newtrade] Local NAV file not found" +
+                                     " for removal - continuing")
                     generatenav_thread = threading.Thread(
-                        target=generatenav, args=(current_user.username, True)
-                    )
+                        target=generatenav, args=(current_user.username, True))
                     logging.info("Change to database - generate NAV")
                     generatenav_thread.start()
 
@@ -189,8 +179,10 @@ def newtrade():
                 flash("Trade included", "success")
             return redirect(url_for("main.home"))
         else:
-            flash("Trade Input failed. Something went wrong. Try Again.", "danger")
+            flash("Trade Input failed. Something went wrong. Try Again.",
+                  "danger")
 
+    form.trade_currency.data = current_user.fx()
     form.trade_date.data = datetime.utcnow()
     return render_template("newtrade.html", form=form, title="New Trade")
 
@@ -204,9 +196,9 @@ def list_transactions():
     if transactions.count() == 0:
         return render_template("empty.html")
 
-    return render_template(
-        "transactions.html", title="Transaction History", transactions=transactions
-    )
+    return render_template("transactions.html",
+                           title="Transaction History",
+                           transactions=transactions)
 
 
 @transactions.route("/edittransaction", methods=["GET", "POST"])
@@ -216,7 +208,8 @@ def edittransaction():
     form = EditTransaction()
     id = request.args.get("id")
     tmp = str(int(id) + 1)
-    trade = Trades.query.filter_by(user_id=current_user.username).filter_by(id=id)
+    trade = Trades.query.filter_by(user_id=current_user.username).filter_by(
+        id=id)
     trade_type = 0
 
     if trade.first() is None:
@@ -234,7 +227,8 @@ def edittransaction():
 
     matchok = True
     try:
-        match = Trades.query.filter_by(id=tmp).filter_by(user_id=current_user.username)
+        match = Trades.query.filter_by(id=tmp).filter_by(
+            user_id=current_user.username)
         # check if match can be used (same user and hash)
 
         if match[0].user_id != trade[0].user_id:
@@ -297,8 +291,7 @@ def edittransaction():
                 # re-generates the NAV on the background - delete First
                 # the local NAV file so it's not used.
                 usernamehash = hashlib.sha256(
-                    current_user.username.encode("utf-8")
-                ).hexdigest()
+                    current_user.username.encode("utf-8")).hexdigest()
                 filename = "thewarden/nav_data/" + usernamehash + ".nav"
                 logging.info(f"[edittrade] {filename} marked for deletion.")
                 # Since this function can be run as a thread,
@@ -309,13 +302,10 @@ def edittransaction():
                     os.remove(filename)
                     logging.info("[edittrade] Local NAV file deleted")
                 except OSError:
-                    logging.info(
-                        "[edittrade] Local NAV file not found"
-                        + " for removal - continuing"
-                    )
+                    logging.info("[edittrade] Local NAV file not found" +
+                                 " for removal - continuing")
                 generatenav_thread = threading.Thread(
-                    target=generatenav, args=(current_user.username, True)
-                )
+                    target=generatenav, args=(current_user.username, True))
                 logging.info("[edittrade] Change to database - generate NAV")
                 generatenav_thread.start()
 
@@ -338,17 +328,10 @@ def edittransaction():
                 match[0].trade_account = form.cash_account.data
                 match[0].trade_operation = acc
                 match[0].trade_date = form.trade_date.data
-                match[0].trade_quantity = (
-                    qop
-                    * (-1)
-                    * (
-                        (
-                            float(form.trade_quantity.data)
-                            * float(form.trade_price.data)
-                            + float(form.trade_fees.data)
-                        )
-                    )
-                )
+                match[0].trade_quantity = (qop * (-1) *
+                                           ((float(form.trade_quantity.data) *
+                                             float(form.trade_price.data) +
+                                             float(form.trade_fees.data))))
                 match[0].cash_value = cv * (-1)
 
             if not cvfail:
@@ -358,8 +341,7 @@ def edittransaction():
                 # re-generates the NAV on the background - delete First
                 # the local NAV file so it's not used.
                 usernamehash = hashlib.sha256(
-                    current_user.username.encode("utf-8")
-                ).hexdigest()
+                    current_user.username.encode("utf-8")).hexdigest()
                 filename = "thewarden/nav_data/" + usernamehash + ".nav"
                 logging.info(f"[edittrade] {filename} marked for deletion.")
                 # Since this function can be run as a thread,
@@ -370,13 +352,10 @@ def edittransaction():
                     os.remove(filename)
                     logging.info("[edittrade] Local NAV file deleted")
                 except OSError:
-                    logging.info(
-                        "[edittrade] Local NAV file not found"
-                        + " for removal - continuing"
-                    )
+                    logging.info("[edittrade] Local NAV file not found" +
+                                 " for removal - continuing")
                 generatenav_thread = threading.Thread(
-                    target=generatenav, args=(current_user.username, True)
-                )
+                    target=generatenav, args=(current_user.username, True))
                 logging.info("[edittrade] Change to database - generate NAV")
                 generatenav_thread.start()
                 flash("Trade edit successful", "success")
@@ -433,7 +412,8 @@ def deltrade():
         db.session.commit()
         # re-generates the NAV on the background - delete First
         # the local NAV file so it's not used.
-        usernamehash = hashlib.sha256(current_user.username.encode("utf-8")).hexdigest()
+        usernamehash = hashlib.sha256(
+            current_user.username.encode("utf-8")).hexdigest()
         filename = "thewarden/nav_data/" + usernamehash + ".nav"
         logging.info(f"[deltrade] {filename} marked for deletion.")
         # Since this function can be run as a thread,
@@ -444,12 +424,11 @@ def deltrade():
             os.remove(filename)
             logging.info("[deltrade] Local NAV file deleted")
         except OSError:
-            logging.info(
-                "[deltrade] Local NAV file not found" + " for removal - continuing"
-            )
-        generatenav_thread = threading.Thread(
-            target=generatenav, args=(current_user.username, True)
-        )
+            logging.info("[deltrade] Local NAV file not found" +
+                         " for removal - continuing")
+        generatenav_thread = threading.Thread(target=generatenav,
+                                              args=(current_user.username,
+                                                    True))
         logging.info("Change to database - generate NAV")
         generatenav_thread.start()
 
@@ -466,9 +445,8 @@ def deltrade():
 # be called directly as it will delete all trades without confirmation!
 def delalltrades():
 
-    transactions = Trades.query.filter_by(user_id=current_user.username).order_by(
-        Trades.trade_date
-    )
+    transactions = Trades.query.filter_by(
+        user_id=current_user.username).order_by(Trades.trade_date)
 
     if transactions.count() == 0:
         return render_template("empty.html")
@@ -478,7 +456,8 @@ def delalltrades():
         db.session.commit()
         # re-generates the NAV on the background - delete First
         # the local NAV file so it's not used.
-        usernamehash = hashlib.sha256(current_user.username.encode("utf-8")).hexdigest()
+        usernamehash = hashlib.sha256(
+            current_user.username.encode("utf-8")).hexdigest()
         filename = "thewarden/nav_data/" + usernamehash + ".nav"
         logging.info(f"[delalltrades] {filename} marked for deletion.")
         # Since this function can be run as a thread,
@@ -489,12 +468,11 @@ def delalltrades():
             os.remove(filename)
             logging.info("[dellalltrades] Local NAV file deleted")
         except OSError:
-            logging.info(
-                "[delalltrades] Local NAV file not found" + " for removal - continuing"
-            )
-        generatenav_thread = threading.Thread(
-            target=generatenav, args=(current_user.username, True)
-        )
+            logging.info("[delalltrades] Local NAV file not found" +
+                         " for removal - continuing")
+        generatenav_thread = threading.Thread(target=generatenav,
+                                              args=(current_user.username,
+                                                    True))
         logging.info("Change to database - generate NAV")
         generatenav_thread.start()
         flash("ALL TRANSACTIONS WERE DELETED", "danger")
@@ -516,26 +494,22 @@ def account_positions():
     df = df[(df.user_id == current_user.username)]
     df["trade_date"] = pd.to_datetime(df["trade_date"])
 
-    account_table = df.groupby(["trade_account", "trade_asset_ticker"])[
-        ["trade_quantity"]
-    ].sum()
+    account_table = df.groupby(["trade_account", "trade_asset_ticker"
+                                ])[["trade_quantity"]].sum()
     # All accounts
-    all_accounts = (
-        account_table.query("trade_asset_ticker != '"+current_user.fx()+"'")
-        .index.get_level_values("trade_account")
-        .unique()
-        .tolist()
-    )
+    all_accounts = (account_table.query(
+        "trade_asset_ticker != '" + current_user.fx() +
+        "'").index.get_level_values("trade_account").unique().tolist())
     # Trim the account list only for accounts that currently hold a position
     account_table = account_table[account_table.trade_quantity != 0]
     # Remove accounts with USD only Positions
     account_table = account_table.query("trade_asset_ticker != 'USD'")
 
     # account_table = account_table['trade_asset_ticker' != 'USD']
-    accounts = account_table.index.get_level_values("trade_account").unique().tolist()
-    tickers = (
-        account_table.index.get_level_values("trade_asset_ticker").unique().tolist()
-    )
+    accounts = account_table.index.get_level_values(
+        "trade_account").unique().tolist()
+    tickers = (account_table.index.get_level_values(
+        "trade_asset_ticker").unique().tolist())
     # if 'USD' in tickers:
     #     tickers.remove('USD')
 
@@ -572,14 +546,15 @@ def bitmex_transactions():
     meta["success"] = False
     meta["n_txs"] = 0
     bitmex_credentials = load_bitmex_json()
-    if ("api_key" in bitmex_credentials) and ("api_secret" in bitmex_credentials):
+    if ("api_key" in bitmex_credentials) and (
+            "api_secret" in bitmex_credentials):
         data = bitmex_orders(bitmex_credentials['api_key'],
-                             bitmex_credentials['api_secret'],
-                             testnet)
+                             bitmex_credentials['api_secret'], testnet)
         try:
             # Create a DataFrame to return
             data_df = pd.DataFrame.from_dict(data[0])
-            data_df['fiat_fee'] = data_df['execComm'] * data_df['lastPx'] / 100000000
+            data_df['fiat_fee'] = data_df['execComm'] * data_df[
+                'lastPx'] / 100000000
             # Check if the transactions are included in the database already
             data_df['exists'] = data_df['execID'].apply(check_trade_included)
             transactions["data"] = data_df
@@ -587,10 +562,8 @@ def bitmex_transactions():
         except ValueError:
             meta["success"] = "error"
 
-    return render_template(
-        "bitmex_transactions.html",
-        title="Bitmex Transactions",
-        meta=meta,
-        transactions=transactions,
-        bitmex_credentials=bitmex_credentials
-    )
+    return render_template("bitmex_transactions.html",
+                           title="Bitmex Transactions",
+                           meta=meta,
+                           transactions=transactions,
+                           bitmex_credentials=bitmex_credentials)

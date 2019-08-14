@@ -1,24 +1,24 @@
-import os
-import secrets
-import logging
-import requests
 import configparser
-import hashlib
-import pickle
 import csv
+import hashlib
 import json
-import pandas as pd
+import logging
+import os
+import pickle
+from datetime import datetime, timedelta, timezone
+
 import numpy as np
-from PIL import Image
-from flask import url_for, current_app, flash
+import pandas as pd
+import requests
+from flask import flash, url_for
+from flask_login import current_user
 from flask_mail import Message
-from flask_login import current_user, login_required
+
 from thewarden import db, mail
+from thewarden import mhp as mrh
 from thewarden.models import Trades, User
 from thewarden.node.utils import tor_request
-from thewarden.users.decorators import pd_cache, timing, memoized, MWT
-from thewarden import mhp as mrh
-from datetime import datetime, timedelta, timezone
+from thewarden.users.decorators import MWT, memoized, timing
 
 # ---------------------------------------------------------
 # Helper Functions start here
@@ -71,7 +71,6 @@ def rt_price_grab(ticker, user_fx='USD'):
     except AttributeError:
         data = "ConnectionError"
     return (data)
-
 
 
 @MWT(timeout=30)
@@ -208,14 +207,15 @@ def fx():
     # Currency / USD
     return (float(fx_rate()['fx_rate']))
 
+
 @memoized
 def to_epoch(in_date):
-    return str(int((in_date - datetime(1970,1,1)).total_seconds()))
+    return str(int((in_date - datetime(1970, 1, 1)).total_seconds()))
 
 
 def find_fx(row, fx=None):
     return price_ondate(current_user.fx(), row.name, row['trade_currency'])
-            
+
 
 @MWT(timeout=20)
 @timing
@@ -236,7 +236,7 @@ def transactions_fx():
     # Need to get currencies into the df in order to normalize
     # let's load a list of currencies needed and merge
     list_of_fx = df.trade_currency.unique().tolist()
-    
+
     # loop through currency list
     for currency in list_of_fx:
         if currency == current_user.fx():
@@ -256,7 +256,6 @@ def transactions_fx():
 def generate_pos_table(user, fx, hidesmall):
     # This function creates all relevant data for the main page
     # Including current positions, cost and other market info
-    
     # Gets all transactions
     df = transactions_fx()
     # Create string of tickers and grab all prices in one request
@@ -269,17 +268,17 @@ def generate_pos_table(user, fx, hidesmall):
         return ("ConnectionError", "ConnectionError")
 
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
-        ["cash_value", "trade_fees", "trade_quantity", "cash_value_fx",
-        "trade_fees_fx"]].sum()
+                                ["cash_value", "trade_fees", "trade_quantity",
+                                 "cash_value_fx", "trade_fees_fx"]].sum()
 
     summary_table['count'] = df.groupby([
         'trade_asset_ticker', 'trade_operation'])[
         "cash_value_fx"].count()
 
     consol_table = df.groupby(['trade_asset_ticker'])[
-        ["cash_value", "trade_fees",
-        "trade_quantity","cash_value_fx",
-        "trade_fees_fx"]].sum()
+                                ["cash_value", "trade_fees",
+                                 "trade_quantity", "cash_value_fx",
+                                 "trade_fees_fx"]].sum()
 
     consol_table['symbol'] = consol_table.index.values
     try:
@@ -290,7 +289,7 @@ def generate_pos_table(user, fx, hidesmall):
 
     except KeyError:
         logging.info(f"[generate_pos_table] No USD or {current_user.fx()} positions found")
-    
+
     def find_price_data(ticker):
         price_data = price_list["RAW"][ticker]['USD']
         return (price_data)
@@ -411,7 +410,7 @@ def generate_pos_table(user, fx, hidesmall):
             pie_data.append(tmp_dict)
             table[ticker]['breakeven'] = \
                 (consol_table['price_data_USD'][ticker]['PRICE'] *
-                current_user.fx_rate_USD())-\
+                current_user.fx_rate_USD()) -\
                 (consol_table['total_pnl_net_fx'][ticker] /
                  consol_table['trade_quantity'][ticker])
 
@@ -457,7 +456,7 @@ def generate_pos_table(user, fx, hidesmall):
 
         table[ticker]['usd_price_data'] =\
             consol_table['price_data_USD'][ticker]
-        try:    
+        try:
             table[ticker]['usd_price_data']['LASTUPDATE'] =\
                     (datetime.utcfromtimestamp(table[ticker]['usd_price_data']['LASTUPDATE']).strftime('%H:%M:%S'))
         except TypeError:
@@ -562,7 +561,7 @@ def generatenav(user, force=False, filter=None):
 
     # Pandas dataframe with transactions
     df = transactions_fx()
-    
+
     if filter:
         df = df.query(filter)
     logging.info("[generatenav] Success - read trades from database")
@@ -582,7 +581,7 @@ def generatenav(user, force=False, filter=None):
     dailynav['PORT_fx_pos'] = 0
     dailynav['PORT_cash_value'] = 0
     dailynav['PORT_cash_value_fx'] = 0
-    # Fill with conversion from USD to current selected FX. 
+    # Fill with conversion from USD to current selected FX.
     if current_user.fx() != "USD":
         local_json, _, _ = alphavantage_historical("USD", current_user.fx())
         prices = pd.DataFrame(local_json)
@@ -625,10 +624,10 @@ def generatenav(user, force=False, filter=None):
             # rename index to date to match dailynav name
             prices.index.rename('date', inplace=True)
             prices.columns = [id+'_price']
-            
+
             # Fill dailyNAV with prices for each ticker
             dailynav = pd.merge(dailynav, prices, on='date', how='left')
-            
+
             # Update today's price with realtime data
             try:
                 dailynav[id+"_price"][-1] = (
@@ -641,13 +640,13 @@ def generatenav(user, force=False, filter=None):
                 dailynav[id+"_price"][-1] = dailynav[id+"_price"][-2]
 
             # Replace NaN with prev value, if no prev value then zero
-            
+
             dailynav[id+'_price'].fillna(method='ffill', inplace=True)
             dailynav[id+'_price'].fillna(0, inplace=True)
             # Convert price to default fx
             dailynav[id+'_fx_price'] = dailynav[id+'_price'].astype(
                     float) * dailynav['fx'].astype(float)
-            
+
             # Now let's find trades for this ticker and include in dailynav
             tradedf = df[['trade_asset_ticker',
                           'trade_quantity', 'cash_value', 'cash_value_fx']]
@@ -706,8 +705,8 @@ def generatenav(user, force=False, filter=None):
             dailynav['PORT_usd_pos'] = dailynav['PORT_usd_pos'] +\
                 dailynav[id+'_usd_pos']
             dailynav['PORT_fx_pos'] = dailynav['PORT_fx_pos'] +\
-                dailynav[id+'_fx_pos']    
-        except KeyError as e:
+                dailynav[id+'_fx_pos']
+        except KeyError:
             logging.warning(f"[GENERATENAV] Ticker {id} was not found " +
                             "on NAV Table - continuing but this is not good." +
                             " NAV calculations will be erroneous.")
@@ -765,13 +764,13 @@ def generatenav(user, force=False, filter=None):
     dailynav['port_dietz_ret'].fillna(0, inplace=True)
     dailynav['port_dietz_ret_fx'].fillna(0, inplace=True)
 
-    dailynav['adj_port_chg_usd'] = (dailynav['PORT_usd_pos'] -\
-                                    dailynav['PORT_usd_pos'].shift(1)) -\
-                                    dailynav['PORT_cash_value']
-    dailynav['adj_port_chg_fx'] = (dailynav['PORT_fx_pos'] -\
-                                    dailynav['PORT_fx_pos'].shift(1)) -\
-                                    dailynav['PORT_cash_value_fx']
-    
+    dailynav['adj_port_chg_usd'] = ((dailynav['PORT_usd_pos'] -
+                                    dailynav['PORT_usd_pos'].shift(1)) -
+                                    dailynav['PORT_cash_value'])
+    dailynav['adj_port_chg_fx'] = ((dailynav['PORT_fx_pos'] -
+                                    dailynav['PORT_fx_pos'].shift(1)) -
+                                    dailynav['PORT_cash_value_fx'])
+
     # let's fill NaN with zeros
     dailynav['adj_port_chg_usd'].fillna(0, inplace=True)
     dailynav['adj_port_chg_fx'].fillna(0, inplace=True)
@@ -795,7 +794,6 @@ def generatenav(user, force=False, filter=None):
     return dailynav
 
 
-@MWT(timeout=120)
 def alphavantage_historical(id, to_symbol=None):
     # Downloads Historical prices from Alphavantage
     # Can handle both Stock and Crypto tickers - try stock first, then crypto
@@ -862,12 +860,12 @@ def alphavantage_historical(id, to_symbol=None):
         logging.info(f"[ALPHAVANTAGE] Fetching URL: {globalURL}")
     else:
         baseURL = "https://www.alphavantage.co/query?"
-        func = "FX_DAILY"   
+        func = "FX_DAILY"
         globalURL = baseURL + "function=" + func + "&from_symbol=" + from_symbol +\
             "&to_symbol=" + to_symbol + "&outputsize=full&apikey=" + api_key
         logging.info(f"[ALPHAVANTAGE - FX] {id}: Downloading data")
         logging.info(f"[ALPHAVANTAGE - FX] Fetching URL: {globalURL}")
-    
+
     try:
         logging.info(f"[ALPHAVANTAGE] Requesting URL: {globalURL}")
         request = tor_request(globalURL)
@@ -1043,6 +1041,7 @@ def send_reset_email(user):
                 '''
     mail.send(msg)
 
+
 @MWT(timeout=20)
 def heatmap_generator():
     # If no Transactions for this user, return empty.html
@@ -1108,19 +1107,16 @@ def heatmap_generator():
 
     return (heatmap, heatmap_stats, years, cols)
 
-
 @memoized
 def price_ondate(ticker, date_input, to_symbol=None):
     # Returns the price of a ticker on a given date
     # if to_symbol is passed, it assumes FX and ticker is from_symbol
-    
     if to_symbol is not None:
         local_json, message, error = alphavantage_historical(ticker, to_symbol)
     else:
         local_json, message, error = alphavantage_historical(ticker)
     if message == 'error':
         return 'error'
-    
     try:
         prices = pd.DataFrame(local_json)
         prices.reset_index(inplace=True)
@@ -1138,13 +1134,11 @@ def price_ondate(ticker, date_input, to_symbol=None):
         idx = prices[prices.index.get_loc(date_input, method='nearest')]
     except KeyError:
         return ("0")
-    
     return (idx)
 
 
 @memoized
 def fx_list():
-    fx_dict = {}
     with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
         reader = csv.reader(csvfile)
         fiat_dict = {rows[0]: (rows[1]) for rows in reader}

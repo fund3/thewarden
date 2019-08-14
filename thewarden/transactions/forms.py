@@ -10,23 +10,25 @@ from wtforms.fields.html5 import DateField
 class NewTrade(FlaskForm):
     transtypes = (
         ("0", ""),
-        ("1", "Asset and Cash"),
+        ("1", "Asset and Fiat"),
         ("2", "Asset Only"),
-        ("3", "Cash only"),
+        ("3", "Fiat only"),
     )
 
-    trade_type = SelectField(
-        "Select type of Transaction", [Optional()], choices=transtypes, default="2"
-    )
+    trade_type = SelectField("Select type of Transaction", [Optional()],
+                             choices=transtypes,
+                             default="2")
     trade_date = DateField("Trade Date", [DataRequired()])
     trade_asset_ticker = StringField("Crypto Asset", [Optional()])
     trade_operation = SelectField(
         "Operation",
         [Optional()],
-        choices=[("B", "Buy"), ("S", "Sell"), ("D", "Deposit"), ("W", "Withdraw")],
+        choices=[("B", "Buy"), ("S", "Sell"), ("D", "Deposit"),
+                 ("W", "Withdraw")],
     )
     trade_quantity = StringField("Quantity", [Optional()])
-    trade_currency = SelectField("Trade Currency", [Optional()], choices=fx_list())
+    trade_currency = SelectField("Trade Currency", [Optional()],
+                                 choices=fx_list())
     trade_price = StringField("Price", [Optional()])
     trade_fees = StringField("Fees", default=0)
     trade_account = StringField("Trade Account")
@@ -79,9 +81,9 @@ class NewTrade(FlaskForm):
 class EditTransaction(FlaskForm):
     transtypes = (
         ("0", ""),
-        ("1", "Asset and Cash"),
+        ("1", "Asset and Fiat"),
         ("2", "Asset Only"),
-        ("3", "Cash only"),
+        ("3", "Fiat only"),
     )
 
     trade_date = DateField("Trade Date", [DataRequired()])
@@ -90,17 +92,21 @@ class EditTransaction(FlaskForm):
     trade_operation = SelectField(
         "Operation",
         [Optional()],
-        choices=[("B", "Buy"), ("S", "Sell"), ("D", "Deposit"), ("W", "Withdraw")],
+        choices=[("B", "Buy"), ("S", "Sell"), ("D", "Deposit"),
+                 ("W", "Withdraw")],
     )
-    trade_currency = SelectField("Trade Currency", [Optional()], choices=fx_list())
+    trade_currency = SelectField("Trade Currency", [Optional()],
+                                 choices=fx_list())
     trade_quantity = StringField("Quantity", [DataRequired()])
     trade_price = StringField("Price", [DataRequired()])
     trade_fees = StringField("Fees", default=0)
     trade_account = StringField("Trade Account")
     cash_account = StringField("Debit (or Credit) Account", [Optional()])
     trade_notes = StringField("Trade Notes and Tags")
-    match_asset_ticker = SelectField("Currency", [Optional()], choices=fx_list())
-    trade_type = StringField("Select type of Transaction", [Optional()], default="")
+    match_asset_ticker = SelectField("Currency", [Optional()],
+                                     choices=fx_list())
+    trade_type = StringField("Select type of Transaction", [Optional()],
+                             default="")
     cash_value = StringField("Total Cash Amount", default=0)
 
     submit = SubmitField("Update Transaction")

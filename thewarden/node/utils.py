@@ -1,11 +1,12 @@
-import requests
 import logging
-import time
+
 import pandas as pd
-from thewarden.models import User
+import requests
+from flask import Markup, current_app, flash
 from flask_login import current_user
-from flask import flash, Markup, current_app
-from thewarden.users.decorators import pd_cache, timing, memoized, MWT
+
+from thewarden.models import User
+from thewarden.users.decorators import MWT, memoized
 
 
 @MWT(30)

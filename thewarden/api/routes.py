@@ -36,7 +36,7 @@ from thewarden.node.utils import (
     dojo_get_hd,
     tor_request,
 )
-from thewarden.users.decorators import MWT, memoized
+from thewarden.users.decorators import MWT
 
 api = Blueprint("api", __name__)
 
@@ -1698,7 +1698,7 @@ def import_transaction():
                 int(jsonData[item]["trade_date"]))  # Epoch worked
         except ValueError:
             trade_date = parser.parse(jsonData[item]["trade_date"])
-        
+
         new_trade = Trades(
             user_id=current_user.username,
             trade_inputon=parser.parse(jsonData[item]["trade_inputon"]),
@@ -1909,6 +1909,7 @@ def fx_list():
 # API Helpers for Bitmex start here
 # ------------------------------------
 
+
 @api.route("/test_bitmex", methods=["GET"])
 # receives api_key and api_secret then saves to a local json for later use
 # returns in message - user details
@@ -1930,9 +1931,7 @@ def test_bitmex():
         logging.info("Credentials saved to bitmex.json")
         return ({'status': 'success', 'message': resp})
     except Exception as e:
-        return ({'status': 'error', 'message': f'Error when connecting to Bitmex. Check credentials. Error: {e}'})
-    
-
+        return ({'status': 'error', 'message': f'Error when connecting to Bitmex. Check credentials. Error: {e}'})    
 
 
 @api.route("/load_bitmex_json", methods=["GET"])
@@ -1945,6 +1944,7 @@ def load_bitmex_json():
             return (data)
     except (FileNotFoundError, KeyError):
         return ({'status': 'error', 'message': 'API credentials not found'})
+
 
 @MWT(20)
 @api.route("/realtime_user", methods=["GET"])

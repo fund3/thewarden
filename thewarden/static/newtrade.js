@@ -1,17 +1,13 @@
 $(document).ready(function () {
   hideandshow();
   calccf();
-  $('#submit_button').hide()
+  // $('#submit_button').hide()
 });
-
 
 $(function () {
   $('#submit_button').click(function () {
-    var $this = $(this);
-    $('#submit_button').hide()
-    $('#submit_button').attr('value', 'Please wait. Including transaction...');
-
-
+    // $('#submit_button').prop('disabled', true)
+    $('#submit_button').prop('value', 'Please wait. Including transaction and generating new NAV. This can take a while. Wait...');
   });
 });
 
