@@ -46,8 +46,9 @@ $(document).ready(function () {
             var min_nav_txt = data.min_nav.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "<span class='small'> on "
             min_nav_txt = min_nav_txt + data.min_port_date + "</span>"
             $('#min_nav').html(min_nav_txt);
-            $('#end_portvalue').html("$ " + data.end_portvalue.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }));
-            var max_pv_txt = "$ " + data.max_portvalue.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }) + "<span class='small'> on "
+            $('#end_portvalue_usd').html("$ " + data.end_portvalue_usd.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }));
+            $('#end_portvalue').html(data.end_portvalue.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }));
+            var max_pv_txt = data.max_portvalue.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }) + "<span class='small'> on "
             max_pv_txt = max_pv_txt + data.max_port_date + "</span>"
             $('#max_portvalue').html(max_pv_txt);
             $('#return_1d').html((data.return_1d * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "%");

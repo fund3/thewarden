@@ -147,7 +147,6 @@
                         </th>
 
 
-
                     </tr>
                 </thead>
 
@@ -194,6 +193,10 @@
                         <td class="text-right small align-middle">
                             {{"{:,.2f}".format(portfolio_data[position]['fx_perc']*100)}}%
                         </td>
+
+
+
+
                     </tr>
 
                     {% endif %}
@@ -647,14 +650,30 @@
                                 src="static/images/loading3.gif" width="15" height="15"></img> </td>
                     </tr>
                     <tr>
-                        <td>Portfolio Value</td>
-                        <td id='end_portvalue' class="text-right"> <img class="mx-auto d-block"
+                        <td>Portfolio Value (USD)</td>
+                        <td id='end_portvalue_usd' class="text-right"> <img class="mx-auto d-block"
                                 src="static/images/loading3.gif" width="15" height="15"></img> </td>
                     </tr>
+
+                    <tr>
+                        <td>Portfolio Value</td>
+                        <td class="text-right">
+                            {{current_user.fx() | fxsymbol}}
+                            <span id='end_portvalue'> <img class="mx-auto d-block" src="static/images/loading3.gif"
+                                    width="15" height="15"></img>
+                            </span>
+                        </td>
+                    </tr>
+
                     <tr>
                         <td>Highest Value</td>
-                        <td id='max_portvalue' class="text-right"> <img class="mx-auto d-block"
-                                src="static/images/loading3.gif" width="15" height="15"></img> </td>
+                        <td class="text-right">
+                            {{current_user.fx() | fxsymbol}}
+                            <span id='max_portvalue'>
+                                <img class="mx-auto d-block" src="static/images/loading3.gif" width="15"
+                                    height="15"></img>
+                            </span>
+                        </td>
                     </tr>
 
 

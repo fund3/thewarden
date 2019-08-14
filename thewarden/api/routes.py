@@ -231,6 +231,7 @@ def portstats():
     meta["min_nav_date"] = data[data["NAV_fx"] == data["NAV_fx"].min()].index.strftime(
         "%B %d, %Y")[0]
     meta["end_portvalue"] = data["PORT_fx_pos"][-1].astype(float)
+    meta["end_portvalue_usd"] = data["PORT_usd_pos"][-1].astype(float)
     meta["max_portvalue"] = data["PORT_fx_pos"].max().astype(float)
     meta["max_port_date"] = data[
         data["PORT_fx_pos"] == data["PORT_fx_pos"].max()
@@ -1902,20 +1903,14 @@ def fx_list():
     fx_dict = {}
     with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
         reader = csv.reader(csvfile)
-        fiat_dict = {rows[0]: rows[1] for rows in reader}
-    with open('thewarden/static/csv_files/digital_currency_list.csv', newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        dig_dict = {rows[0]: rows[1] for rows in reader}
-
-    fx_dict = {**fiat_dict, **dig_dict}
-
+        fx_dict = {rows[0]: rows[1] for rows in reader}
     q = request.args.get("term")
+    if q is None:
+        q = ""
     list_key = {key: value for key, value in fx_dict.items() if q.upper() in key.upper()}
     list_value = {key: value for key, value in fx_dict.items() if q.upper() in value.upper()}
     list = {**list_key, **list_value}
-
     list = json.dumps(list)
-
     return list
 
 # ------------------------------------

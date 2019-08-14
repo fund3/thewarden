@@ -1,4 +1,13 @@
 {
+  "BTC": {
+    "symbol": "Ƀ",
+    "name": "Bitcoin",
+    "symbol_native": "Ƀ",
+    "decimal_digits": 2,
+    "rounding": 0,
+    "code": "BTC",
+    "name_plural": "Bitcoins"
+  },
   "USD": {
     "symbol": "$",
     "name": "US Dollar",

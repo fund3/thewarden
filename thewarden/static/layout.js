@@ -1,8 +1,9 @@
 $(document).ready(function () {
-    // refresh BTC price every 5 seconds
+    // refresh BTC price every 30 seconds
+    BTC_price();
     window.setInterval(function () {
         BTC_price();
-    }, 1000);
+    }, 30000);
 
 
 

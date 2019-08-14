@@ -117,7 +117,6 @@ def cost_calculation(user, ticker):
     # Adjust Cash Value only to account for needed position
     fifo_df['adjusted_cv'] = fifo_df['cash_value_fx'] * fifo_df['Q'] /\
         fifo_df['trade_quantity']
-
     cost_matrix['FIFO'] = {}
     cost_matrix['FIFO']['cash'] = fifo_df['adjusted_cv'].sum()
     cost_matrix['FIFO']['quantity'] = open_position
@@ -148,8 +147,7 @@ def cost_calculation(user, ticker):
     cost_matrix['LIFO']['cash'] = lifo_df['adjusted_cv'].sum()
     cost_matrix['LIFO']['quantity'] = open_position
     cost_matrix['LIFO']['count'] = int(lifo_df['trade_operation'].count())
-    cost_matrix['LIFO']['average_cost'] = lifo_df['adjusted_cv'].sum()\
-        / open_position
+    cost_matrix['LIFO']['average_cost'] = lifo_df['adjusted_cv'].sum() / open_position
     return (cost_matrix)
 
 
@@ -258,6 +256,7 @@ def generate_pos_table(user, fx, hidesmall):
     # Including current positions, cost and other market info
     # Gets all transactions
     df = transactions_fx()
+
     # Create string of tickers and grab all prices in one request
     list_of_tickers = df.trade_asset_ticker.unique().tolist()
     ticker_str = ""
@@ -367,6 +366,8 @@ def generate_pos_table(user, fx, hidesmall):
     table['TOTAL'] = {}
     table['TOTAL']['cash_flow_value'] = summary_table.sum()['cash_value']
     table['TOTAL']['cash_flow_value_fx'] = summary_table.sum()['cash_value_fx']
+    table['TOTAL']['avg_fx_rate'] = table['TOTAL']['cash_flow_value_fx'] /\
+        table['TOTAL']['cash_flow_value']
     table['TOTAL']['trade_fees'] = summary_table.sum()['trade_fees']
     table['TOTAL']['trade_fees_fx'] = summary_table.sum()['trade_fees_fx']
     table['TOTAL']['trade_count'] = summary_table.sum()['count']
@@ -486,6 +487,7 @@ def generate_pos_table(user, fx, hidesmall):
             summary_table['average_price'][ticker].to_dict()
         table[ticker]['average_price_fx'] = \
             summary_table['average_price_fx'][ticker].to_dict()
+
     return(table, pie_data)
 
 
