@@ -160,9 +160,9 @@ body {
     top: 45px;
     right: 0px;
     left: 0px;
-    -moz-transition: all 0.25s linear;
-    -webkit-transition: all 0.25s linear;
-    transition: all 0.25s linear;
+    -moz-transition: all 0.4s linear;
+    -webkit-transition: all 0.4s linear;
+    transition: all 0.4s linear;
   }
 }
 

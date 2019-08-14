@@ -7,6 +7,8 @@ import time
 from functools import wraps
 from glob import glob
 
+from thewarden.config import Config
+
 import pandas as pd
 
 
@@ -47,14 +49,18 @@ def del_cached():
 
 
 def timing(method):
-    # Time a function
+    # Time a function - only runs if environment variable:
+    # WARDEN_STATUS="developer
     def timed(*args, **kw):
-        ts = time.time()
-        result = method(*args, **kw)
-        te = time.time()
-        print('Function', method.__name__, 'time:', round((te - ts) * 1000, 1),
-              'ms')
-        return result
+        if Config.WARDEN_STATUS == "developer":
+            ts = time.time()
+            result = method(*args, **kw)
+            te = time.time()
+            print('Function', method.__name__, 'time:',
+                  round((te - ts) * 1000, 1), 'ms')
+            return result
+        else:
+            return (method(*args, **kw))
 
     return timed
 

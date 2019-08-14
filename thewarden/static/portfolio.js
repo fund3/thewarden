@@ -185,7 +185,7 @@ function navChart(data) {
             enabled: false
         },
         rangeSelector: {
-            selected: 0
+            selected: 5
         },
         chart: {
             zoomType: 'xy',

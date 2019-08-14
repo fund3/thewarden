@@ -10,7 +10,7 @@ from thewarden.users.forms import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 from thewarden.models import User, Trades, AccountInfo
-from thewarden.users.utils import send_reset_email, fx_list, generatenav
+from thewarden.users.utils import send_reset_email, fx_list, generatenav, regenerate_nav
 
 users = Blueprint("users", __name__)
 
@@ -68,7 +68,7 @@ def account():
         # If currency is changed, recalculate the NAV
         if form.basefx.data != current_user.fx():
             current_user.image_file = form.basefx.data
-            generatenav(current_user, True)
+            regenerate_nav()
             db.session.commit()
             flash(
                 f"NAV recalculated to use {form.basefx.data} as a base currency",
