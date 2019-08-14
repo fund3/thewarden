@@ -648,7 +648,6 @@ def generatenav(user, force=False, filter=None):
             # Now let's find trades for this ticker and include in dailynav
             tradedf = df[['trade_asset_ticker',
                           'trade_quantity', 'cash_value', 'cash_value_fx']]
-            print (tradedf)
                           # Filter trades only for this ticker
             tradedf = tradedf[tradedf['trade_asset_ticker'] == id]
             # consolidate all trades in a single date Input
