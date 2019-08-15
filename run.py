@@ -9,16 +9,15 @@ from thewarden.models import listofcrypto, User, Trades, AccountInfo, Contact
 print("\033[1;32;40m")
 for _ in range(50):
     print("")
-print(
-    f"""
+print(f"""
 \033[1;32;40m
 -----------------------------------------------------------------
-      _   _           __        ___    ____     _            
-     | |_| |__   ___  \ \      / / \  |  _ \ __| | ___ _ __  
-     | __| '_ \ / _ \  \ \ /\ / / _ \ | |_) / _` |/ _ \ '_ \ 
+      _   _           __        ___    ____     _
+     | |_| |__   ___  \ \      / / \  |  _ \ __| | ___ _ __
+     | __| '_ \ / _ \  \ \ /\ / / _ \ | |_) / _` |/ _ \ '_ \
      | |_| | | |  __/   \ V  V / ___ \|  _ < (_| |  __/ | | |
       \__|_| |_|\___|    \_/\_/_/   \_\_| \_\__,_|\___|_| |_|
-                                                        
+
 -----------------------------------------------------------------
                \033[1;37;40m
        Privacy Focused Portfolio & Bitcoin Address Tracker
@@ -28,7 +27,7 @@ print(
    You can access it at your browser
    Just go to:
    \033[1;32;40mhttp://127.0.0.1:5000/
-   \033[1;37;40mTo change the IP:
+   \033[1;37;40mTo change the ip above:
    \033[1;32;40mpython run.py --host [host_ip]
    \033[1;37;40mTO EXIT HIT CTRL+C a couple of times
    You can minimize this window now...
@@ -37,9 +36,7 @@ print(
 \033[1;31;40m                  Always go for the red pill
 \033[1;32;40m-----------------------------------------------------------------
 \033[1;37;40m
-"""
-)
-
+""")
 
 app = create_app()
 app.app_context().push()
