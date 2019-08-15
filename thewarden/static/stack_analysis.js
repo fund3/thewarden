@@ -77,7 +77,7 @@ function run_ajax() {
             $('#alerts').html("")
             console.log("ajax request: OK")
             console.log(data)
-            handle_ajax_data(data, ticker);
+            handle_ajax_data(data, ticker, data['fx']);
 
         },
         error: function (xhr, status, error) {
@@ -88,15 +88,15 @@ function run_ajax() {
     });
 };
 
-function handle_ajax_data(data, ticker) {
+function handle_ajax_data(data, ticker, fx) {
     var parsed_data = (jQuery.parseJSON(data.data));
     // Create Chart
-    createChart(parsed_data, ticker);
+    createChart(parsed_data, ticker, fx);
 
 };
 
 //  CHART
-function createChart(data, ticker) {
+function createChart(data, ticker, fx) {
 
 
     var myChart = Highcharts.stockChart('compchart', {
@@ -228,7 +228,7 @@ function createChart(data, ticker) {
                 data: Object.keys(data[ticker]).map((key) => [((key * 1)), data[ticker][key]]),
                 turboThreshold: 0,
                 tooltip: {
-                    pointFormat: ticker + " Price: {point.y:,.0f}"
+                    pointFormat: ticker + " Price: " + fx + "{point.y:,.0f}"
                 },
             },
             {
@@ -244,7 +244,7 @@ function createChart(data, ticker) {
                 data: Object.keys(data['avg_cost']).map((key) => [((key * 1)), data['avg_cost'][key]]),
                 turboThreshold: 0,
                 tooltip: {
-                    pointFormat: "Average Cost: ${point.y:,.0f}"
+                    pointFormat: "Average Cost: " + fx + "{point.y:,.0f}"
                 },
             },
             {
@@ -295,7 +295,7 @@ function createChart(data, ticker) {
                 data: Object.keys(data["price_over_cost_usd"]).map((key) => [((key * 1)), data["price_over_cost_usd"][key]]),
                 turboThreshold: 0,
                 tooltip: {
-                    pointFormat: "Cost over Price: ${point.y:,.2f}"
+                    pointFormat: "Cost over Price: " + fx + " {point.y:,.2f}"
                 },
             },
             {
@@ -312,7 +312,7 @@ function createChart(data, ticker) {
                 turboThreshold: 0,
                 pointWidth: 10,
                 tooltip: {
-                    pointFormat: "This transaction changed cost by ${point.y:,.2f}"
+                    pointFormat: "This transaction changed cost by " + fx + "{point.y:,.2f}"
                 },
             }
         ]

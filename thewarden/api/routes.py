@@ -26,7 +26,9 @@ from thewarden.users.utils import (
     heatmap_generator,
     rt_price_grab,
     price_ondate,
-    regenerate_nav
+    regenerate_nav,
+    transactions_fx,
+    fxsymbol
 )
 from thewarden.node.utils import (
     dojo_auth,
@@ -749,6 +751,10 @@ def portfolio_tickers_json():
         df = pd.read_sql_table("trades", db.engine)
         df = df[(df.user_id == current_user.username)]
         list_of_tickers = df.trade_asset_ticker.unique().tolist()
+        try:
+            list_of_tickers.remove(current_user.fx())
+        except ValueError:
+            pass
         return jsonify(list_of_tickers)
 
 
@@ -981,14 +987,12 @@ def transactionsandcost_json():
             end_date = datetime.now()
 
     # Get Transaction List
-    df = pd.read_sql_table("trades", db.engine)
-    # Filter only the trades for current user
-    df = df[(df.user_id == current_user.username)]
+    df = transactions_fx()
     # Filter only to requested ticker
     # if no ticker, use BTC as default, if not BTC then the 1st in list
     tickers = df.trade_asset_ticker.unique().tolist()
     try:
-        tickers.remove("USD")
+        tickers.remove(current_user.fx())
     except ValueError:
         pass
 
@@ -997,6 +1001,8 @@ def transactionsandcost_json():
             ticker = "BTC"
         else:
             ticker = tickers[0]
+
+    # Filter only the trades for current user
     df = df[(df.trade_asset_ticker == ticker)]
     # Filter only buy and sells, ignore deposit / withdraw
     # For now, including Deposits and Withdrawns as well but
@@ -1006,14 +1012,12 @@ def transactionsandcost_json():
     # Create a cash_flow column - so we can calculate
     # average price for days with multiple buys and/or sells
     df["cash_flow"] = df["trade_quantity"] * \
-        df["trade_price"] + df["trade_fees"]
-    df["trade_date"] = pd.to_datetime(df["trade_date"])
+        df["trade_price_fx"] + df["trade_fees_fx"]
 
     # Consolidate all transactions from a single day by grouping
-    df = df.groupby(["trade_date"])[["cash_value", "trade_fees", "trade_quantity"]].agg(
-        ["sum", "count"]
-    )
-    df.index.names = ["date"]
+    df = df.groupby(["date"])[["cash_value", "trade_fees",
+                                     "trade_quantity", "cash_value_fx"]].agg([
+                                        "sum", "count"])
     # Remove the double index for column and consolidate under one row
     df.columns = ["_".join(col).strip() for col in df.columns.values]
 
@@ -1024,27 +1028,34 @@ def transactionsandcost_json():
     # ---------------------------------------------------------
     # Get price of ticker passed as argument and merge into df
     message = {}
-    data, notification, meta = alphavantage_historical(ticker)
+    data, notification, meta = alphavantage_historical(
+        ticker, None, current_user.fx())
     # If notification is an error, skip this ticker
     if notification == "error":
         message = data
         return message
     data.reset_index(inplace=True)
     data = data.set_index(list(data.columns[[0]]))
+    aa_header = "4a. close ("+current_user.fx()+")"
     try:
-        data = data["4a. close (USD)"]
+        data = data[aa_header]
     except KeyError:
         try:
             data = data["4. close"]
         except KeyError:
-            message = "Key Error on Data"
-            return message
+            try:
+                aa_header = "4. close ("+current_user.fx()+")"
+                data = data[aa_header]
+            except KeyError:
+                message = "Key Error on Data"
+                return message
     # convert string date to datetime
     data.index = pd.to_datetime(data.index)
     # rename index to date to match dailynav name
     data.index.rename("date", inplace=True)
     data.rename(ticker, inplace=True)
     data = data.astype(float)
+
 
     # Create a DF, fill with dates and fill with operation and prices
     start_date = df.index.min()
@@ -1054,7 +1065,6 @@ def transactionsandcost_json():
     # Fill dailyNAV with prices for each ticker
     daily_df = pd.merge(daily_df, df, on="date", how="left")
     daily_df.fillna(0, inplace=True)
-
     if type(daily_df) != type(data):
         data = data.to_frame()
 
@@ -1065,12 +1075,12 @@ def transactionsandcost_json():
     # ---------------------------------------------------------
     # Create additional columns on df
     # ---------------------------------------------------------
-    # daily_df['transaction_boolean'] = daily_df.loc[daily_df.trade_quantity_sum > 0] = 'True'
     daily_df.loc[daily_df.trade_quantity_sum > 0, "traded"] = 1
     daily_df.loc[daily_df.trade_quantity_sum <= 0, "traded"] = 0
     daily_df["q_cum_sum"] = daily_df["trade_quantity_sum"].cumsum()
     daily_df["cv_cum_sum"] = daily_df["cash_value_sum"].cumsum()
-    daily_df["avg_cost"] = daily_df["cv_cum_sum"] / daily_df["q_cum_sum"]
+    daily_df["cv_fx_cum_sum"] = daily_df["cash_value_fx_sum"].cumsum()
+    daily_df["avg_cost"] = daily_df["cv_fx_cum_sum"] / daily_df["q_cum_sum"]
     daily_df["price_over_cost_usd"] = daily_df[ticker] - daily_df["avg_cost"]
     daily_df["price_over_cost_perc"] = (
         daily_df[ticker] / daily_df["avg_cost"]) - 1
@@ -1090,8 +1100,8 @@ def transactionsandcost_json():
     return_dict["data"] = daily_df.to_json()
     return_dict["meta_data"] = meta
     return_dict["message"] = message
+    return_dict["fx"] = fxsymbol(current_user.fx())
     logging.info(f"[transactionandcost_json] Success generating data")
-
     return jsonify(return_dict)
 
 

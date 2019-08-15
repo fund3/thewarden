@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import os
+import glob
 import pickle
 from datetime import datetime, timedelta, timezone
 
@@ -242,6 +243,7 @@ def transactions_fx():
     df['fx'] = df.apply(lambda x: x[x['trade_currency']], axis=1)
     df['cash_value_fx'] = df['cash_value'].astype(float) / df['fx'].astype(float)
     df['trade_fees_fx'] = df['trade_fees'].astype(float) / df['fx'].astype(float)
+    df['trade_price_fx'] = df['trade_price'].astype(float) / df['fx'].astype(float)
     return (df)
 
 
@@ -500,7 +502,6 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     return(str)
 
 
-@MWT(timeout=5)
 @timing
 def generatenav(user, force=False, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
@@ -810,12 +811,15 @@ def regenerate_nav():
     except OSError:
         logging.info("[newtrade] Local NAV file not found" +
                      " for removal - continuing")
+    # Delete all pricing history from AA
+    aa_files = glob.glob('thewarden/alphavantage_data/*')
+    [os.remove(x) for x in aa_files]
 
     generatenav(current_user.username, True)
     logging.info("Change to database - generate NAV")
 
 
-def alphavantage_historical(id, to_symbol=None):
+def alphavantage_historical(id, to_symbol=None, market="USD"):
     # Downloads Historical prices from Alphavantage
     # Can handle both Stock and Crypto tickers - try stock first, then crypto
     # Returns:
@@ -837,6 +841,7 @@ def alphavantage_historical(id, to_symbol=None):
     # Alphavantage Keys can be generated free at
     # https://www.alphavantage.co/support/#api-key
 
+
     user_info = User.query.filter_by(username=current_user.username).first()
     api_key = user_info.aa_apikey
     if api_key is None:
@@ -848,8 +853,8 @@ def alphavantage_historical(id, to_symbol=None):
 
     id = id.upper()
 
-    filename = "thewarden/alphavantage_data/" + id + ".aap"
-    meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
+    filename = "thewarden/alphavantage_data/" + id + "_" + market + ".aap"
+    meta_filename = "thewarden/alphavantage_data/" + id + "_" + market + "_meta.aap"
 
     try:
         # Check if saved file is recent enough to be used
@@ -866,7 +871,7 @@ def alphavantage_historical(id, to_symbol=None):
             return (id_pickle, "downloaded", meta_pickle)
         else:
             logging.info("[ALPHAVANTAGE] File found but too old" +
-                            " - downloading a fresh one.")
+                         " - downloading a fresh one.")
 
     except FileNotFoundError:
         logging.info(f"[ALPHAVANTAGE] File not found for {id} - downloading")
@@ -874,7 +879,6 @@ def alphavantage_historical(id, to_symbol=None):
     if to_symbol is None:
         baseURL = "https://www.alphavantage.co/query?"
         func = "DIGITAL_CURRENCY_DAILY"
-        market = "USD"
         globalURL = baseURL + "function=" + func + "&symbol=" + id +\
             "&market=" + market + "&apikey=" + api_key
         logging.info(f"[ALPHAVANTAGE] {id}: Downloading data")
@@ -904,10 +908,10 @@ def alphavantage_historical(id, to_symbol=None):
                 'Time Series FX (Daily)'],
                 orient="index")
             # Save locally for reuse today
-            filename = "thewarden/alphavantage_data/" + id + ".aap"
+            filename = "thewarden/alphavantage_data/" + id + "_" + market + ".aap"
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             df.to_pickle(filename)
-            meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
+            meta_filename = "thewarden/alphavantage_data/" + id + "_" + market + "_meta.aap"
             with open(meta_filename, 'wb') as handle:
                 pickle.dump(meta_data, handle,
                             protocol=pickle.HIGHEST_PROTOCOL)
@@ -923,10 +927,10 @@ def alphavantage_historical(id, to_symbol=None):
             'Time Series (Digital Currency Daily)'],
             orient="index")
         # Save locally for reuse today
-        filename = "thewarden/alphavantage_data/" + id + ".aap"
+        filename = "thewarden/alphavantage_data/" + id + "_" + market + ".aap"
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         df.to_pickle(filename)
-        meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
+        meta_filename = "thewarden/alphavantage_data/" + id + "_" + market + "_meta.aap"
         with open(meta_filename, 'wb') as handle:
             pickle.dump(meta_data, handle,
                         protocol=pickle.HIGHEST_PROTOCOL)
@@ -955,10 +959,10 @@ def alphavantage_historical(id, to_symbol=None):
                 data['Time Series (Daily)'],
                 orient="index")
             # Save locally for reuse today
-            filename = "thewarden/alphavantage_data/" + id + ".aap"
+            filename = "thewarden/alphavantage_data/" + id + "_" + market + ".aap"
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             df.to_pickle(filename)
-            meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
+            meta_filename = "thewarden/alphavantage_data/" + id + "_" + market + "_meta.aap"
             with open(meta_filename, 'wb') as handle:
                 pickle.dump(meta_data, handle,
                             protocol=pickle.HIGHEST_PROTOCOL)
@@ -989,10 +993,10 @@ def alphavantage_historical(id, to_symbol=None):
                 meta_data = "Bitmex Metadata not available"
 
                 # Save locally for reuse today
-                filename = "thewarden/alphavantage_data/" + id + ".aap"
+                filename = "thewarden/alphavantage_data/" + id + "_" + market + ".aap"
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 data.to_pickle(filename)
-                meta_filename = "thewarden/alphavantage_data/" + id + "_meta.aap"
+                meta_filename = "thewarden/alphavantage_data/" + id + "_" + market + "_meta.aap"
                 with open(meta_filename, 'wb') as handle:
                     pickle.dump(meta_data, handle,
                                 protocol=pickle.HIGHEST_PROTOCOL)
@@ -1138,7 +1142,7 @@ def price_ondate(ticker, date_input, to_symbol=None):
     else:
         local_json, message, error = alphavantage_historical(ticker)
     if message == 'error':
-        return 'error'
+        return '0'
     try:
         prices = pd.DataFrame(local_json)
         prices.reset_index(inplace=True)
