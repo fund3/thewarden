@@ -1056,7 +1056,6 @@ def transactionsandcost_json():
     data.rename(ticker, inplace=True)
     data = data.astype(float)
 
-
     # Create a DF, fill with dates and fill with operation and prices
     start_date = df.index.min()
     daily_df = pd.DataFrame(columns=["date"])

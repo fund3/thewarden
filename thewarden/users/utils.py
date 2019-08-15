@@ -254,7 +254,6 @@ def generate_pos_table(user, fx, hidesmall):
     # Including current positions, cost and other market info
     # Gets all transactions
     df = transactions_fx()
-
     # Create string of tickers and grab all prices in one request
     list_of_tickers = df.trade_asset_ticker.unique().tolist()
     ticker_str = ""
@@ -362,6 +361,8 @@ def generate_pos_table(user, fx, hidesmall):
     # create a dictionary in a better format to deliver to html table
     table = {}
     table['TOTAL'] = {}
+    table['TOTAL']['fx'] = current_user.fx()
+    table['TOTAL']['fx_symbol'] = fxsymbol(current_user.fx())
     table['TOTAL']['cash_flow_value'] = summary_table.sum()['cash_value']
     table['TOTAL']['cash_flow_value_fx'] = summary_table.sum()['cash_value_fx']
     table['TOTAL']['avg_fx_rate'] = table['TOTAL']['cash_flow_value_fx'] /\

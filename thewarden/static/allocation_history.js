@@ -47,7 +47,8 @@ function run_ajax(tickers) {
         success: function (pnl_data) {
             $('#alerts').html("")
             console.log("ajax request [PnL Data]: OK")
-            run_alloc(pnl_data, tickers);
+            console.log(pnl_data)
+            run_alloc(pnl_data, tickers, pnl_data.TOTAL.fx_symbol);
         },
         error: function (xhr, status, error) {
             $('#alerts').html("<div class='small alert alert-danger alert-dismissible fade show' role='alert'>An error occured while refreshing data." +
@@ -100,7 +101,7 @@ function createChart(data, tickers) {
             backgroundColor: "#FAFAFA",
         },
         title: {
-            text: 'Historical Portfolio Allocation (in % of USD)'
+            text: 'Historical Portfolio Allocation (%)'
         },
         subtitle: {
             text: document.ontouchstart === undefined ?
@@ -148,7 +149,7 @@ function createChart(data, tickers) {
 
 
 // CREATE SECOND CHART - PNL ATTRIBUTION
-function run_alloc(data, tickers) {
+function run_alloc(data, tickers, fx) {
 
 
 
@@ -169,7 +170,7 @@ function run_alloc(data, tickers) {
             // it maps to (date, value)
             // console.log(data[ticker]['total_pnl_gross_USD']);
             // data_tmp = [];
-            tmp_tuple = [ticker, data[ticker]['total_pnl_gross_USD']]
+            tmp_tuple = [ticker, data[ticker]['total_pnl_gross_fx']]
             // tmp_dict['data'] = data_tmp
             // tmp_dict['y'] = data[ticker]['total_pnl_gross_USD']
             // tmp_dict['yAxis'] = 0;
@@ -198,7 +199,7 @@ function run_alloc(data, tickers) {
                 dataLabels: {
                     enabled: true,
                     x: -10,
-                    format: '{point.name} : $ {point.y:,.0f}',
+                    format: '{point.name} : ' + fx + ' {point.y:,.0f}',
                 },
                 pointPadding: 0.1,
                 groupPadding: 0
@@ -208,7 +209,7 @@ function run_alloc(data, tickers) {
             categories: tickers
         },
         title: {
-            text: 'PnL Attribution'
+            text: 'PnL Attribution (' + fx + ')'
         },
         legend: {
             enabled: false,
