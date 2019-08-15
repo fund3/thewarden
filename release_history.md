@@ -6,6 +6,8 @@
 - Realtime pricing of currencies + change base currency of portfolio.
 - Fixed issues afecting NAV generation
 - Fixed formatting issues
+- Updated all charts to reflect currency selection
+- NAV calculation includes impact of currency
 - Optimized calculation intensive methods to remember recent values (memoization)
 
 ## v.12 alpha (released on 8/7/2019)

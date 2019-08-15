@@ -107,11 +107,8 @@ Not at this time.
 
 ### - Do I need to run it locally or is there a website I can use?
 
-Cryptoblotter.io has a running copy of version 0.02 but will be discontinued soon.
-
-### - On the remote version at cryptoblotter.io, what kind of information is gathered?
-
-The debug.log file at the host we are using (Heroku) logs the IP addresses accessing the website. Also, username is stored at the database. **Use the website just for testing.** We encourage users of the website to not use their real e-mail address (use a burner only for password recovery). **This software is designed to be ran locally at your machine.**
+The app needs to be installed locally. Remember, you don't want to be sending all your transactions to unknown couterparties or through the internet. Keeping it local increases
+your privacy and security.
 
 ### - Why the DOJO and not other available options?
 
