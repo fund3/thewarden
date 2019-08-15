@@ -44,7 +44,7 @@ except KeyError:
                   " Defaulting to 5.")
 
 
-@MWT(10)
+@MWT(5)
 @timing
 def multiple_price_grab(tickers, fx):
     # tickers should be in comma sep string format like "BTC,ETH,LTC"
@@ -62,6 +62,7 @@ def multiple_price_grab(tickers, fx):
     return (data)
 
 
+@MWT(1)
 def rt_price_grab(ticker, user_fx='USD'):
     baseURL =\
         "https://min-api.cryptocompare.com/data/price?fsym=" + ticker + \
@@ -74,7 +75,7 @@ def rt_price_grab(ticker, user_fx='USD'):
     return (data)
 
 
-@MWT(timeout=30)
+@MWT(timeout=5)
 @timing
 def cost_calculation(user, ticker):
     # This function calculates the cost basis assuming 3 different methods
@@ -150,7 +151,7 @@ def cost_calculation(user, ticker):
     return (cost_matrix)
 
 
-@MWT(timeout=30)
+@MWT(timeout=5)
 @timing
 def fx_rate():
     # To avoid multiple requests to grab a new FX, the data is
@@ -198,14 +199,13 @@ def fx_rate():
         return json.dumps(rate)
 
 
-@MWT(timeout=10)
+@MWT(timeout=5)
 def fx():
     # Returns a float with the conversion of fx in the format of
     # Currency / USD
     return (float(fx_rate()['fx_rate']))
 
 
-@memoized
 def to_epoch(in_date):
     return str(int((in_date - datetime(1970, 1, 1)).total_seconds()))
 
@@ -214,7 +214,7 @@ def find_fx(row, fx=None):
     return price_ondate(current_user.fx(), row.name, row['trade_currency'])
 
 
-@MWT(timeout=15)
+@MWT(timeout=3)
 @timing
 def transactions_fx():
     # Gets the transaction table and fills with fx information
@@ -815,6 +815,8 @@ def regenerate_nav():
     # Delete all pricing history from AA
     aa_files = glob.glob('thewarden/alphavantage_data/*')
     [os.remove(x) for x in aa_files]
+    nav_files = glob.glob('thewarden/dailydata/*.json')
+    [os.remove(x) for x in nav_files]
 
     generatenav(current_user.username, True)
     logging.info("Change to database - generate NAV")
@@ -1007,52 +1009,6 @@ def alphavantage_historical(id, to_symbol=None, market="USD"):
     return("Invalid Ticker", "error", "empty")
 
 
-def bitmex_gethistory(ticker):
-    # Gets historical prices from bitmex
-    # Saves to folder
-    from bitmex import bitmex
-    testnet = False
-    logging.info(f"[Bitmex] Trying Bitmex for {ticker}")
-    bitmex_credentials = load_bitmex_json()
-
-    if ("api_key" in bitmex_credentials) and ("api_secret" in bitmex_credentials):
-        try:
-            mex = bitmex(test=testnet,
-                         api_key=bitmex_credentials['api_key'],
-                         api_secret=bitmex_credentials['api_secret'])
-            # Need to paginate results here to get all the history
-            # Bitmex API end point limits 750 results per call
-            start_bin = 0
-            resp = (mex.Trade.Trade_getBucketed(
-                symbol=ticker, binSize="1d", count=750, start=start_bin).result())[0]
-            df = pd.DataFrame(resp)
-            last_update = df['timestamp'].iloc[-1]
-
-            # If last_update is older than 3 days ago, keep building.
-            while last_update < (datetime.now(timezone.utc) - timedelta(days=3)):
-                start_bin += 750
-                resp = (mex.Trade.Trade_getBucketed(
-                    symbol=ticker, binSize="1d", count=750, start=start_bin).result())[0]
-                df = df.append(resp)
-                last_update = df['timestamp'].iloc[-1]
-                # To avoid an infinite loop, check if start_bin
-                # is higher than 10000 and stop (i.e. 30+yrs of data)
-                if start_bin > 10000:
-                    logging.error("[Bitmex] Something went wrong on price grab loop. Forced quit of loop.")
-                    break
-
-            logging.info(f"[Bitmex] Success. Downloaded data for {ticker}")
-            return(df)
-
-        except Exception as e:
-            logging.error(f"[Bitmex] error: {e}")
-            return ("error")
-
-    else:
-        logging.warning(f"[Bitmex] No Credentials Found")
-        return ('error')
-
-
 def send_reset_email(user):
     token = user.get_reset_token()
     msg = Message('Password Reset Request',
@@ -1068,7 +1024,7 @@ def send_reset_email(user):
     mail.send(msg)
 
 
-@MWT(timeout=20)
+@MWT(timeout=5)
 def heatmap_generator():
     # If no Transactions for this user, return empty.html
     transactions = Trades.query.filter_by(user_id=current_user.username).order_by(
@@ -1134,7 +1090,7 @@ def heatmap_generator():
     return (heatmap, heatmap_stats, years, cols)
 
 
-@memoized
+@MWT(timeout=5)
 def price_ondate(ticker, date_input, to_symbol=None):
     # Returns the price of a ticker on a given date
     # if to_symbol is passed, it assumes FX and ticker is from_symbol
@@ -1175,7 +1131,7 @@ def fx_list():
     return (fx_list)
 
 
-@memoized
+@MWT(timeout=5)
 def fxsymbol(fx, output='symbol'):
     # Gets an FX 3 letter symbol and returns the HTML symbol
     # Sample outputs are:
@@ -1200,6 +1156,52 @@ def fxsymbol(fx, output='symbol'):
 # ------------------------------------
 # Helpers for Bitmex start here
 # ------------------------------------
+
+def bitmex_gethistory(ticker):
+    # Gets historical prices from bitmex
+    # Saves to folder
+    from bitmex import bitmex
+    testnet = False
+    logging.info(f"[Bitmex] Trying Bitmex for {ticker}")
+    bitmex_credentials = load_bitmex_json()
+
+    if ("api_key" in bitmex_credentials) and ("api_secret" in bitmex_credentials):
+        try:
+            mex = bitmex(test=testnet,
+                         api_key=bitmex_credentials['api_key'],
+                         api_secret=bitmex_credentials['api_secret'])
+            # Need to paginate results here to get all the history
+            # Bitmex API end point limits 750 results per call
+            start_bin = 0
+            resp = (mex.Trade.Trade_getBucketed(
+                symbol=ticker, binSize="1d", count=750, start=start_bin).result())[0]
+            df = pd.DataFrame(resp)
+            last_update = df['timestamp'].iloc[-1]
+
+            # If last_update is older than 3 days ago, keep building.
+            while last_update < (datetime.now(timezone.utc) - timedelta(days=3)):
+                start_bin += 750
+                resp = (mex.Trade.Trade_getBucketed(
+                    symbol=ticker, binSize="1d", count=750, start=start_bin).result())[0]
+                df = df.append(resp)
+                last_update = df['timestamp'].iloc[-1]
+                # To avoid an infinite loop, check if start_bin
+                # is higher than 10000 and stop (i.e. 30+yrs of data)
+                if start_bin > 10000:
+                    logging.error("[Bitmex] Something went wrong on price grab loop. Forced quit of loop.")
+                    break
+
+            logging.info(f"[Bitmex] Success. Downloaded data for {ticker}")
+            return(df)
+
+        except Exception as e:
+            logging.error(f"[Bitmex] error: {e}")
+            return ("error")
+
+    else:
+        logging.warning(f"[Bitmex] No Credentials Found")
+        return ('error')
+
 
 def save_bitmex_json(api_key, api_secret):
     # receives api_key and api_secret then saves to a local json for later use

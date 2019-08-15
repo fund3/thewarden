@@ -64,7 +64,9 @@ function handle_ajax_data(data, tickers) {
     // // Looping through Tickers (only ones that downloaded ok)
     $.each(tickers, function (key_ticker) {
         ticker = tickers[key_ticker]
-        if (ticker != "USD") {
+        console.log(data)
+        if (data[ticker + '_pos']) {
+            // if (ticker != "USD") {
             // Prep data for chart
             tmp_dict = {};
             tmp_dict['name'] = ticker;
@@ -78,7 +80,6 @@ function handle_ajax_data(data, tickers) {
         }
     });
     createChart(chart_data_list);
-
 };
 
 
