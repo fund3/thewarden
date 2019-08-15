@@ -1,6 +1,6 @@
 # Release History
 
-## v.13 alpha (TBD)
+## v.13 alpha (8/15/2019)
 
 - Support to include trades in any fiat currency
 - Realtime pricing of currencies + change base currency of portfolio.
