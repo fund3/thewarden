@@ -43,7 +43,7 @@ except KeyError:
                   " Defaulting to 5.")
 
 
-@memoized
+@MWT(10)
 @timing
 def multiple_price_grab(tickers, fx):
     # tickers should be in comma sep string format like "BTC,ETH,LTC"
@@ -213,7 +213,7 @@ def find_fx(row, fx=None):
     return price_ondate(current_user.fx(), row.name, row['trade_currency'])
 
 
-@MWT(timeout=20)
+@MWT(timeout=15)
 @timing
 def transactions_fx():
     # Gets the transaction table and fills with fx information
@@ -487,7 +487,7 @@ def generate_pos_table(user, fx, hidesmall):
     return(table, pie_data)
 
 
-@memoized
+@MWT(30)
 def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     if text is None:
         return (0)
@@ -500,7 +500,7 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     return(str)
 
 
-@MWT(timeout=10)
+@MWT(timeout=5)
 @timing
 def generatenav(user, force=False, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
@@ -810,9 +810,8 @@ def regenerate_nav():
     except OSError:
         logging.info("[newtrade] Local NAV file not found" +
                      " for removal - continuing")
-    generatenav(current_user.username, True)
-    # clear key memoized functions
 
+    generatenav(current_user.username, True)
     logging.info("Change to database - generate NAV")
 
 

@@ -12,6 +12,11 @@ from thewarden.config import Config
 import pandas as pd
 
 
+def clean_all():
+    # pandas memoization clean
+    del_cached()
+
+
 def pd_cache(func):
     # Caches a Pandas DF into file for later use
     # Memoization version for pandas DF
@@ -94,7 +99,7 @@ class memoized(object):
 
     # Clears the cache - called when there are changes that may affect the result
     # of the function
-    def clear_mem(self):
+    def clear(self):
         print(f"cleared Cache for {self.func}")
         self.cache = {}
 
