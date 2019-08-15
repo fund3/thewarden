@@ -487,7 +487,7 @@ def generate_pos_table(user, fx, hidesmall):
     return(table, pie_data)
 
 
-@MWT(30)
+@MWT(timeout=3)
 def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     if text is None:
         return (0)
@@ -1170,6 +1170,7 @@ def fx_list():
     return (fx_list)
 
 
+@memoized
 def fxsymbol(fx, output='symbol'):
     # Gets an FX 3 letter symbol and returns the HTML symbol
     # Sample outputs are:
@@ -1231,4 +1232,3 @@ def bitmex_orders(api_key, api_secret, testnet=True):
     except Exception:
         resp = "Invalid Credential or Connection Error"
     return(resp)
-
