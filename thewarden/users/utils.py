@@ -300,11 +300,16 @@ def generate_pos_table(user, fx, hidesmall):
                 data = data.json()
                 if "Global Quote" in data:
                     price_data['PRICE'] = cleancsv(data['Global Quote']['05. price'])
-                    price_data['CHANGEPCT24HOUR'] = cleancsv(data['Global Quote']['10. change percent'])
+                    price_data['CHANGEPCT24HOUR'] = cleancsv(data[
+                                'Global Quote'][
+                                '10. change percent'])
                     price_data['LASTUPDATE'] = "-"
-                    price_data['VOLUMEDAY'] = cleancsv(data['Global Quote']['06. volume'])
-                    price_data['LOWDAY'] = cleancsv(data['Global Quote']['04. low'])
-                    price_data['HIGHDAY'] = cleancsv(data['Global Quote']['03. high'])
+                    price_data['VOLUMEDAY'] = cleancsv(data[
+                                'Global Quote']['06. volume'])
+                    price_data['LOWDAY'] = cleancsv(data[
+                                'Global Quote']['04. low'])
+                    price_data['HIGHDAY'] = cleancsv(data[
+                                'Global Quote']['03. high'])
                     price_data['MKTCAP'] = 0
                     return (price_data)
             except Exception as e:
@@ -344,8 +349,16 @@ def generate_pos_table(user, fx, hidesmall):
                 if price_BTC == 0:
                     price_BTC = 1
                 if "Global Quote" in data:
-                    price_data['PRICE'] = cleancsv(data['Global Quote']['05. price']) /\
-                        price_BTC
+                    price_data['PRICE'] = float(
+                        cleancsv(data['Global Quote']['05. price']) /\
+                        price_BTC)
+                    if ticker.upper() == "GBTC":
+                        # For GBTC, let's calculate the premium to NAV
+                        # Each GBTC share contains 0.00099727 bitcoins
+                        price_data['GBTC_fair'] = float(price_BTC * 0.00099727)
+                        price_data['GBTC_premium'] = float(
+                            cleancsv(data['Global Quote']['05. price']) /\
+                                    price_data['GBTC_fair']) - 1
                     return (price_data)
             except Exception as e:
                 price_data['PRICE'] = 0
@@ -508,6 +521,8 @@ def generate_pos_table(user, fx, hidesmall):
         table[ticker]['fx_perc'] = consol_table['fx_perc'][ticker]
         table[ticker]['total_fees'] = consol_table['trade_fees'][ticker]
         table[ticker]['total_fees_fx'] = consol_table['trade_fees_fx'][ticker]
+
+
 
         table[ticker]['usd_price_data'] =\
             consol_table['price_data_USD'][ticker]

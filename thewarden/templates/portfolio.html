@@ -518,14 +518,12 @@
                         <th class="text-right small">
                             24hr Chg
                         </th>
-
-                        <th class="text-right small">
-                            24hr Volume
-                        </th>
                         <th class="text-center small">
                             24hr Price Range
                         </th>
-
+                        <th class="text-right small">
+                            24hr Volume
+                        </th>
                         <th class="text-right small">
                             Mkt Cap
                         </th>
@@ -571,17 +569,26 @@
                             {% endif %}
                         </td>
 
-                        <td class="text-right align-middle small">
-                            {{"{:,.0f}".format(portfolio_data[position]['usd_price_data']['VOLUMEDAY'])}}
-                            {{position}}
-                        </td>
-
                         <td class="text-center small">
                             {{current_user.fx() | fxsymbol}}
                             {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['LOWDAY'] * current_user.fx_rate_USD())}}</br>
                             {{current_user.fx() | fxsymbol}}
                             {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['HIGHDAY'] * current_user.fx_rate_USD())}}
                         </td>
+
+                        {%if position.upper() == "GBTC"%}
+                        <td class="text-left align-middle" style="color: lightslategray;" colspan="4">
+                            <strong>GBTC currently trading at a premium of
+                                {{(portfolio_data[position]['btc_price']['GBTC_premium'] * 100) | jformat(2)}}%<br></strong>
+                            Fair value is
+                            {{current_user.fx() | fxsymbol}}{{(portfolio_data[position]['btc_price']['GBTC_fair'] * current_user.fx_rate_USD()) | jformat(2)}}
+                        </td>
+                        {%else%}
+                        <td class="text-right align-middle small">
+                            {{"{:,.0f}".format(portfolio_data[position]['usd_price_data']['VOLUMEDAY'])}}
+                            {{position}}
+                        </td>
+
 
                         <td class="text-right align-middle small">
                             {{current_user.fx() | fxsymbol}}
@@ -598,7 +605,7 @@
                         <td class="text-right align-middle small">
                             {{portfolio_data[position]['usd_price_data']['LASTMARKET']}}
                         </td>
-
+                        {%endif%}
 
                     </tr>
                     {% endif %}
