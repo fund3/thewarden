@@ -1,5 +1,9 @@
 # Release History
 
+## v.14 alpha (TBD)
+
+- Included support for GBTC (realtime prices and history)
+
 ## v.13 alpha (8/15/2019)
 
 - Support to include trades in any fiat currency

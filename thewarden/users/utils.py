@@ -287,7 +287,35 @@ def generate_pos_table(user, fx, hidesmall):
         logging.info(f"[generate_pos_table] No USD or {current_user.fx()} positions found")
 
     def find_price_data(ticker):
-        price_data = price_list["RAW"][ticker]['USD']
+        try:
+            price_data = price_list["RAW"][ticker]['USD']
+        except KeyError:
+            # Couldn't find price with CryptoCompare. Let's try a different source
+            # and populate data in the same format
+            base = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="
+            baseURL = base + ticker + "&apikey=" + current_user.aa_apikey
+            data = tor_request(baseURL)
+            price_data = {}
+            try:
+                data = data.json()
+                if "Global Quote" in data:
+                    price_data['PRICE'] = cleancsv(data['Global Quote']['05. price'])
+                    price_data['CHANGEPCT24HOUR'] = cleancsv(data['Global Quote']['10. change percent'])
+                    price_data['LASTUPDATE'] = "-"
+                    price_data['VOLUMEDAY'] = cleancsv(data['Global Quote']['06. volume'])
+                    price_data['LOWDAY'] = cleancsv(data['Global Quote']['04. low'])
+                    price_data['HIGHDAY'] = cleancsv(data['Global Quote']['03. high'])
+                    price_data['MKTCAP'] = 0
+                    return (price_data)
+            except Exception as e:
+                price_data['PRICE'] = 0
+                price_data['CHANGEPCT24HOUR'] = 0
+                price_data['LASTUPDATE'] = 0
+                price_data['VOLUMEDAY'] = 0
+                price_data['LOWDAY'] = 0
+                price_data['HIGHDAY'] = 0
+                price_data['MKTCAP'] = 0
+                flash(f"Price for ticker {ticker} not found. Error: {e}", "danger")
         return (price_data)
 
     def find_price_data_BTC(ticker):
@@ -295,7 +323,34 @@ def generate_pos_table(user, fx, hidesmall):
             price_data = price_list["RAW"][ticker]['BTC']
             return (price_data)
         except KeyError:
-            return (0)
+            # Couldn't find price with CryptoCompare. Let's try a different source
+            # and populate data in the same format
+            base = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="
+            baseURL = base + ticker + "&apikey=" + current_user.aa_apikey
+            data = tor_request(baseURL)
+            btcURL = "https://www.alphavantage.co/query?" +\
+                     "function=CURRENCY_EXCHANGE_RATE&" +\
+                     "from_currency=BTC&to_currency=USD&apikey=" +\
+                     current_user.aa_apikey
+            data_BTC = tor_request(btcURL)
+            price_data = {}
+            try:
+                data = data.json()
+                data_BTC = data_BTC.json()
+                price_BTC = data_BTC[
+                    "Realtime Currency Exchange Rate"][
+                    "5. Exchange Rate"]
+                price_BTC = cleancsv(price_BTC)
+                if price_BTC == 0:
+                    price_BTC = 1
+                if "Global Quote" in data:
+                    price_data['PRICE'] = cleancsv(data['Global Quote']['05. price']) /\
+                        price_BTC
+                    return (price_data)
+            except Exception as e:
+                price_data['PRICE'] = 0
+                flash(f"Price for ticker {ticker} not found. Error: {e}", "danger")
+        return (price_data)
 
     consol_table['price_data_USD'] = consol_table['symbol'].\
         apply(find_price_data)
@@ -332,8 +387,8 @@ def generate_pos_table(user, fx, hidesmall):
     consol_table['fx_perc'] = consol_table['fx_position']\
         / consol_table['fx_position'].sum()
 
-    consol_table.loc[consol_table.fx_perc <= 0.01, 'small_pos'] = 'True'
-    consol_table.loc[consol_table.fx_perc >= 0.01, 'small_pos'] = 'False'
+    consol_table.loc[consol_table.fx_perc <= 0.001, 'small_pos'] = 'True'
+    consol_table.loc[consol_table.fx_perc >= 0.001, 'small_pos'] = 'False'
 
     # Should rename this to breakeven:
     consol_table['average_cost'] = consol_table['cash_value']\
