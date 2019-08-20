@@ -38,6 +38,7 @@ $(document).ready(function () {
         url: '/portstats',
         dataType: 'json',
         success: function (data) {
+            console.log(data)
             createcharts(); //Load pie chart
             $('#end_nav').html(data.end_nav.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
             var max_nav_txt = data.max_nav.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "<span class='small'> on "

@@ -578,10 +578,14 @@
 
                         {%if position.upper() == "GBTC"%}
                         <td class="text-left align-middle" style="color: lightslategray;" colspan="4">
+                            {% if 'GBTC_premium' in portfolio_data[position]['btc_price']%}
                             <strong>GBTC currently trading at a premium of
                                 {{(portfolio_data[position]['btc_price']['GBTC_premium'] * 100) | jformat(2)}}%<br></strong>
                             Fair value is
                             {{current_user.fx() | fxsymbol}}{{(portfolio_data[position]['btc_price']['GBTC_fair'] * current_user.fx_rate_USD()) | jformat(2)}}
+                            {%else%}
+                            -
+                            {%endif%}
                         </td>
                         {%else%}
                         <td class="text-right align-middle small">

@@ -28,6 +28,7 @@ from pandas.core.base import PandasObject
 def sum_returns(returns, groupby, compounded=True):
     def returns_prod(data):
         return (data + 1).prod() - 1
+
     if compounded:
         return returns.groupby(groupby).apply(returns_prod)
     return returns.groupby(groupby).sum()
@@ -46,11 +47,10 @@ def get(returns, eoy=False, is_prices=False, compounded=True):
     if is_prices:
         returns = returns.pct_change()
 
-    original_returns = returns.copy()
+    original_returns = returns
 
-    returns = pd.DataFrame(sum_returns(returns,
-                                       returns.index.strftime('%Y-%m-01'),
-                                       compounded))
+    returns = pd.DataFrame(
+        sum_returns(returns, returns.index.strftime('%Y-%m-01'), compounded))
     returns.columns = ['Returns']
     returns.index = pd.to_datetime(returns.index)
 
@@ -62,14 +62,18 @@ def get(returns, eoy=False, is_prices=False, compounded=True):
     returns = returns.pivot('Year', 'Month', 'Returns').fillna(0)
 
     # handle missing months
-    for month in ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']:
+    for month in [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+            'Oct', 'Nov', 'Dec'
+    ]:
         if month not in returns.columns:
             returns.loc[:, month] = 0
 
     # order columns by month
-    returns = returns[['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']]
+    returns = returns[[
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
+        'Nov', 'Dec'
+    ]]
 
     if eoy:
         returns['eoy'] = sum_returns(original_returns,

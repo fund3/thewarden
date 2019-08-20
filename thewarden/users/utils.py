@@ -247,6 +247,15 @@ def transactions_fx():
     return (df)
 
 
+@memoized
+def is_currency(id):
+    # Return true if id is in list of currencies
+    found = ([item for item in fx_list() if item[0] == id])
+    if found != []:
+        return True
+    return False
+
+
 @MWT(timeout=5)
 @timing
 def generate_pos_table(user, fx, hidesmall):
@@ -350,14 +359,15 @@ def generate_pos_table(user, fx, hidesmall):
                     price_BTC = 1
                 if "Global Quote" in data:
                     price_data['PRICE'] = float(
-                        cleancsv(data['Global Quote']['05. price']) /\
+                        cleancsv(data['Global Quote']['05. price']) /
                         price_BTC)
                     if ticker.upper() == "GBTC":
                         # For GBTC, let's calculate the premium to NAV
                         # Each GBTC share contains 0.00099727 bitcoins
-                        price_data['GBTC_fair'] = float(price_BTC * 0.00099727)
+                        price_data['GBTC_fair'] = float(price_BTC * 0.00099727) *\
+                            current_user.fx_rate_USD()
                         price_data['GBTC_premium'] = float(
-                            cleancsv(data['Global Quote']['05. price']) /\
+                            cleancsv(data['Global Quote']['05. price']) /
                                     price_data['GBTC_fair']) - 1
                     return (price_data)
             except Exception as e:
@@ -370,12 +380,21 @@ def generate_pos_table(user, fx, hidesmall):
     consol_table['price_data_BTC'] = consol_table['symbol'].\
         apply(find_price_data_BTC)
 
-    consol_table['usd_price'] =\
-        consol_table.price_data_USD.map(lambda v: v['PRICE'])
+    try:
+        consol_table['usd_price'] =\
+            consol_table.price_data_USD.map(lambda v: v['PRICE'])
+    except (KeyError, TypeError) as e:
+        flash(f"There was an error generating positions: {e}", "danger")
+        consol_table['usd_price'] = 0
+
     consol_table['fx_price'] = consol_table['usd_price'] * current_user.fx_rate_USD()
 
-    consol_table['chg_pct_24h'] =\
-        consol_table.price_data_USD.map(lambda v: v['CHANGEPCT24HOUR'])
+    try:
+        consol_table['chg_pct_24h'] =\
+            consol_table.price_data_USD.map(lambda v: v['CHANGEPCT24HOUR'])
+    except KeyError:
+        consol_table['chg_pct_24h'] = 0
+
     try:
         consol_table['btc_price'] =\
             consol_table.price_data_BTC.map(lambda v: v['PRICE'])
@@ -574,7 +593,7 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
 
 
 @timing
-def generatenav(user, force=False, filter=None):
+def generatenav(user, force=True, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
     # Variables
     # Portfolios smaller than this size do not account for NAV calculations
@@ -582,6 +601,7 @@ def generatenav(user, force=False, filter=None):
     # This is set in config.ini file
     min_size_for_calc = int(PORTFOLIO_MIN_SIZE_NAV)
     logging.info(f"[generatenav] Force update status is {force}")
+    save_nav = True
     # This process can take some time and it's intensive to run NAV
     # generation every time the NAV is needed. A compromise is to save
     # the last NAV generation locally and only refresh after a period of time.
@@ -676,8 +696,8 @@ def generatenav(user, force=False, filter=None):
 
     # Create a dataframe for each position's prices
     for id in tickers:
-        # if id == current_user.fx():
-        #     continue
+        if is_currency(id):
+            continue
         local_json, _, _ = alphavantage_historical(id)
         try:
             prices = pd.DataFrame(local_json)
@@ -685,7 +705,11 @@ def generatenav(user, force=False, filter=None):
             # Reassign index to the date column
             prices = prices.set_index(
                 list(prices.columns[[0]]))
-            prices = prices['4a. close (USD)']
+            try:
+                prices = prices['4a. close (USD)']
+            except KeyError:
+                prices = prices['4. close']
+
             # convert string date to datetime
             prices.index = pd.to_datetime(prices.index)
             # Make sure this is a dataframe so it can be merged later
@@ -694,23 +718,26 @@ def generatenav(user, force=False, filter=None):
             # rename index to date to match dailynav name
             prices.index.rename('date', inplace=True)
             prices.columns = [id+'_price']
-
             # Fill dailyNAV with prices for each ticker
             dailynav = pd.merge(dailynav, prices, on='date', how='left')
-
             # Update today's price with realtime data
             try:
                 dailynav[id+"_price"][-1] = (
                     rt_price_grab(id)['USD'])
             except IndexError:
                 pass
-            except TypeError:
+            except (TypeError, KeyError):
                 # If for some reason the last price is an error,
-                # use the previous close
-                dailynav[id+"_price"][-1] = dailynav[id+"_price"][-2]
+                # use one of the previous close (try progressively)
+                try:
+                    dailynav[id+"_price"][-1] = dailynav[id+"_price"][-5]
+                    dailynav[id+"_price"][-1] = dailynav[id+"_price"][-4]
+                    dailynav[id+"_price"][-1] = dailynav[id+"_price"][-3]
+                    dailynav[id+"_price"][-1] = dailynav[id+"_price"][-2]
+                except KeyError:
+                    pass
 
             # Replace NaN with prev value, if no prev value then zero
-
             dailynav[id+'_price'].fillna(method='ffill', inplace=True)
             dailynav[id+'_price'].fillna(0, inplace=True)
             # Convert price to default fx
@@ -762,14 +789,14 @@ def generatenav(user, force=False, filter=None):
                 f"Success: imported prices from file:{filename}")
 
         except (FileNotFoundError, KeyError, ValueError) as e:
-            logging.error(f"File not Found Error: ID: {id}")
+            logging.error(f"File not Found Error: ID: {id}.")
             logging.error(f"{id}: Error: {e}")
 
     # Another loop to sum the portfolio values - maybe there is a way to
     # include this on the loop above. But this is not a huge time drag unless
     # there are too many tickers in a portfolio
     for id in tickers:
-        if id == current_user.fx():
+        if is_currency(id):
             continue
         # Include totals in new columns
         try:
@@ -781,6 +808,7 @@ def generatenav(user, force=False, filter=None):
             logging.warning(f"[GENERATENAV] Ticker {id} was not found " +
                             "on NAV Table - continuing but this is not good." +
                             " NAV calculations will be erroneous.")
+            save_nav = False
             continue
         dailynav['PORT_cash_value'] = dailynav['PORT_cash_value'] +\
             dailynav[id+'_cash_value']
@@ -789,7 +817,7 @@ def generatenav(user, force=False, filter=None):
 
     # Now that we have the full portfolio value each day, calculate alloc %
     for id in tickers:
-        if id == current_user.fx():
+        if is_currency(id):
             continue
         try:
             dailynav[id+"_usd_perc"] = dailynav[id+'_usd_pos'] /\
@@ -802,6 +830,7 @@ def generatenav(user, force=False, filter=None):
             logging.warning(f"[GENERATENAV] Ticker {id} was not found " +
                             "on NAV Table - continuing but this is not good." +
                             " NAV calculations will be erroneous.")
+            save_nav = False
             continue
 
     # Create a new column with the portfolio change only due to market move
@@ -856,12 +885,15 @@ def generatenav(user, force=False, filter=None):
         f"[generatenav] Success: NAV Generated for user {user}")
 
     # Save NAV Locally as Pickle
-    usernamehash = hashlib.sha256(current_user.username.encode(
-        'utf-8')).hexdigest()
-    filename = "thewarden/nav_data/"+usernamehash + ".nav"
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
-    dailynav.to_pickle(filename)
-    logging.info(f"[generatenav] NAV saved to {filename}")
+    if save_nav:
+        usernamehash = hashlib.sha256(current_user.username.encode(
+            'utf-8')).hexdigest()
+        filename = "thewarden/nav_data/"+usernamehash + ".nav"
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        dailynav.to_pickle(filename)
+        logging.info(f"[generatenav] NAV saved to {filename}")
+
+    pd.set_option('display.max_rows', 1000)
     return dailynav
 
 
@@ -914,7 +946,6 @@ def alphavantage_historical(id, to_symbol=None, market="USD"):
     # Alphavantage Keys can be generated free at
     # https://www.alphavantage.co/support/#api-key
 
-
     user_info = User.query.filter_by(username=current_user.username).first()
     api_key = user_info.aa_apikey
     if api_key is None:
@@ -953,7 +984,7 @@ def alphavantage_historical(id, to_symbol=None, market="USD"):
         baseURL = "https://www.alphavantage.co/query?"
         func = "DIGITAL_CURRENCY_DAILY"
         globalURL = baseURL + "function=" + func + "&symbol=" + id +\
-            "&market=" + market + "&apikey=" + api_key
+            "&market=" + market + "&outputsize=full&apikey=" + api_key
         logging.info(f"[ALPHAVANTAGE] {id}: Downloading data")
         logging.info(f"[ALPHAVANTAGE] Fetching URL: {globalURL}")
     else:
@@ -969,9 +1000,14 @@ def alphavantage_historical(id, to_symbol=None, market="USD"):
         request = tor_request(globalURL)
     except requests.exceptions.ConnectionError:
         logging.error("[ALPHAVANTAGE] Connection ERROR " +
-                        "while trying to download prices")
+                      "while trying to download prices")
         return("Connection Error", 'error', 'empty')
-    data = request.json()
+    try:
+        data = request.json()
+    except AttributeError:
+        logging.error("[ALPHAVANTAGE] Connection ERROR " +
+                      "while trying to download prices")
+        return("Connection Error", 'error', 'empty')
     # if FX request
     try:
         if to_symbol is not None:
@@ -1021,7 +1057,7 @@ def alphavantage_historical(id, to_symbol=None, market="USD"):
             request = tor_request(globalURL)
         except requests.exceptions.ConnectionError:
             logging.error("[ALPHAVANTAGE] Connection ERROR while" +
-                            " trying to download prices")
+                          " trying to download prices")
             return("Connection Error", "error", "empty")
         data = request.json()
         try:
@@ -1110,7 +1146,7 @@ def heatmap_generator():
     # Run the mrh function to generate heapmap table
     heatmap = mrh.get(returns, eoy=True)
 
-    heatmap_stats = heatmap.copy()
+    heatmap_stats = heatmap
     cols = [
         "Jan",
         "Feb",

@@ -144,7 +144,7 @@ def histvol():
         data["vol"] = (data["NAV"].pct_change().rolling(q).std() *
                        (365 ** 0.5) * 100)
         # data.set_index('date', inplace=True)
-        vollist = data[["vol"]].copy()
+        vollist = data[["vol"]]
         vollist.index = vollist.index.strftime("%Y-%m-%d")
         datajson = vollist.to_json()
 
@@ -164,7 +164,7 @@ def histvol():
                     prices["4b. close (USD)"].pct_change().rolling(q).std() *
                     (365 ** 0.5) * 100
                 )
-                pricelist = prices[["vol"]].copy()
+                pricelist = prices[["vol"]]
                 datajson = pricelist.to_json()
 
         except (FileNotFoundError, KeyError):
@@ -221,7 +221,6 @@ def portstats():
     # YTD), average daily return. Best day, worse day. Std dev of daily ret,
     # Higher NAV, Lower NAV + dates. Higher Port Value (date).
     data = generatenav(current_user.username)
-
     meta["start_date"] = (data.index.min()).date().strftime("%B %d, %Y")
     meta["end_date"] = data.index.max().date().strftime("%B %d, %Y")
     meta["start_nav"] = data["NAV_fx"][0]
@@ -702,7 +701,7 @@ def portfolio_compare_json():
 
     # Create Correlation Matrix
     filter_col = [col for col in nav_only if col.endswith("_ret")]
-    nav_matrix = nav_only[filter_col].copy()
+    nav_matrix = nav_only[filter_col]
     corr_matrix = nav_matrix.corr(method="pearson").round(2)
     corr_html = corr_matrix.to_html(
         classes="table small text-center", border=0, justify="center"
@@ -911,7 +910,7 @@ def scatter_json():
 
     # Create Correlation Matrix
     filter_col = [col for col in nav_only if col.endswith("_ret")]
-    nav_matrix = nav_only[filter_col].copy()
+    nav_matrix = nav_only[filter_col]
     corr_matrix = nav_matrix.corr(method="pearson").round(2)
     corr_html = corr_matrix.to_html(
         classes="table small text-center", border=0, justify="center"
@@ -934,7 +933,7 @@ def scatter_json():
             continue
         tmp_dict["name"] = "x: " + market + ", y: " + ticker
         tmp_dict["regression"] = 1
-        tmp_df = nav_matrix[[market + "_ret", ticker + "_ret"]].copy()
+        tmp_df = nav_matrix[[market + "_ret", ticker + "_ret"]]
         tmp_df.fillna(0, inplace=True)
         tmp_dict["data"] = list(
             zip(tmp_df[market + "_ret"], tmp_df[ticker + "_ret"]))
@@ -1173,10 +1172,10 @@ def heatmapbenchmark_json():
             f"Could not get realtime price for {ticker}. Last price defaulted to previous close price."
         )
     data["pchange"] = (data / data.shift(1)) - 1
-    returns = data["pchange"].copy()
+    returns = data["pchange"]
     # Run the mrh function to generate heapmap table
     heatmap = mrh.get(returns, eoy=True)
-    heatmap_stats = heatmap.copy()
+    heatmap_stats = heatmap
     cols = [
         "Jan",
         "Feb",
@@ -1977,3 +1976,19 @@ def realtime_user():
     except Exception as e:
         return (f"Error: {e}")
 
+
+@api.route("/test_pricing", methods=["GET"])
+def test_pricing():
+    from thewarden.pricing_engine.pricing import PROVIDER_LIST, PriceData, PriceProvider
+    provider = PROVIDER_LIST['cc_digital']
+    a = PriceData("BTC", provider)
+    a.update_history()
+    date_input = '07/03/2019'
+    print (a.df)
+    print (a.price_ondate(date_input))
+    print (a.last_update)
+    print (a.first_update)
+    print (a.last_close)
+    print (a.errors)
+    print (provider.errors)
+    return ("OK")

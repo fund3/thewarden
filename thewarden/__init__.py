@@ -15,7 +15,6 @@ from logging.handlers import RotatingFileHandler
 from sqlalchemy import MetaData
 from thewarden.config import Config
 
-
 naming_convention = {
     "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -37,15 +36,20 @@ try:
         print("Startup message: Debug File size is larger than maxsize")
         print("Moving into archive")
         # rename file to include archive time and date
-        archive_file = "debug_" + datetime.now().strftime("%I%M%p_on_%B_%d_%Y") + ".log"
+        archive_file = "debug_" + datetime.now().strftime(
+            "%I%M%p_on_%B_%d_%Y") + ".log"
         archive_file = os.path.join("./debug_archive/", archive_file)
         os.rename("debug.log", archive_file)
 except FileNotFoundError:
     pass
 
 format_str = "%(asctime)s %(levelname)s %(funcName)s(%(lineno)d) %(message)s"
-handler = RotatingFileHandler("debug.log", maxBytes=1 * 1024 * 1024, backupCount=2)
-logging.basicConfig(filename="debug.log", level=logging.DEBUG, format=format_str)
+handler = RotatingFileHandler("debug.log",
+                              maxBytes=1 * 1024 * 1024,
+                              backupCount=2)
+logging.basicConfig(filename="debug.log",
+                    level=logging.DEBUG,
+                    format=format_str)
 handler.setFormatter(format_str)
 logging.captureWarnings(True)
 
@@ -155,7 +159,8 @@ def create_app(config_class=Config):
             if found == []:
                 current_user.image_file = "USD"
                 db.session.commit()
-                flash("No currency found for portfolio. Defaulted to USD.", "warning")
+                flash("No currency found for portfolio. Defaulted to USD.",
+                      "warning")
 
     # Jinja2 filter to format time to a nice string
     @app.template_filter()
@@ -199,9 +204,9 @@ def create_app(config_class=Config):
         # "rounding": 0,
         # "code": "EUR",
         # "name_plural": "euros"
-        with open('thewarden/static/json_files/currency.json') as fx_json:
-            fx_list = json.load(fx_json)
         try:
+            with open('thewarden/static/json_files/currency.json') as fx_json:
+                fx_list = json.load(fx_json, encoding='utf-8')
             out = fx_list[fx][output]
         except Exception:
             out = fx

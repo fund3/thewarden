@@ -4,9 +4,8 @@ from flask import render_template, Blueprint
 from flask_login import current_user, login_required
 from thewarden.models import Trades, User
 from datetime import datetime
-from thewarden.users.utils import (
-    generatenav, generate_pos_table, heatmap_generator,
-    fxsymbol)
+from thewarden.users.utils import (generatenav, generate_pos_table,
+                                   heatmap_generator, fxsymbol)
 
 portfolio = Blueprint("portfolio", __name__)
 
@@ -16,7 +15,8 @@ def before_request():
     # Before any request at main, check if API Keys are set
     # But only if user is logged in.
     if current_user.is_authenticated:
-        user_info = User.query.filter_by(username=current_user.username).first()
+        user_info = User.query.filter_by(
+            username=current_user.username).first()
         if user_info.aa_apikey is None:
             logging.error("NO AA API KEY FOUND!")
             return render_template("welcome.html", title="Welcome")
@@ -53,7 +53,7 @@ def portfolio_main():
 @login_required
 def navchart():
     data = generatenav(current_user.username)
-    navchart = data[["NAV_fx"]].copy()
+    navchart = data[["NAV_fx"]]
     # dates need to be in Epoch time for Highcharts
     navchart.index = (navchart.index - datetime(1970, 1, 1)).total_seconds()
     navchart.index = navchart.index * 1000
@@ -61,25 +61,23 @@ def navchart():
     navchart = navchart.to_dict()
     navchart = navchart["NAV_fx"]
 
-    port_value_chart = data[["PORT_cash_value_fx", "PORT_fx_pos", "PORT_ac_CFs_fx"]].copy()
-    port_value_chart["ac_pnl_fx"] = (
-        port_value_chart["PORT_fx_pos"] - port_value_chart["PORT_ac_CFs_fx"]
-    )
+    port_value_chart = data[[
+        "PORT_cash_value_fx", "PORT_fx_pos", "PORT_ac_CFs_fx"
+    ]]
+    port_value_chart["ac_pnl_fx"] = (port_value_chart["PORT_fx_pos"] -
+                                     port_value_chart["PORT_ac_CFs_fx"])
     # dates need to be in Epoch time for Highcharts
-    port_value_chart.index = (
-        port_value_chart.index - datetime(1970, 1, 1)
-    ).total_seconds()
+    port_value_chart.index = (port_value_chart.index -
+                              datetime(1970, 1, 1)).total_seconds()
     port_value_chart.index = port_value_chart.index * 1000
     port_value_chart.index = port_value_chart.index.astype(np.int64)
     port_value_chart = port_value_chart.to_dict()
 
-    return render_template(
-        "navchart.html",
-        title="NAV Historical Chart",
-        navchart=navchart,
-        port_value_chart=port_value_chart,
-        fx=fxsymbol(current_user.fx())
-    )
+    return render_template("navchart.html",
+                           title="NAV Historical Chart",
+                           navchart=navchart,
+                           port_value_chart=port_value_chart,
+                           fx=fxsymbol(current_user.fx()))
 
 
 @portfolio.route("/heatmap")
@@ -105,13 +103,15 @@ def heatmap():
 @login_required
 # Only returns the html - request for data is done through jQuery AJAX
 def volchart():
-    return render_template("volchart.html", title="Historical Volatility Chart")
+    return render_template("volchart.html",
+                           title="Historical Volatility Chart")
 
 
 @portfolio.route("/portfolio_compare", methods=["GET"])
 @login_required
 def portfolio_compare():
-    return render_template("portfolio_compare.html", title="Portfolio Comparison")
+    return render_template("portfolio_compare.html",
+                           title="Portfolio Comparison")
 
 
 @portfolio.route("/activity_summary", methods=["GET"])
@@ -135,9 +135,8 @@ def activity_summary():
 @portfolio.route("/allocation_history", methods=["GET"])
 @login_required
 def allocation_history():
-    return render_template(
-        "allocation_history.html", title="Portfolio Historical Allocation"
-    )
+    return render_template("allocation_history.html",
+                           title="Portfolio Historical Allocation")
 
 
 @portfolio.route("/scatter", methods=["GET"])
@@ -149,7 +148,8 @@ def scatter():
 @portfolio.route("/stack_analysis", methods=["GET"])
 @login_required
 def stack_analysis():
-    return render_template("stack_analysis.html", title="Stack & Cost Analysis")
+    return render_template("stack_analysis.html",
+                           title="Stack & Cost Analysis")
 
 
 @portfolio.route("/drawdown", methods=["GET"])
