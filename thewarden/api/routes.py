@@ -141,7 +141,7 @@ def histvol():
             return render_template("empty.html")
 
         data = generatenav(current_user.username)
-        data["vol"] = (data["NAV"].pct_change().rolling(q).std() *
+        data["vol"] = (data["NAV_fx"].pct_change().rolling(q).std() *
                        (365 ** 0.5) * 100)
         # data.set_index('date', inplace=True)
         vollist = data[["vol"]]
@@ -271,7 +271,7 @@ def portstats():
 
     try:
         yr_ago = pd.to_datetime(datetime.today() - relativedelta(years=1))
-        yr_ago_NAV = data.NAV[data.index.get_loc(yr_ago, method="nearest")]
+        yr_ago_NAV = data.NAV_fx[data.index.get_loc(yr_ago, method="nearest")]
         meta["return_1yr"] = meta["end_nav"] / yr_ago_NAV - 1
     except IndexError:
         meta["return_1yr"] = "-"
@@ -608,7 +608,7 @@ def portfolio_compare_json():
         "tickers, requesting generatenav."
     )
     nav = generatenav(current_user.username)
-    nav_only = nav["NAV"]
+    nav_only = nav["NAV_fx"]
 
     # Now go over tickers and merge into nav_only df
     messages = {}
@@ -660,7 +660,7 @@ def portfolio_compare_json():
 
     # Now create the list of normalized Returns for the available period
     # Plus create a table with individual analysis for each ticker and NAV
-    nav_only["NAV_norm"] = (nav_only["NAV"] / nav_only["NAV"][0]) * 100
+    nav_only["NAV_norm"] = (nav_only["NAV_fx"] / nav_only["NAV_fx"][0]) * 100
     nav_only["NAV_ret"] = nav_only["NAV_norm"].pct_change()
     table = {}
     table["meta"] = {}
@@ -668,11 +668,11 @@ def portfolio_compare_json():
     table["meta"]["end_date"] = nav_only.index[-1].strftime("%m-%d-%Y")
     table["meta"]["number_of_days"] = (
         (nav_only.index[-1] - nav_only.index[0])).days
-    table["meta"]["count_of_points"] = nav_only["NAV"].count().astype(float)
+    table["meta"]["count_of_points"] = nav_only["NAV_fx"].count().astype(float)
     table["NAV"] = {}
-    table["NAV"]["start"] = nav_only["NAV"][0]
-    table["NAV"]["end"] = nav_only["NAV"][-1]
-    table["NAV"]["return"] = (nav_only["NAV"][-1] / nav_only["NAV"][0]) - 1
+    table["NAV"]["start"] = nav_only["NAV_fx"][0]
+    table["NAV"]["end"] = nav_only["NAV_fx"][-1]
+    table["NAV"]["return"] = (nav_only["NAV_fx"][-1] / nav_only["NAV_fx"][0]) - 1
     table["NAV"]["avg_return"] = nav_only["NAV_ret"].mean()
     table["NAV"]["ann_std_dev"] = nav_only["NAV_ret"].std() * math.sqrt(365)
     for ticker in tickers:
@@ -814,7 +814,7 @@ def scatter_json():
         "tickers, requesting generatenav."
     )
     nav = generatenav(current_user.username)
-    nav_only = nav["NAV"]
+    nav_only = nav["NAV_fx"]
     # Append market ticker to list of tickers, remove duplicates
     tickers.append(market)
     tickers = list(set(tickers))
@@ -868,7 +868,7 @@ def scatter_json():
 
     # Now create the scatter plot data
     # Plus create a table with individual analysis for each ticker and NAV
-    nav_only["NAV_norm"] = (nav_only["NAV"] / nav_only["NAV"][0]) * 100
+    nav_only["NAV_norm"] = (nav_only["NAV_fx"] / nav_only["NAV_fx"][0]) * 100
     nav_only["NAV_ret"] = nav_only["NAV_norm"].pct_change()
     table = {}
     table["meta"] = {}
@@ -876,11 +876,11 @@ def scatter_json():
     table["meta"]["end_date"] = nav_only.index[-1].strftime("%m-%d-%Y")
     table["meta"]["number_of_days"] = (
         (nav_only.index[-1] - nav_only.index[0])).days
-    table["meta"]["count_of_points"] = nav_only["NAV"].count().astype(float)
+    table["meta"]["count_of_points"] = nav_only["NAV_fx"].count().astype(float)
     table["NAV"] = {}
-    table["NAV"]["start"] = nav_only["NAV"][0]
-    table["NAV"]["end"] = nav_only["NAV"][-1]
-    table["NAV"]["return"] = (nav_only["NAV"][-1] / nav_only["NAV"][0]) - 1
+    table["NAV"]["start"] = nav_only["NAV_fx"][0]
+    table["NAV"]["end"] = nav_only["NAV_fx"][-1]
+    table["NAV"]["return"] = (nav_only["NAV_fx"][-1] / nav_only["NAV_fx"][0]) - 1
     table["NAV"]["avg_return"] = nav_only["NAV_ret"].mean()
     table["NAV"]["ann_std_dev"] = nav_only["NAV_ret"].std() * math.sqrt(365)
     # Include avg return + and -
@@ -1288,7 +1288,7 @@ def drawdown_json():
     # Create a df with either NAV or ticker prices
     if ticker == "NAV":
         data = generatenav(current_user.username)
-        data = data["NAV"]
+        data = data["NAV_fx"]
     else:
         # Get price of ticker passed as argument
         message = {}

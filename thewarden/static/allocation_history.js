@@ -74,7 +74,7 @@ function handle_ajax_data(data, tickers) {
             tmp_dict['turboThreshold'] = 0;
             // The line below maps in a format that HighCharts can understand. the *1 (for date) is necessary for some weird reason.
             // it maps to (date, value)
-            tmp_dict['data'] = Object.keys(data[ticker + '_usd_perc']).map((key) => [((key * 1)), data[ticker + '_usd_perc'][key] * 100]);
+            tmp_dict['data'] = Object.keys(data[ticker + '_fx_perc']).map((key) => [((key * 1)), data[ticker + '_fx_perc'][key] * 100]);
             tmp_dict['yAxis'] = 0;
             chart_data_list.push(tmp_dict);
         }

@@ -596,9 +596,8 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
 
 
 @timing
-def generatenav(user, force=True, filter=None):
+def generatenav(user, force=False, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
-    # Variables
     # Portfolios smaller than this size do not account for NAV calculations
     # Otherwise, there's an impact of dust left in the portfolio (in USD)
     # This is set in config.ini file
@@ -614,17 +613,14 @@ def generatenav(user, force=True, filter=None):
     # Unless force is true, then a rebuild is done regardless
     # Local files are  saved under a hash of username.
     if force:
-        logging.info("[generatenav] FORCE update is on. Not using local file")
         usernamehash = hashlib.sha256(current_user.username.encode(
             'utf-8')).hexdigest()
         filename = "thewarden/nav_data/"+usernamehash + ".nav"
-        logging.info(f"[generatenav] {filename} marked for deletion.")
         # Since this function can be run as a thread, it's safer to delete
         # the current NAV file if it exists. This avoids other tasks reading
         # the local file which is outdated
         try:
             os.remove(filename)
-            logging.info("[generatenav] Local NAV file found and deleted")
         except OSError:
             logging.info("[generatenav] Local NAV file was not found" +
                          " for removal - continuing")
@@ -643,13 +639,12 @@ def generatenav(user, force=True, filter=None):
                          f" {elapsed_seconds} seconds ago")
             if (elapsed_seconds/60) < int(RENEW_NAV):
                 nav_pickle = pd.read_pickle(filename)
-                logging.info(f"Success: Open {filename} - no need to rebuild")
                 return (nav_pickle)
             else:
                 logging.info("File found but too old - rebuilding NAV")
 
         except FileNotFoundError:
-            logging.warn(f"[generatenav] File not found to load NAV" +
+            logging.info(f"[generatenav] File not found to load NAV" +
                          " - rebuilding")
 
     # Pandas dataframe with transactions
@@ -843,7 +838,7 @@ def regenerate_nav():
     [os.remove(x) for x in nav_files]
 
     generatenav(current_user.username, True)
-    logging.info("Change to database - generate NAV")
+    logging.info("Change to database - generated new NAV")
 
 
 def alphavantage_historical(id, to_symbol=None, market="USD"):
@@ -1063,7 +1058,7 @@ def heatmap_generator():
 
     # Generate NAV Table first
     data = generatenav(current_user.username)
-    data["navpchange"] = (data["NAV"] / data["NAV"].shift(1)) - 1
+    data["navpchange"] = (data["NAV_fx"] / data["NAV_fx"].shift(1)) - 1
     returns = data["navpchange"]
     # Run the mrh function to generate heapmap table
     heatmap = mrh.get(returns, eoy=True)
