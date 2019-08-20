@@ -2,7 +2,15 @@
 
 ## v.14 alpha (TBD)
 
+- Complete refactory of pricing feeds
+- Support for multiple pricing APIs (currently CryptoCompare, Alphavantage and Bitmex)
+- Included pricing model for easy inclusion of new APIs
+- Enhanced calculations with new pricing requests
+- With the new APIs, users can access pricing info since 2011 (compared to 2014 before)
+- Fixed issues with drawdown calculation
+- Fixed NAV calculation issues
 - Included support for GBTC (realtime prices and history)
+- Included GBTC premium on front page when position is present
 
 ## v.13 alpha (8/15/2019)
 

@@ -545,8 +545,6 @@ def generate_pos_table(user, fx, hidesmall):
         table[ticker]['total_fees'] = consol_table['trade_fees'][ticker]
         table[ticker]['total_fees_fx'] = consol_table['trade_fees_fx'][ticker]
 
-
-
         table[ticker]['usd_price_data'] =\
             consol_table['price_data_USD'][ticker]
         try:
