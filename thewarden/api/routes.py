@@ -1979,16 +1979,11 @@ def realtime_user():
 
 @api.route("/test_pricing", methods=["GET"])
 def test_pricing():
-    from thewarden.pricing_engine.pricing import PROVIDER_LIST, PriceData, PriceProvider
+    from thewarden.pricing_engine.pricing import PROVIDER_LIST, PriceData
+    rt_provider = PROVIDER_LIST['cc_realtime']
     provider = PROVIDER_LIST['cc_digital']
     a = PriceData("BTC", provider)
-    a.update_history()
-    date_input = '07/03/2019'
-    print (a.df)
-    print (a.price_ondate(date_input))
-    print (a.last_update)
-    print (a.first_update)
-    print (a.last_close)
+    print (a.realtime(rt_provider))
     print (a.errors)
     print (provider.errors)
     return ("OK")

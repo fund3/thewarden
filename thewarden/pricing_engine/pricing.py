@@ -11,8 +11,9 @@ import pandas as pd
 from datetime import datetime, timedelta, timezone
 from thewarden.node.utils import tor_request
 from thewarden.users.decorators import timing, memoized
+from thewarden.users.utils import cleancsv
 
-# How to include new API providers:
+# How to include new API providers (historical prices):
 # Step 1:
 #     Edit the PROVIDER_LIST dictionary at the end of the file.
 #     See examples there and follow a similar pattern.
@@ -29,6 +30,12 @@ from thewarden.users.decorators import timing, memoized
 #     Data is saved locally to a pickle file to be used during
 #     the same day. File format is <TICKER>_<PROVIDER.NAME>.price
 #     see ./pricing_data folder for samples
+# Including realtime providers:
+# Step 1:
+#     follow step 1 above.
+# Step 2:
+#     edit the realtime function to parse the date correctly and
+#     return a price float
 
 
 @timing
@@ -247,8 +254,15 @@ class PriceData():
         return None
 
     @timing
-    def realtime(self, provider):
-        pass
+    def realtime(self, rt_provider):
+        price_request = rt_provider.request_data(self.ticker)
+        if rt_provider.name == 'ccrealtime':
+            try:
+                price = (price_request['USD'])
+            except Exception as e:
+                self.errors.append(e)
+                price = None
+            return (price)
 
 
 # Bitmex Helper Function (uses bitmex library instead of requests)
@@ -353,8 +367,8 @@ PROVIDER_LIST = {
                   doc_link='https://www.bitmex.com/api/explorer/'),
     'cc_realtime':
     PriceProvider(name='ccrealtime',
-                  base_url='',
-                  ticker_field='',
-                  field_dict=None,
+                  base_url='https://min-api.cryptocompare.com/data/price',
+                  ticker_field='fsym',
+                  field_dict={'tsyms': 'USD'},
                   doc_link=None)
 }
