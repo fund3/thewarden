@@ -20,6 +20,9 @@ from thewarden import mhp as mrh
 from thewarden.models import Trades, User
 from thewarden.node.utils import tor_request
 from thewarden.users.decorators import MWT, memoized, timing
+from thewarden.pricing_engine.pricing import (PROVIDER_LIST,
+                                              PriceData, HISTORICAL_PROVIDER_PRIORITY,
+                                              FX_PROVIDER_PRIORITY)
 
 # ---------------------------------------------------------
 # Helper Functions start here
@@ -651,7 +654,7 @@ def generatenav(user, force=True, filter=None):
 
     # Pandas dataframe with transactions
     df = transactions_fx()
-
+    # if a filter argument was passed, execute it
     if filter:
         df = df.query(filter)
     logging.info("[generatenav] Success - read trades from database")
@@ -666,101 +669,52 @@ def generatenav(user, force=True, filter=None):
     # Fill the dates from first trade until today
     dailynav['date'] = pd.date_range(start=start_date, end=end_date)
     dailynav = dailynav.set_index('date')
-    # dailynav = dailynav.index.floor('d')
+    # Create empty fields
     dailynav['PORT_usd_pos'] = 0
     dailynav['PORT_fx_pos'] = 0
     dailynav['PORT_cash_value'] = 0
     dailynav['PORT_cash_value_fx'] = 0
-    # Fill with conversion from USD to current selected FX.
-    if current_user.fx() != "USD":
-        local_json, _, _ = alphavantage_historical("USD", current_user.fx())
-        prices = pd.DataFrame(local_json)
-        prices.reset_index(inplace=True)
-        # Reassign index to the date column
-        prices = prices.set_index(
-            list(prices.columns[[0]]))
-        prices = prices['4. close']
-        # convert string date to datetime
-        prices.index = pd.to_datetime(prices.index)
-        # Make sure this is a dataframe so it can be merged later
-        if type(prices) != type(dailynav):
-            prices = prices.to_frame()
-        # rename index to date to match dailynav name
-        prices.index.rename('date', inplace=True)
-        prices.columns = ['fx']
-        # Fill dailyNAV with prices for each ticker
-        dailynav = pd.merge(dailynav, prices, on='date', how='left')
-        dailynav['fx'].fillna(method='ffill', inplace=True)
-    else:
-        dailynav['fx'] = 1
 
     # Create a dataframe for each position's prices
     for id in tickers:
         if is_currency(id):
             continue
-        local_json, _, _ = alphavantage_historical(id)
         try:
-            prices = pd.DataFrame(local_json)
-            prices.reset_index(inplace=True)
-            # Reassign index to the date column
-            prices = prices.set_index(
-                list(prices.columns[[0]]))
-            try:
-                prices = prices['4a. close (USD)']
-            except KeyError:
-                prices = prices['4. close']
-
-            # convert string date to datetime
-            prices.index = pd.to_datetime(prices.index)
-            # Make sure this is a dataframe so it can be merged later
-            if type(prices) != type(dailynav):
-                prices = prices.to_frame()
-            # rename index to date to match dailynav name
-            prices.index.rename('date', inplace=True)
-            prices.columns = [id+'_price']
+            # Create a new PriceData class for this ticker
+            # Loop through all pricing providers until a df is filled
+            for provider in HISTORICAL_PROVIDER_PRIORITY:
+                price_data = PriceData(id, PROVIDER_LIST[provider])
+                if price_data.df is not None:
+                    break
+            # Loop through FX providers until a df is filled
+            for provider in FX_PROVIDER_PRIORITY:
+                prices = price_data.df_fx(current_user.fx(), PROVIDER_LIST[provider])
+                if prices is not None:
+                    break
+            prices = prices.rename(columns={'close_converted': id+'_price'})
+            prices = prices[id+'_price']
             # Fill dailyNAV with prices for each ticker
             dailynav = pd.merge(dailynav, prices, on='date', how='left')
-            # Update today's price with realtime data
-            try:
-                dailynav[id+"_price"][-1] = (
-                    rt_price_grab(id)['USD'])
-            except IndexError:
-                pass
-            except (TypeError, KeyError):
-                # If for some reason the last price is an error,
-                # use one of the previous close (try progressively)
-                try:
-                    dailynav[id+"_price"][-1] = dailynav[id+"_price"][-5]
-                    dailynav[id+"_price"][-1] = dailynav[id+"_price"][-4]
-                    dailynav[id+"_price"][-1] = dailynav[id+"_price"][-3]
-                    dailynav[id+"_price"][-1] = dailynav[id+"_price"][-2]
-                except KeyError:
-                    pass
 
             # Replace NaN with prev value, if no prev value then zero
             dailynav[id+'_price'].fillna(method='ffill', inplace=True)
             dailynav[id+'_price'].fillna(0, inplace=True)
-            # Convert price to default fx
-            dailynav[id+'_fx_price'] = dailynav[id+'_price'].astype(
-                    float) * dailynav['fx'].astype(float)
 
             # Now let's find trades for this ticker and include in dailynav
             tradedf = df[['trade_asset_ticker',
-                          'trade_quantity', 'cash_value', 'cash_value_fx']]
-                          # Filter trades only for this ticker
+                          'trade_quantity', 'cash_value_fx']]
+            # Filter trades only for this ticker
             tradedf = tradedf[tradedf['trade_asset_ticker'] == id]
             # consolidate all trades in a single date Input
             tradedf = tradedf.groupby(level=0).sum()
-
             tradedf.sort_index(ascending=True, inplace=True)
             # include column to cumsum quant
             tradedf['cum_quant'] = tradedf['trade_quantity'].cumsum()
-            # merge with dailynav - 1st rename columns to include ticker
+            # merge with dailynav - 1st rename columns to match
             tradedf.index.rename('date', inplace=True)
             # rename columns to include ticker name so it's differentiated
-            # when merged
+            # when merged with other ids
             tradedf.rename(columns={'trade_quantity': id+'_quant',
-                                    'cash_value': id+'_cash_value',
                                     'cum_quant': id+'_pos',
                                     'cash_value_fx': id+'_cash_value_fx'},
                            inplace=True)
@@ -768,30 +722,26 @@ def generatenav(user, force=True, filter=None):
             dailynav = pd.merge(dailynav, tradedf, on='date', how='left')
             # for empty days just trade quantity = 0, same for CV
             dailynav[id+'_quant'].fillna(0, inplace=True)
-            dailynav[id+'_cash_value'].fillna(0, inplace=True)
             dailynav[id+'_cash_value_fx'].fillna(0, inplace=True)
             # Now, for positions, fill with previous values, NOT zero,
             # unless there's no previous
             dailynav[id+'_pos'].fillna(method='ffill', inplace=True)
             dailynav[id+'_pos'].fillna(0, inplace=True)
             # Calculate USD and fx position and % of portfolio at date
-            dailynav[id+'_usd_pos'] = dailynav[id+'_price'].astype(
-                float) * dailynav[id+'_pos'].astype(float)
             # Calculate USD position and % of portfolio at date
-            dailynav[id+'_fx_pos'] = dailynav[id+'_fx_price'].astype(
+            dailynav[id+'_fx_pos'] = dailynav[id+'_price'].astype(
                 float) * dailynav[id+'_pos'].astype(float)
             # Before calculating NAV, clean the df for small
             # dust positions. Otherwise, a portfolio close to zero but with
             # 10 sats for example, would still have NAV changes
-            dailynav[id+'_usd_pos'].round(2)
             dailynav[id+'_fx_pos'].round(2)
             logging.info(
-                f"Success: imported prices from file:{filename}")
-
+                f"Success: imported prices for id:{id}")
         except (FileNotFoundError, KeyError, ValueError) as e:
-            logging.error(f"File not Found Error: ID: {id}.")
             logging.error(f"{id}: Error: {e}")
-
+            flash(f"Ticker {id} generated an error. " +
+                   f"NAV calculations will be off. Error: {e}", "danger")
+    print(dailynav)
     # Another loop to sum the portfolio values - maybe there is a way to
     # include this on the loop above. But this is not a huge time drag unless
     # there are too many tickers in a portfolio
@@ -800,18 +750,16 @@ def generatenav(user, force=True, filter=None):
             continue
         # Include totals in new columns
         try:
-            dailynav['PORT_usd_pos'] = dailynav['PORT_usd_pos'] +\
-                dailynav[id+'_usd_pos']
             dailynav['PORT_fx_pos'] = dailynav['PORT_fx_pos'] +\
                 dailynav[id+'_fx_pos']
-        except KeyError:
-            logging.warning(f"[GENERATENAV] Ticker {id} was not found " +
+        except KeyError as e:
+            logging.error(f"[GENERATENAV] Ticker {id} was not found " +
                             "on NAV Table - continuing but this is not good." +
                             " NAV calculations will be erroneous.")
             save_nav = False
+            flash(f"Ticker {id} was not found on NAV table. " +
+                   f"NAV calculations will be off. Error: {e}", "danger")
             continue
-        dailynav['PORT_cash_value'] = dailynav['PORT_cash_value'] +\
-            dailynav[id+'_cash_value']
         dailynav['PORT_cash_value_fx'] = dailynav['PORT_cash_value_fx'] +\
             dailynav[id+'_cash_value_fx']
 
@@ -820,23 +768,14 @@ def generatenav(user, force=True, filter=None):
         if is_currency(id):
             continue
         try:
-            dailynav[id+"_usd_perc"] = dailynav[id+'_usd_pos'] /\
-                dailynav['PORT_usd_pos']
-            dailynav[id+"_usd_perc"].fillna(0, inplace=True)
             dailynav[id+"_fx_perc"] = dailynav[id+'_fx_pos'] /\
                 dailynav['PORT_fx_pos']
             dailynav[id+"_fx_perc"].fillna(0, inplace=True)
         except KeyError:
-            logging.warning(f"[GENERATENAV] Ticker {id} was not found " +
-                            "on NAV Table - continuing but this is not good." +
-                            " NAV calculations will be erroneous.")
-            save_nav = False
             continue
 
     # Create a new column with the portfolio change only due to market move
     # discounting all cash flows for that day
-    dailynav['adj_portfolio'] = dailynav['PORT_usd_pos'] -\
-        dailynav['PORT_cash_value']
     dailynav['adj_portfolio_fx'] = dailynav['PORT_fx_pos'] -\
         dailynav['PORT_cash_value_fx']
 
@@ -844,14 +783,6 @@ def generatenav(user, force=True, filter=None):
     # more info here: https://tinyurl.com/y474gy36
     # There is one caveat here. If end value is zero (i.e. portfolio fully
     # redeemed, the formula needs to be adjusted)
-    dailynav.loc[dailynav.PORT_usd_pos > min_size_for_calc,
-                 'port_dietz_ret'] =\
-        ((dailynav['PORT_usd_pos'] -
-          dailynav['PORT_usd_pos'].shift(1)) -
-         dailynav['PORT_cash_value']) /\
-        (dailynav['PORT_usd_pos'].shift(1) +
-         abs(dailynav['PORT_cash_value']))
-
     dailynav.loc[dailynav.PORT_fx_pos > min_size_for_calc,
                  'port_dietz_ret_fx'] =\
         ((dailynav['PORT_fx_pos'] -
@@ -861,25 +792,17 @@ def generatenav(user, force=True, filter=None):
          abs(dailynav['PORT_cash_value_fx']))
 
     # Fill empty and NaN with zero
-    dailynav['port_dietz_ret'].fillna(0, inplace=True)
     dailynav['port_dietz_ret_fx'].fillna(0, inplace=True)
-
-    dailynav['adj_port_chg_usd'] = ((dailynav['PORT_usd_pos'] -
-                                    dailynav['PORT_usd_pos'].shift(1)) -
-                                    dailynav['PORT_cash_value'])
     dailynav['adj_port_chg_fx'] = ((dailynav['PORT_fx_pos'] -
                                     dailynav['PORT_fx_pos'].shift(1)) -
                                     dailynav['PORT_cash_value_fx'])
 
     # let's fill NaN with zeros
-    dailynav['adj_port_chg_usd'].fillna(0, inplace=True)
     dailynav['adj_port_chg_fx'].fillna(0, inplace=True)
-    dailynav['port_perc_factor'] = (dailynav['port_dietz_ret']) + 1
+    # Calculate the metrics
     dailynav['port_perc_factor_fx'] = (dailynav['port_dietz_ret_fx']) + 1
-    dailynav['NAV'] = dailynav['port_perc_factor'].cumprod()
     dailynav['NAV_fx'] = dailynav['port_perc_factor_fx'].cumprod()
     dailynav['NAV_fx'] = dailynav['NAV_fx'] * 100
-    dailynav['PORT_ac_CFs'] = dailynav['PORT_cash_value'].cumsum()
     dailynav['PORT_ac_CFs_fx'] = dailynav['PORT_cash_value_fx'].cumsum()
     logging.info(
         f"[generatenav] Success: NAV Generated for user {user}")
@@ -893,7 +816,6 @@ def generatenav(user, force=True, filter=None):
         dailynav.to_pickle(filename)
         logging.info(f"[generatenav] NAV saved to {filename}")
 
-    pd.set_option('display.max_rows', 1000)
     return dailynav
 
 

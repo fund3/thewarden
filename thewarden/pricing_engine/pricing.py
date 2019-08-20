@@ -13,7 +13,6 @@ import pandas as pd
 from datetime import datetime, timedelta, timezone
 from thewarden.node.utils import tor_request
 from thewarden.users.decorators import timing, memoized
-from thewarden.users.utils import cleancsv
 
 # How to include new API providers (historical prices):
 # Step 1:
@@ -148,14 +147,18 @@ class PriceData():
     def df_fx(self, currency, fx_provider):
         try:
             # First get the df from this currency
-            fx = PriceData(currency, fx_provider)
-            fx.df = fx.df.rename(columns={'close': 'fx_close'})
-            fx.df["fx_close"] = pd.to_numeric(fx.df.fx_close, errors='coerce')
-            print(fx.df)
-            # Merge the two dfs:
-            merge_df = pd.merge(self.df, fx.df, on='date', how='inner')
-            merge_df['close_converted'] = merge_df['close'] * merge_df['fx_close']
-            return (merge_df)
+            if currency != 'USD':
+                fx = PriceData(currency, fx_provider)
+                fx.df = fx.df.rename(columns={'close': 'fx_close'})
+                fx.df["fx_close"] = pd.to_numeric(fx.df.fx_close, errors='coerce')
+                # Merge the two dfs:
+                merge_df = pd.merge(self.df, fx.df, on='date', how='inner')
+                merge_df['close_converted'] = merge_df['close'] * merge_df['fx_close']
+                return (merge_df)
+            else:  # If currency is USD no conversion is needed - prices are all in USD
+                self.df['fx_close'] = 1
+                self.df['close_converted'] = self.df['close']
+                return (self.df)
         except Exception as e:
             self.errors.append(e)
             return (None)
@@ -427,9 +430,10 @@ PROVIDER_LIST = {
 }
 
 # Generic Requests will try each of these before failing
-HISTORICAL_PROVIDER_PRIORITY = ['cc_digital',
-            'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',  'bitmex']
+HISTORICAL_PROVIDER_PRIORITY = [
+    'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',  'bitmex']
 REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime']
+FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 
 # Todo: Include benchmarking method maybe to show how slow or quick each are
 # Include a daily maintenance to download all historical prices
