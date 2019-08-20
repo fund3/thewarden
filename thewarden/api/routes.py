@@ -1980,10 +1980,12 @@ def realtime_user():
 @api.route("/test_pricing", methods=["GET"])
 def test_pricing():
     from thewarden.pricing_engine.pricing import PROVIDER_LIST, PriceData
-    rt_provider = PROVIDER_LIST['cc_realtime']
     provider = PROVIDER_LIST['cc_digital']
+    fx_provider = PROVIDER_LIST['cc_fx']
     a = PriceData("BTC", provider)
-    print (a.realtime(rt_provider))
+    print (a.df)
     print (a.errors)
     print (provider.errors)
+    merge_fx = a.df_fx('BRL', fx_provider)
+    print (merge_fx)
     return ("OK")

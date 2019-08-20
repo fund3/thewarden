@@ -37,8 +37,8 @@ def tor_request(url, tor_only=False, method="get"):
                 request = session.post(url, timeout=15)
 
         except (
-            requests.exceptions.ConnectionError,
-            requests.exceptions.ReadTimeout,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.ReadTimeout,
         ) as e:
             logging.error(f"Connection Error on tor request: {e}")
             return "ConnectionError"
@@ -66,7 +66,8 @@ def dojo_get_settings(force=False):
     # check if dojo_settings are already stored
 
     if current_app.config["DOJO_SETTINGS"]:
-        if (not force) and (current_app.config["DOJO_SETTINGS"]["token"] != 'error'):
+        if (not force) and (current_app.config["DOJO_SETTINGS"]["token"] !=
+                            'error'):
             logging.info(
                 f"Returning local Config settings of: {current_app.config['DOJO_SETTINGS']}"
             )
@@ -91,12 +92,13 @@ def dojo_get_settings(force=False):
         logging.error(f"Error while getting token.")
 
     logging.info(f"Current token: {token}")
-    current_app.config["DOJO_SETTINGS"] = dict(
-        {"onion": onion_address,
-         "api": api_key,
-         "token": token}
-    )
-    logging.info(f"Current app settings: {current_app.config['DOJO_SETTINGS']}")
+    current_app.config["DOJO_SETTINGS"] = dict({
+        "onion": onion_address,
+        "api": api_key,
+        "token": token
+    })
+    logging.info(
+        f"Current app settings: {current_app.config['DOJO_SETTINGS']}")
     return current_app.config["DOJO_SETTINGS"]
 
 
@@ -127,13 +129,15 @@ def dojo_auth(force=False):
     if current_app.config["DOJO_SETTINGS"]:
         if not force:
             logging.info("Config variable [DOJO SETTINGS] found. Using it.")
-            logging.info(f"Current settings are: {current_app.config['DOJO_SETTINGS']}")
+            logging.info(
+                f"Current settings are: {current_app.config['DOJO_SETTINGS']}")
             return current_app.config["DOJO_SETTINGS"]["token"]
         else:
             logging.info("[DOJO Auth] Force is True, getting a new token.")
 
     try:
-        user_info = User.query.filter_by(username=current_user.username).first()
+        user_info = User.query.filter_by(
+            username=current_user.username).first()
     except AttributeError:
         logging.info("DOJO TEST: User not logged in")
         try:
@@ -168,26 +172,21 @@ def dojo_auth(force=False):
         logging.info("DOJO AUTH: Trying to get authorization")
         auth_response = session.post(url, post_fields, timeout=TIME_OUT).json()
         token = auth_response['authorizations']['access_token']
-    except (
-        requests.exceptions.ConnectionError,
-        requests.exceptions.InvalidURL,
-        KeyError,
-        requests.exceptions.ReadTimeout,
-        requests.exceptions.InvalidSchema,
-        UnicodeError,
-        requests.exceptions.InvalidSchema
-    ) as e:
+    except (requests.exceptions.ConnectionError,
+            requests.exceptions.InvalidURL, KeyError,
+            requests.exceptions.ReadTimeout, requests.exceptions.InvalidSchema,
+            UnicodeError, requests.exceptions.InvalidSchema) as e:
         logging.info(f"DOJO AUTH: Error: {e}")
         auth_response = {"status": "error", "error": f"Error: {e}"}
         token = 'error'
     # Store for this session in Global Variable
 
-    current_app.config["DOJO_SETTINGS"] = dict(
-        {"onion": onion_address,
-         "api": APIKey,
-         "token": token,
-         "auth_response": auth_response}
-    )
+    current_app.config["DOJO_SETTINGS"] = dict({
+        "onion": onion_address,
+        "api": APIKey,
+        "token": token,
+        "auth_response": auth_response
+    })
     logging.info(f"DOJO Settings updated")
     logging.info(
         f"DOJO Settings: Stored token at app.config. New value: {current_app.config['DOJO_SETTINGS']}"
@@ -320,10 +319,10 @@ def dojo_get_txs(addr, at):
         tmp_list = []
         for __, row in df_dict.iterrows():
             tmp_list.append(
-                [row["time"], row["result"], row["hash"], row["block_height"]]
-            )
+                [row["time"], row["result"], row["hash"], row["block_height"]])
 
-        df = pd.DataFrame(tmp_list, columns=["time", "result", "hash", "block"])
+        df = pd.DataFrame(tmp_list,
+                          columns=["time", "result", "hash", "block"])
         if not df.empty:
             meta["transactions"] = df.to_dict()
             meta["balance"] = df["result"].sum().astype(float)
@@ -385,10 +384,10 @@ def dojo_status(token_test=None):
     try:
         auth_response = session.get(url)
     except (
-        requests.exceptions.ConnectionError,
-        requests.exceptions.InvalidURL,
-        requests.exceptions.ReadTimeout,
-        UnicodeError,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.InvalidURL,
+            requests.exceptions.ReadTimeout,
+            UnicodeError,
     ) as e:
         auth_response = {"status": "error", "error": e}
     logging.info(f"Dojo Status responded: {auth_response}")

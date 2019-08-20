@@ -6,6 +6,8 @@
 # Standardized field names:
 # open, high, low, close, volume
 import os
+import sys
+import json
 import urllib.parse
 import pandas as pd
 from datetime import datetime, timedelta, timezone
@@ -67,6 +69,7 @@ class PriceProvider:
 
     @memoized
     def request_data(self, ticker):
+        data = None
         if self.base_url is not None:
             ticker = ticker.upper()
             globalURL = (self.base_url + "?" + self.ticker_field + "=" +
@@ -74,11 +77,13 @@ class PriceProvider:
             request = tor_request(globalURL)
             try:
                 data = request.json()
-            except Exception as e:
-                self.errors.append(e)
-        else:
-            data = None
-
+            except Exception:
+                try:  # Try again - some APIs return a json already
+                    print(request)
+                    data = json.loads(request)
+                    print (data)
+                except Exception as e:
+                    self.errors.append(e)
         return (data)
 
 
@@ -138,6 +143,22 @@ class PriceData():
         df.to_pickle(self.filename)
         # Refresh the class - reinitialize
         return (df)
+
+    @timing
+    def df_fx(self, currency, fx_provider):
+        try:
+            # First get the df from this currency
+            fx = PriceData(currency, fx_provider)
+            fx.df = fx.df.rename(columns={'close': 'fx_close'})
+            fx.df["fx_close"] = pd.to_numeric(fx.df.fx_close, errors='coerce')
+            print(fx.df)
+            # Merge the two dfs:
+            merge_df = pd.merge(self.df, fx.df, on='date', how='inner')
+            merge_df['close_converted'] = merge_df['close'] * merge_df['fx_close']
+            return (merge_df)
+        except Exception as e:
+            self.errors.append(e)
+            return (None)
 
     @timing
     def price_ondate(self, date_input):
@@ -219,8 +240,8 @@ class PriceData():
                 df_save = None
             return (df_save)
 
-        # CryptoCompare Digital
-        if provider.name == 'ccdigital':
+        # CryptoCompare Digital and FX use the same parser
+        if provider.name == 'ccdigital' or provider.name == 'ccfx':
             try:
                 df = pd.DataFrame.from_dict(data['Data'])
                 df = df.rename(columns={'time': 'date'})
@@ -231,6 +252,7 @@ class PriceData():
                 self.errors.append(e)
                 df_save = None
             return (df_save)
+
 
         if provider.name == 'bitmex':
             try:
@@ -256,13 +278,23 @@ class PriceData():
     @timing
     def realtime(self, rt_provider):
         price_request = rt_provider.request_data(self.ticker)
+        price = None
+
         if rt_provider.name == 'ccrealtime':
             try:
                 price = (price_request['USD'])
             except Exception as e:
                 self.errors.append(e)
-                price = None
-            return (price)
+
+        if rt_provider.name == 'aarealtime':
+            try:
+                price = (price_request[
+                    'Realtime Currency Exchange Rate'][
+                    '5. Exchange Rate'])
+            except Exception as e:
+                self.errors.append(e)
+
+        return price
 
 
 # Bitmex Helper Function (uses bitmex library instead of requests)
@@ -353,8 +385,21 @@ PROVIDER_LIST = {
             'allData': 'true'
         },
         doc_link=
-        'https://min-api.cryptocompare.com/data/histoday?fsym=BTC&tsym=USD&allData=true'
+        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
+    'cc_fx':
+    PriceProvider(
+        name='ccfx',
+        base_url='https://min-api.cryptocompare.com/data/histoday',
+        ticker_field='tsym',
+        field_dict={
+            'fsym': 'USD',
+            'allData': 'true'
+        },
+        doc_link=
+        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
+    ),
+
     'bitmex':
     PriceProvider(name='bitmex',
                   base_url=None,
@@ -370,5 +415,21 @@ PROVIDER_LIST = {
                   base_url='https://min-api.cryptocompare.com/data/price',
                   ticker_field='fsym',
                   field_dict={'tsyms': 'USD'},
-                  doc_link=None)
+                  doc_link=None),
+    'aa_realtime':
+    PriceProvider(name='aarealtime',
+                  base_url='https://www.alphavantage.co/query',
+                  ticker_field='from_currency',
+                  field_dict={'function' : 'CURRENCY_EXCHANGE_RATE',
+                              'to_currency': 'USD',
+                              'apikey': 'xpto1234567890'},
+                  doc_link='https://www.alphavantage.co/documentation/')
 }
+
+# Generic Requests will try each of these before failing
+HISTORICAL_PROVIDER_PRIORITY = ['cc_digital',
+            'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',  'bitmex']
+REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime']
+
+# Todo: Include benchmarking method maybe to show how slow or quick each are
+# Include a daily maintenance to download all historical prices
