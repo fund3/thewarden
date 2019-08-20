@@ -20,7 +20,6 @@ from thewarden import mhp as mrh
 from thewarden.models import (
     Trades, listofcrypto, User, BitcoinAddresses, AccountInfo)
 from thewarden.users.utils import (
-    alphavantage_historical,
     generate_pos_table,
     generatenav,
     heatmap_generator,
@@ -40,6 +39,7 @@ from thewarden.node.utils import (
     tor_request,
 )
 from thewarden.users.decorators import MWT
+from thewarden.pricing_engine.pricing import price_data_fx
 
 api = Blueprint("api", __name__)
 
@@ -617,38 +617,18 @@ def portfolio_compare_json():
         if ticker == "NAV":
             # Ticker was NAV, skipped
             continue
-        data, notification, meta = alphavantage_historical(ticker)
-        # If notification is an error, skip this ticker
-        if notification == "error":
-            messages[ticker] = data
-            continue
-        data.reset_index(inplace=True)
-        data = data.set_index(list(data.columns[[0]]))
-        try:
-            data = data["4a. close (USD)"]
-        except KeyError:
-            try:
-                data = data["4. close"]
-            except KeyError:
-                messages[ticker] = "Key Error on Data"
-                continue
 
-        # convert string date to datetime
-        data.index = pd.to_datetime(data.index)
-        # rename index to date to match dailynav name
-        data.index.rename("date", inplace=True)
-        data.rename(ticker + "_price", inplace=True)
-        data = data.astype(float)
-        # Check if dataframe
-        if isinstance(nav_only, pd.Series):
-            nav_only = nav_only.to_frame()
-        if isinstance(data, pd.Series):
-            data = data.to_frame()
-        # Fill dailyNAV with prices for each ticker
+        # Generate price Table now for the ticker and trim to match portfolio
+        data = price_data_fx(ticker)
+        # If notification is an error, skip this ticker
+        if data is None:
+            messages = data.errors
+            return jsonify(messages)
+        data = data.rename(columns={'close_converted': ticker+'_price'})
+        data = data[ticker+'_price']
         nav_only = pd.merge(nav_only, data, on="date", how="left")
         nav_only[ticker + "_price"].fillna(method="bfill", inplace=True)
         messages[ticker] = "ok"
-        meta_data[ticker] = meta
         logging.info(
             f"[portfolio_compare_json] {ticker}: Success - Merged OK")
 
@@ -825,39 +805,20 @@ def scatter_json():
         if ticker == "NAV":
             # Ticker was NAV, skipped
             continue
-        data, notification, meta = alphavantage_historical(ticker)
+        data = price_data_fx(ticker)
         # If notification is an error, skip this ticker
-        if notification == "error":
-            messages[ticker] = data
-            continue
-        data.reset_index(inplace=True)
-        data = data.set_index(list(data.columns[[0]]))
-        try:
-            data = data["4a. close (USD)"]
-        except KeyError:
-            try:
-                data = data["4. close"]
-            except KeyError:
-                messages[ticker] = "Key Error on Data"
-                continue
+        if data is None:
+            messages = data.errors
+            return jsonify(messages)
 
-        # convert string date to datetime
-        data.index = pd.to_datetime(data.index)
-
-        # rename index to date to match dailynav name
-        data.index.rename("date", inplace=True)
-        data.rename(ticker + "_price", inplace=True)
+        data = data.rename(columns={'close_converted': ticker+'_price'})
+        data = data[[ticker+'_price']]
         data = data.astype(float)
-        # Check if dataframe
-        if isinstance(data, pd.Series):
-            data = data.to_frame()
-        if isinstance(nav_only, pd.Series):
-            nav_only = nav_only.to_frame()
+
         # Fill dailyNAV with prices for each ticker
         nav_only = pd.merge(nav_only, data, on="date", how="left")
         nav_only[ticker + "_price"].fillna(method="bfill", inplace=True)
         messages[ticker] = "ok"
-        meta_data[ticker] = meta
         logging.info(f"[scatter_json] {ticker}: Success - Merged OK")
 
     nav_only.fillna(method="ffill", inplace=True)
@@ -1027,32 +988,13 @@ def transactionsandcost_json():
     # ---------------------------------------------------------
     # Get price of ticker passed as argument and merge into df
     message = {}
-    data, notification, meta = alphavantage_historical(
-        ticker, None, current_user.fx())
+    data = price_data_fx(ticker)
     # If notification is an error, skip this ticker
-    if notification == "error":
-        message = data
-        return message
-    data.reset_index(inplace=True)
-    data = data.set_index(list(data.columns[[0]]))
-    aa_header = "4a. close ("+current_user.fx()+")"
-    try:
-        data = data[aa_header]
-    except KeyError:
-        try:
-            data = data["4. close"]
-        except KeyError:
-            try:
-                aa_header = "4. close ("+current_user.fx()+")"
-                data = data[aa_header]
-            except KeyError:
-                message = "Key Error on Data"
-                return message
-    # convert string date to datetime
-    data.index = pd.to_datetime(data.index)
-    # rename index to date to match dailynav name
-    data.index.rename("date", inplace=True)
-    data.rename(ticker, inplace=True)
+    if data is None:
+        messages = data.errors
+        return jsonify(messages)
+
+    data = data.rename(columns={'close_converted': ticker})
     data = data.astype(float)
 
     # Create a DF, fill with dates and fill with operation and prices
@@ -1096,7 +1038,6 @@ def transactionsandcost_json():
 
     return_dict = {}
     return_dict["data"] = daily_df.to_json()
-    return_dict["meta_data"] = meta
     return_dict["message"] = message
     return_dict["fx"] = fxsymbol(current_user.fx())
     logging.info(f"[transactionandcost_json] Success generating data")
@@ -1131,50 +1072,21 @@ def heatmapbenchmark_json():
     start_date -= timedelta(days=1)  # start on t-1 of first trade
 
     # Generate price Table now for the ticker and trim to match portfolio
-    data, notification, meta = alphavantage_historical(ticker)
-    # Trim this list only to start_date to end_date:
-    try:
-        data.index = pd.to_datetime(data.index)
-    except TypeError:
-        return "Connection Error"
-
-    data.index.names = ["date"]
+    data = price_data_fx(ticker)
     mask = data.index >= start_date
     data = data.loc[mask]
 
     # If notification is an error, skip this ticker
-    if notification == "error":
-        messages = data
+    if data is None:
+        messages = data.errors
         return jsonify(messages)
-    data.reset_index(inplace=True)
-    data = data.set_index(list(data.columns[[0]]))
-    try:
-        data = data["4a. close (USD)"]
-    except KeyError:
-        try:
-            data = data["4. close"]
-        except KeyError:
-            messages = "Key Error on Data"
-            return jsonify(messages)
 
-    # convert string date to datetime
-    data.index = pd.to_datetime(data.index)
-    # rename index to date to match dailynav name
-    data.index.rename("date", inplace=True)
-    data.rename(ticker + "_price", inplace=True)
-    data = data.astype(float)
-    # Include the last price of ticker in the df
-    try:
-        data[pd.to_datetime(datetime.today())] = rt_price_grab(ticker)["USD"]
-        data.sort_index(inplace=True)
-    except KeyError:
-        logging.warn(
-            f"Could not get realtime price for {ticker}. Last price defaulted to previous close price."
-        )
+    data = data.rename(columns={'close_converted': ticker+'_price'})
+    data = data[[ticker+'_price']]
+    data.sort_index(ascending=True, inplace=True)
     data["pchange"] = (data / data.shift(1)) - 1
-    returns = data["pchange"]
     # Run the mrh function to generate heapmap table
-    heatmap = mrh.get(returns, eoy=True)
+    heatmap = mrh.get(data["pchange"], eoy=True)
     heatmap_stats = heatmap
     cols = [
         "Jan",
@@ -1254,7 +1166,6 @@ def heatmapbenchmark_json():
 # n_dd:         Top n drawdowns to be calculated
 # chart:        Boolean - return data for chart
 def drawdown_json():
-
     # Get the arguments and store
     if request.method == "GET":
         start_date = request.args.get("start")
@@ -1288,43 +1199,29 @@ def drawdown_json():
     # Create a df with either NAV or ticker prices
     if ticker == "NAV":
         data = generatenav(current_user.username)
-        data = data["NAV_fx"]
+        data = data[["NAV_fx"]]
+        data = data.rename(columns={'NAV_fx': 'close'})
     else:
         # Get price of ticker passed as argument
         message = {}
-        data, notification, meta = alphavantage_historical(ticker)
-        # If notification is an error, return error
-        if notification == "error":
-            message = data
-            return message
-        data.reset_index(inplace=True)
-        data = data.set_index(list(data.columns[[0]]))
-        try:
-            data = data["4a. close (USD)"]
-        except KeyError:
-            try:
-                data = data["4. close"]
-            except KeyError:
-                message = "Key Error on Data"
-                return message
-        # convert string date to datetime
-        data.index = pd.to_datetime(data.index)
-        # rename index to date to match dailynav name
-        data.index.rename("date", inplace=True)
-        data.rename(ticker, inplace=True)
+        data = price_data_fx(ticker)
+        # If notification is an error, skip this ticker
+        if data is None:
+            messages = data.errors
+            return jsonify(messages)
+        data = data.rename(columns={'close_converted': ticker+'_price'})
+        data = data[[ticker+'_price']]
         data = data.astype(float)
-
+        data.sort_index(ascending=True, inplace=True)
+        data = data.rename(columns={ticker+'_price': 'close'})
     # Trim the df only to start_date to end_date:
     mask = (data.index >= start_date) & (data.index <= end_date)
     data = data.loc[mask]
-    # # Rename columns
-    data.index.rename("date", inplace=True)
-    data.columns = [ticker]
-
     # # Calculate drawdowns
-    df = 100 * (1 + data / 100).cumprod()
-    df = pd.DataFrame(data)
-    df.columns = ["close"]
+    # df = 100 * (1 + data / 100).cumprod()
+
+    df = pd.DataFrame()
+    df["close"] = data['close']
     df["ret"] = df.close / df.close[0]
     df["modMax"] = df.ret.cummax()
     df["modDD"] = (df.ret / df["modMax"]) - 1
@@ -1453,7 +1350,7 @@ def drawdown_json():
 
         return jsonify(
             {
-                "chart_data": data,
+                "chart_data": data['close'],
                 "messages": "OK",
                 "chart_flags": flags,
                 "plot_bands": plot_bands,

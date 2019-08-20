@@ -22,7 +22,8 @@ from thewarden.node.utils import tor_request
 from thewarden.users.decorators import MWT, memoized, timing
 from thewarden.pricing_engine.pricing import (PROVIDER_LIST,
                                               PriceData, HISTORICAL_PROVIDER_PRIORITY,
-                                              FX_PROVIDER_PRIORITY)
+                                              FX_PROVIDER_PRIORITY, price_data,
+                                              price_data_fx)
 
 # ---------------------------------------------------------
 # Helper Functions start here
@@ -676,16 +677,12 @@ def generatenav(user, force=False, filter=None):
             continue
         try:
             # Create a new PriceData class for this ticker
-            # Loop through all pricing providers until a df is filled
-            for provider in HISTORICAL_PROVIDER_PRIORITY:
-                price_data = PriceData(id, PROVIDER_LIST[provider])
-                if price_data.df is not None:
-                    break
-            # Loop through FX providers until a df is filled
-            for provider in FX_PROVIDER_PRIORITY:
-                prices = price_data.df_fx(current_user.fx(), PROVIDER_LIST[provider])
-                if prices is not None:
-                    break
+            prices = price_data_fx(id)
+            if prices is None:
+                logging.error(f"Could not get a price for {id}")
+                save_nav = False
+                raise ValueError
+
             prices = prices.rename(columns={'close_converted': id+'_price'})
             prices = prices[id+'_price']
             # Fill dailyNAV with prices for each ticker
@@ -1117,6 +1114,7 @@ def heatmap_generator():
 def price_ondate(ticker, date_input, to_symbol=None):
     # Returns the price of a ticker on a given date
     # if to_symbol is passed, it assumes FX and ticker is from_symbol
+
     if to_symbol is not None:
         local_json, message, error = alphavantage_historical(ticker, to_symbol)
     else:

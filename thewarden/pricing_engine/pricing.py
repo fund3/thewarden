@@ -11,6 +11,7 @@ import json
 import urllib.parse
 import pandas as pd
 from datetime import datetime, timedelta, timezone
+from flask_login import current_user
 from thewarden.node.utils import tor_request
 from thewarden.users.decorators import timing, memoized
 
@@ -78,9 +79,7 @@ class PriceProvider:
                 data = request.json()
             except Exception:
                 try:  # Try again - some APIs return a json already
-                    print(request)
                     data = json.loads(request)
-                    print (data)
                 except Exception as e:
                     self.errors.append(e)
         return (data)
@@ -153,11 +152,12 @@ class PriceData():
                 fx.df["fx_close"] = pd.to_numeric(fx.df.fx_close, errors='coerce')
                 # Merge the two dfs:
                 merge_df = pd.merge(self.df, fx.df, on='date', how='inner')
+                merge_df['close'] = merge_df['close'].astype(float)
                 merge_df['close_converted'] = merge_df['close'] * merge_df['fx_close']
                 return (merge_df)
             else:  # If currency is USD no conversion is needed - prices are all in USD
                 self.df['fx_close'] = 1
-                self.df['close_converted'] = self.df['close']
+                self.df['close_converted'] = self.df['close'].astype(float)
                 return (self.df)
         except Exception as e:
             self.errors.append(e)
@@ -255,7 +255,6 @@ class PriceData():
                 self.errors.append(e)
                 df_save = None
             return (df_save)
-
 
         if provider.name == 'bitmex':
             try:
@@ -435,5 +434,27 @@ HISTORICAL_PROVIDER_PRIORITY = [
 REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime']
 FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 
+
 # Todo: Include benchmarking method maybe to show how slow or quick each are
 # Include a daily maintenance to download all historical prices
+# Loop through all providers to get the first non-empty df
+def price_data(ticker):
+    for provider in HISTORICAL_PROVIDER_PRIORITY:
+        price_data = PriceData(ticker, PROVIDER_LIST[provider])
+        if price_data.df is not None:
+            break
+    return (price_data)
+
+
+# Returns price data in current user's currency
+def price_data_fx(ticker):
+    for provider in HISTORICAL_PROVIDER_PRIORITY:
+        price_data = PriceData(ticker, PROVIDER_LIST[provider])
+        if price_data.df is not None:
+            break
+    # Loop through FX providers until a df is filled
+    for provider in FX_PROVIDER_PRIORITY:
+        prices = price_data.df_fx(current_user.fx(), PROVIDER_LIST[provider])
+        if prices is not None:
+            break
+    return (prices)
