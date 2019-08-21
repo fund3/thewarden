@@ -23,7 +23,7 @@ from thewarden.users.decorators import MWT, memoized, timing
 from thewarden.pricing_engine.pricing import (PROVIDER_LIST,
                                               PriceData, HISTORICAL_PROVIDER_PRIORITY,
                                               FX_PROVIDER_PRIORITY, price_data,
-                                              price_data_fx)
+                                              price_data_fx, price_data_rt)
 
 # ---------------------------------------------------------
 # Helper Functions start here
@@ -81,7 +81,7 @@ def rt_price_grab(ticker, user_fx='USD'):
 
 @MWT(timeout=5)
 @timing
-def cost_calculation(user, ticker):
+def cost_calculation(ticker):
     # This function calculates the cost basis assuming 3 different methods
     # FIFO, LIFO and avg. cost
     # found = [item for item in fx_list() if ticker in item]
@@ -258,6 +258,41 @@ def is_currency(id):
     if found != []:
         return True
     return False
+
+
+@MWT(timeout=5)
+@timing
+def positions():
+    # Method to create a user's position table
+    # Returns a df with the following information
+    # Ticker, name, quantity, small_pos
+    # THIS SHOULD CONTAIN THE STATIC FIELDS ONLY - no web requests
+    # It should be a light method to load quickly on the main page.
+    # Anything with web requests should be done on a separate function
+
+    # Get all transactions & group by ticker name and operation
+    df = transactions_fx()
+    summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
+                                ["trade_quantity",
+                                 "cash_value_fx",
+                                 "trade_fees_fx"]].sum()
+    # Now let's create our main dataframe with information for each ticker
+    list_of_tickers = df.trade_asset_ticker.unique().tolist()
+    main_df = pd.DataFrame({'trade_asset_ticker': list_of_tickers})
+    # Fill with positions, cash_values and fees
+    df_tmp = df.groupby(['trade_asset_ticker'])[
+                        ["trade_quantity",
+                         "cash_value_fx",
+                         "trade_fees_fx"]].sum()
+    main_df = pd.merge(main_df, df_tmp, on='trade_asset_ticker')
+    # Fill in with same information but only for buys, sells, deposits and withdraws
+    # main_df = pd.merge(main_df, summary_table, on='trade_asset_ticker')
+    summary_table = summary_table.unstack(level='trade_operation').fillna(0)
+    main_df = pd.merge(main_df, summary_table, on='trade_asset_ticker')
+    # Include FIFO and LIFO calculations for each ticker
+    main_df['cost_frame'] = main_df['trade_asset_ticker'].apply(cost_calculation)
+    main_df['is_currency'] = main_df['trade_asset_ticker'].apply(is_currency)
+    return main_df
 
 
 @MWT(timeout=5)
@@ -505,7 +540,7 @@ def generate_pos_table(user, fx, hidesmall):
                 (consol_table['total_pnl_net_fx'][ticker] /
                  consol_table['trade_quantity'][ticker])
 
-        table[ticker]['cost_matrix'] = cost_calculation(user, ticker)
+        table[ticker]['cost_matrix'] = cost_calculation(ticker)
         table[ticker]['cost_matrix']['LIFO']['unrealized_pnl'] = \
             (consol_table['fx_price'][ticker] -
              table[ticker]['cost_matrix']['LIFO']['average_cost']) * \
@@ -731,7 +766,6 @@ def generatenav(user, force=False, filter=None):
             logging.error(f"{id}: Error: {e}")
             flash(f"Ticker {id} generated an error. " +
                    f"NAV calculations will be off. Error: {e}", "danger")
-    print(dailynav)
     # Another loop to sum the portfolio values - maybe there is a way to
     # include this on the loop above. But this is not a huge time drag unless
     # there are too many tickers in a portfolio

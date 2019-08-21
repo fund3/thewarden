@@ -27,14 +27,18 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    image_file = db.Column(db.String(20), nullable=False, default="default.jpg")
+    image_file = db.Column(db.String(20), nullable=False, default="USD")
     password = db.Column(db.String(60), nullable=False)
-    creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    creation_date = db.Column(db.DateTime,
+                              nullable=False,
+                              default=datetime.utcnow)
     trades = db.relationship("Trades", backref="trade_inputby", lazy=True)
-    account = db.relationship("AccountInfo", backref="account_owner", lazy=True)
-    bitcoin_address = db.relationship(
-        "BitcoinAddresses", backref="address_owner", lazy=True
-    )
+    account = db.relationship("AccountInfo",
+                              backref="account_owner",
+                              lazy=True)
+    bitcoin_address = db.relationship("BitcoinAddresses",
+                                      backref="address_owner",
+                                      lazy=True)
     aa_apikey = db.Column(db.String(120))
     dojo_apikey = db.Column(db.String(120))
     dojo_onion = db.Column(db.String(120))
@@ -70,9 +74,15 @@ class User(db.Model, UserMixin):
 
 class Trades(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(150), db.ForeignKey("user.id"), nullable=False)
-    trade_inputon = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    trade_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    user_id = db.Column(db.String(150),
+                        db.ForeignKey("user.id"),
+                        nullable=False)
+    trade_inputon = db.Column(db.DateTime,
+                              nullable=False,
+                              default=datetime.utcnow)
+    trade_date = db.Column(db.DateTime,
+                           nullable=False,
+                           default=datetime.utcnow)
     trade_currency = db.Column(db.String(3), nullable=False, default="USD")
     trade_asset_ticker = db.Column(db.String(20), nullable=False)
     trade_account = db.Column(db.String(20), nullable=False)
@@ -104,7 +114,8 @@ class AccountInfo(db.Model):
     previous_balance = db.Column(db.Float)
     auto_check = db.Column(db.Boolean)
     notes = db.Column(db.Text)
-    child_addresses = db.relationship("BitcoinAddresses", backref="parent_account")
+    child_addresses = db.relationship("BitcoinAddresses",
+                                      backref="parent_account")
     xpub_derivation = db.Column(db.String(255))
     xpub_created = db.Column(db.String(255))
 
@@ -120,7 +131,8 @@ class Contact(db.Model):
 class BitcoinAddresses(db.Model):
     address_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    account_id = db.Column(db.Integer, db.ForeignKey("account_info.account_id"))
+    account_id = db.Column(db.Integer,
+                           db.ForeignKey("account_info.account_id"))
     address_hash = db.Column(db.String(256), nullable=False)
     last_check = db.Column(db.DateTime)
     last_balance = db.Column(db.Float)

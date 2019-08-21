@@ -32,7 +32,6 @@ def newtrade():
     if request.method == "POST":
 
         if form.validate_on_submit():
-            print(form.trade_currency.data)
             # Need to include two sides of trade:
             if form.trade_operation.data in ("B", "D"):
                 qop = 1

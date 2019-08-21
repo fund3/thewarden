@@ -13,7 +13,7 @@ import pandas as pd
 from datetime import datetime, timedelta, timezone
 from flask_login import current_user
 from thewarden.node.utils import tor_request
-from thewarden.users.decorators import timing, memoized
+from thewarden.users.decorators import timing, memoized, MWT
 
 # How to include new API providers (historical prices):
 # Step 1:
@@ -74,12 +74,14 @@ class PriceProvider:
             ticker = ticker.upper()
             globalURL = (self.base_url + "?" + self.ticker_field + "=" +
                          ticker + self.url_args)
+            print(globalURL)
             request = tor_request(globalURL)
             try:
                 data = request.json()
             except Exception:
                 try:  # Try again - some APIs return a json already
                     data = json.loads(request)
+                    print(data)
                 except Exception as e:
                     self.errors.append(e)
         return (data)
@@ -279,9 +281,10 @@ class PriceData():
 
     @timing
     def realtime(self, rt_provider):
+        # This is the parser for realtime prices.
+        # Data should be parsed so only the price is returned
         price_request = rt_provider.request_data(self.ticker)
         price = None
-
         if rt_provider.name == 'ccrealtime':
             try:
                 price = (price_request['USD'])
@@ -293,6 +296,20 @@ class PriceData():
                 price = (price_request[
                     'Realtime Currency Exchange Rate'][
                     '5. Exchange Rate'])
+            except Exception as e:
+                self.errors.append(e)
+
+        if rt_provider.name == 'aarealtimestock':
+            try:
+                price = (price_request[
+                    'Global Quote'][
+                    '05. price'])
+            except Exception as e:
+                self.errors.append(e)
+
+        if rt_provider.name == 'ccrealtimefull':
+            try:
+                price = (price_request['RAW'][self.ticker]['USD'])
             except Exception as e:
                 self.errors.append(e)
 
@@ -342,7 +359,6 @@ def bitmex_gethistory(ticker, provider):
         return ('error: no credentials found for Bitmex')
 
 
-# MOVE THIS TO JSON
 # List of API providers
 # name: should be unique and contain only lowecase letters
 PROVIDER_LIST = {
@@ -418,12 +434,25 @@ PROVIDER_LIST = {
                   ticker_field='fsym',
                   field_dict={'tsyms': 'USD'},
                   doc_link=None),
-    'aa_realtime':
+    'cc_realtime_full':
+    PriceProvider(name='ccrealtimefull',
+                  base_url='https://min-api.cryptocompare.com/data/pricemultifull',
+                  ticker_field='fsyms',
+                  field_dict={'tsyms': 'USD'},
+                  doc_link='https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'),
+    'aa_realtime_digital':
     PriceProvider(name='aarealtime',
                   base_url='https://www.alphavantage.co/query',
                   ticker_field='from_currency',
-                  field_dict={'function' : 'CURRENCY_EXCHANGE_RATE',
+                  field_dict={'function': 'CURRENCY_EXCHANGE_RATE',
                               'to_currency': 'USD',
+                              'apikey': 'xpto1234567890'},
+                  doc_link='https://www.alphavantage.co/documentation/'),
+    'aa_realtime_stock':
+    PriceProvider(name='aarealtimestock',
+                  base_url='https://www.alphavantage.co/query',
+                  ticker_field='symbol',
+                  field_dict={'function': 'GLOBAL_QUOTE',
                               'apikey': 'xpto1234567890'},
                   doc_link='https://www.alphavantage.co/documentation/')
 }
@@ -431,12 +460,13 @@ PROVIDER_LIST = {
 # Generic Requests will try each of these before failing
 HISTORICAL_PROVIDER_PRIORITY = [
     'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',  'bitmex']
-REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime']
+REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock']
 FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 
 
 # Todo: Include benchmarking method maybe to show how slow or quick each are
 # Include a daily maintenance to download all historical prices
+
 # Loop through all providers to get the first non-empty df
 def price_data(ticker):
     for provider in HISTORICAL_PROVIDER_PRIORITY:
@@ -458,3 +488,15 @@ def price_data_fx(ticker):
         if prices is not None:
             break
     return (prices)
+
+
+# Returns realtime price for a ticker using the provider list
+# Price is returned in USD
+@MWT(timeout=2)
+def price_data_rt(ticker):
+    for provider in REALTIME_PROVIDER_PRIORITY:
+        price_data = PriceData(ticker, PROVIDER_LIST[provider])
+        if price_data.realtime(PROVIDER_LIST[provider]) is not None:
+            break
+    return (price_data.realtime(PROVIDER_LIST[provider]))
+

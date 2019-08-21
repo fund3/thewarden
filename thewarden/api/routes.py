@@ -1876,13 +1876,23 @@ def realtime_user():
 
 @api.route("/test_pricing", methods=["GET"])
 def test_pricing():
-    from thewarden.pricing_engine.pricing import PROVIDER_LIST, PriceData
+    from thewarden.pricing_engine.pricing import PROVIDER_LIST, PriceData, price_data_rt
     provider = PROVIDER_LIST['cc_digital']
     fx_provider = PROVIDER_LIST['cc_fx']
+    rt_provider = PROVIDER_LIST['cc_realtime_full']
     a = PriceData("BTC", provider)
-    print (a.df)
-    print (a.errors)
-    print (provider.errors)
-    merge_fx = a.df_fx('BRL', fx_provider)
-    print (merge_fx)
+    print(price_data_rt("aapl"))
+    # print (a.df)
+    # print (a.errors)
+    # print (provider.errors)
+    # merge_fx = a.df_fx('BRL', fx_provider)
+    # print (merge_fx)
     return ("OK")
+
+@api.route("/positions_json", methods=["GET"])
+def positions_json():
+    from thewarden.users.utils import (positions)
+    # Get all transactions
+    df = positions()
+    return(df.to_html())
+    # Get a list of all tickers in this portfolio
