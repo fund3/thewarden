@@ -40,6 +40,10 @@ from thewarden.users.decorators import timing, memoized, MWT
 #     return a price float
 
 
+# _____________________________________________
+# Classes go here
+# _____________________________________________
+
 @timing
 class PriceProvider:
     # This class manages a list of all pricing providers
@@ -316,6 +320,34 @@ class PriceData():
         return price
 
 
+@timing
+class ApiKeys():
+    # returns current stored keys in the api_keys.conf file
+    # makesure file path exists
+    def __init__(self):
+        self.filename = 'thewarden/pricing_engine/api_keys.conf'
+        os.makedirs(os.path.dirname(self.filename), exist_ok=True)
+
+    def loader(self):
+        try:
+            with open(self.filename, 'r') as fp:
+                data = json.load(fp)
+                return (data)
+        except (FileNotFoundError, KeyError) as e:
+            return ""
+
+    def saver(self, api_dict):
+        try:
+            with open(self.filename, 'w') as fp:
+                json.dump(bitmex_data, fp)
+        except Exception:
+            pass
+
+
+# _____________________________________________
+# Helper functions go here
+# _____________________________________________
+
 # Bitmex Helper Function (uses bitmex library instead of requests)
 # Returns a df with history
 def bitmex_gethistory(ticker, provider):
@@ -359,114 +391,6 @@ def bitmex_gethistory(ticker, provider):
         return ('error: no credentials found for Bitmex')
 
 
-# List of API providers
-# name: should be unique and contain only lowecase letters
-PROVIDER_LIST = {
-    'aa_digital':
-    PriceProvider(name='alphavantagedigital',
-                  base_url='https://www.alphavantage.co/query',
-                  ticker_field='symbol',
-                  field_dict={
-                      'function': 'DIGITAL_CURRENCY_DAILY',
-                      'market': 'USD',
-                      'apikey': 'XPTOcddc123'
-                  },
-                  doc_link='https://www.alphavantage.co/documentation/'),
-    'aa_stock':
-    PriceProvider(name='alphavantagestock',
-                  base_url='https://www.alphavantage.co/query',
-                  ticker_field='symbol',
-                  field_dict={
-                      'function': 'TIME_SERIES_DAILY',
-                      'outputsize': 'full',
-                      'apikey': 'XPTOcddc123'
-                  },
-                  doc_link='https://www.alphavantage.co/documentation/'),
-    'aa_fx':
-    PriceProvider(name='alphavantagefx',
-                  base_url='https://www.alphavantage.co/query',
-                  ticker_field='to_symbol',
-                  field_dict={
-                      'function': 'FX_DAILY',
-                      'outputsize': 'full',
-                      'from_symbol': 'USD',
-                      'apikey': 'XPTOcddc123'
-                  },
-                  doc_link='https://www.alphavantage.co/documentation/'),
-    'cc_digital':
-    PriceProvider(
-        name='ccdigital',
-        base_url='https://min-api.cryptocompare.com/data/histoday',
-        ticker_field='fsym',
-        field_dict={
-            'tsym': 'USD',
-            'allData': 'true'
-        },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
-    ),
-    'cc_fx':
-    PriceProvider(
-        name='ccfx',
-        base_url='https://min-api.cryptocompare.com/data/histoday',
-        ticker_field='tsym',
-        field_dict={
-            'fsym': 'USD',
-            'allData': 'true'
-        },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
-    ),
-
-    'bitmex':
-    PriceProvider(name='bitmex',
-                  base_url=None,
-                  ticker_field=None,
-                  field_dict={
-                      'api_key': 'your_key_here',
-                      'api_secret': 'your_secret_here',
-                      'testnet': False
-                  },
-                  doc_link='https://www.bitmex.com/api/explorer/'),
-    'cc_realtime':
-    PriceProvider(name='ccrealtime',
-                  base_url='https://min-api.cryptocompare.com/data/price',
-                  ticker_field='fsym',
-                  field_dict={'tsyms': 'USD'},
-                  doc_link=None),
-    'cc_realtime_full':
-    PriceProvider(name='ccrealtimefull',
-                  base_url='https://min-api.cryptocompare.com/data/pricemultifull',
-                  ticker_field='fsyms',
-                  field_dict={'tsyms': 'USD'},
-                  doc_link='https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'),
-    'aa_realtime_digital':
-    PriceProvider(name='aarealtime',
-                  base_url='https://www.alphavantage.co/query',
-                  ticker_field='from_currency',
-                  field_dict={'function': 'CURRENCY_EXCHANGE_RATE',
-                              'to_currency': 'USD',
-                              'apikey': 'xpto1234567890'},
-                  doc_link='https://www.alphavantage.co/documentation/'),
-    'aa_realtime_stock':
-    PriceProvider(name='aarealtimestock',
-                  base_url='https://www.alphavantage.co/query',
-                  ticker_field='symbol',
-                  field_dict={'function': 'GLOBAL_QUOTE',
-                              'apikey': 'xpto1234567890'},
-                  doc_link='https://www.alphavantage.co/documentation/')
-}
-
-# Generic Requests will try each of these before failing
-HISTORICAL_PROVIDER_PRIORITY = [
-    'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',  'bitmex']
-REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock']
-FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
-
-
-# Todo: Include benchmarking method maybe to show how slow or quick each are
-# Include a daily maintenance to download all historical prices
-
 # Loop through all providers to get the first non-empty df
 def price_data(ticker):
     for provider in HISTORICAL_PROVIDER_PRIORITY:
@@ -499,4 +423,119 @@ def price_data_rt(ticker):
         if price_data.realtime(PROVIDER_LIST[provider]) is not None:
             break
     return (price_data.realtime(PROVIDER_LIST[provider]))
+
+
+# _____________________________________________
+# Variables go here
+# _____________________________________________
+
+# Class instance with api keys loader and saver
+key_class = ApiKeys()
+api_keys = key_class.loader()
+print(api_keys)
+
+# List of API providers
+# name: should be unique and contain only lowecase letters
+PROVIDER_LIST = {
+    'aa_digital':
+    PriceProvider(name='alphavantagedigital',
+                  base_url='https://www.alphavantage.co/query',
+                  ticker_field='symbol',
+                  field_dict={
+                      'function': 'DIGITAL_CURRENCY_DAILY',
+                      'market': 'USD',
+                      'apikey': api_keys['alphavantage']['api_key']
+                  },
+                  doc_link='https://www.alphavantage.co/documentation/'),
+    'aa_stock':
+    PriceProvider(name='alphavantagestock',
+                  base_url='https://www.alphavantage.co/query',
+                  ticker_field='symbol',
+                  field_dict={
+                      'function': 'TIME_SERIES_DAILY',
+                      'outputsize': 'full',
+                      'apikey': api_keys['alphavantage']['api_key']
+                  },
+                  doc_link='https://www.alphavantage.co/documentation/'),
+    'aa_fx':
+    PriceProvider(name='alphavantagefx',
+                  base_url='https://www.alphavantage.co/query',
+                  ticker_field='to_symbol',
+                  field_dict={
+                      'function': 'FX_DAILY',
+                      'outputsize': 'full',
+                      'from_symbol': 'USD',
+                      'apikey': api_keys['alphavantage']['api_key']
+                  },
+                  doc_link='https://www.alphavantage.co/documentation/'),
+    'cc_digital':
+    PriceProvider(
+        name='ccdigital',
+        base_url='https://min-api.cryptocompare.com/data/histoday',
+        ticker_field='fsym',
+        field_dict={
+            'tsym': 'USD',
+            'allData': 'true'
+        },
+        doc_link=
+        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
+    ),
+    'cc_fx':
+    PriceProvider(
+        name='ccfx',
+        base_url='https://min-api.cryptocompare.com/data/histoday',
+        ticker_field='tsym',
+        field_dict={
+            'fsym': 'USD',
+            'allData': 'true'
+        },
+        doc_link=
+        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
+    ),
+
+    'bitmex':
+    PriceProvider(name='bitmex',
+                  base_url=None,
+                  ticker_field=None,
+                  field_dict={
+                      'api_key': api_keys['bitmex']['api_key'],
+                      'api_secret': api_keys['bitmex']['api_secret'],
+                      'testnet': False
+                  },
+                  doc_link='https://www.bitmex.com/api/explorer/'),
+    'cc_realtime':
+    PriceProvider(name='ccrealtime',
+                  base_url='https://min-api.cryptocompare.com/data/price',
+                  ticker_field='fsym',
+                  field_dict={'tsyms': 'USD'},
+                  doc_link=None),
+    'cc_realtime_full':
+    PriceProvider(name='ccrealtimefull',
+                  base_url='https://min-api.cryptocompare.com/data/pricemultifull',
+                  ticker_field='fsyms',
+                  field_dict={'tsyms': 'USD'},
+                  doc_link='https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'),
+    'aa_realtime_digital':
+    PriceProvider(name='aarealtime',
+                  base_url='https://www.alphavantage.co/query',
+                  ticker_field='from_currency',
+                  field_dict={'function': 'CURRENCY_EXCHANGE_RATE',
+                              'to_currency': 'USD',
+                              'apikey': api_keys['alphavantage']['api_key']},
+                  doc_link='https://www.alphavantage.co/documentation/'),
+    'aa_realtime_stock':
+    PriceProvider(name='aarealtimestock',
+                  base_url='https://www.alphavantage.co/query',
+                  ticker_field='symbol',
+                  field_dict={'function': 'GLOBAL_QUOTE',
+                              'apikey': api_keys['alphavantage']['api_key']},
+                  doc_link='https://www.alphavantage.co/documentation/')
+}
+
+# Generic Requests will try each of these before failing
+HISTORICAL_PROVIDER_PRIORITY = [
+    'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',  'bitmex']
+REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock']
+FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
+
 

@@ -11,6 +11,7 @@
 - Fixed NAV calculation issues
 - Included support for GBTC (realtime prices and history)
 - Included GBTC premium on front page when position is present
+- All API keys are now saved under a single file `/thewarden/pricing_engine/api_keys.conf` for easier key management.
 
 ## v.13 alpha (8/15/2019)
 

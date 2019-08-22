@@ -39,12 +39,13 @@ from thewarden.node.utils import (
     tor_request,
 )
 from thewarden.users.decorators import MWT
-from thewarden.pricing_engine.pricing import price_data_fx
+from thewarden.pricing_engine.pricing import price_data_fx, api_keys
 
 api = Blueprint("api", __name__)
 
 
 # Helper function: Make sure strings don't go into DB
+# This will try to convert a data to float, if fails, returns 0
 def s_to_f(x):
     try:
         if x is None:
