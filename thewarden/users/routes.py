@@ -11,6 +11,7 @@ from thewarden.users.forms import (
 from werkzeug.security import check_password_hash, generate_password_hash
 from thewarden.models import User, Trades, AccountInfo
 from thewarden.users.utils import send_reset_email, fx_list, generatenav, regenerate_nav
+from thewarden.pricing_engine.pricing import api_keys_class
 
 users = Blueprint("users", __name__)
 
@@ -64,6 +65,7 @@ def logout():
 @login_required
 def account():
     form = UpdateAccountForm()
+    api_keys_json = api_keys_class.loader()
     if form.validate_on_submit():
         # If currency is changed, recalculate the NAV
         if form.basefx.data != current_user.fx():
@@ -74,9 +76,11 @@ def account():
                 f"NAV recalculated to use {form.basefx.data} as a base currency",
                 "success")
         current_user.email = form.email.data
-        current_user.aa_apikey = form.alphavantage_apikey.data
-        current_user.dojo_apikey = form.dojo_apikey.data
-        current_user.dojo_onion = form.dojo_onion.data
+        api_keys_json['alphavantage'][
+            'api_key'] = form.alphavantage_apikey.data
+        api_keys_json['dojo']['api_key'] = form.dojo_apikey.data
+        api_keys_json['dojo']['onion'] = form.dojo_onion.data
+        api_keys_class.saver(api_keys_json)
         current_user.image_file = form.basefx.data
         db.session.commit()
         flash("Your account has been updated", "success")
@@ -92,11 +96,12 @@ def account():
             form.basefx.data = current_user.image_file
         else:
             form.basefx.data = "USD"
-        form.alphavantage_apikey.data = current_user.aa_apikey
+        form.alphavantage_apikey.data = api_keys_json['alphavantage'][
+            'api_key']
         form.sql_uri.data = Config.SQLALCHEMY_DATABASE_URI
         form.sql_uri.render_kw = {"disabled": "disabled"}
-        form.dojo_onion.data = current_user.dojo_onion
-        form.dojo_apikey.data = current_user.dojo_apikey
+        form.dojo_onion.data = api_keys_json['dojo']['onion']
+        form.dojo_apikey.data = api_keys_json['dojo']['api_key']
 
     return render_template("account.html", title="Account", form=form)
 

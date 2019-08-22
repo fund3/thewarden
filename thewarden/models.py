@@ -39,10 +39,6 @@ class User(db.Model, UserMixin):
     bitcoin_address = db.relationship("BitcoinAddresses",
                                       backref="address_owner",
                                       lazy=True)
-    aa_apikey = db.Column(db.String(120))
-    dojo_apikey = db.Column(db.String(120))
-    dojo_onion = db.Column(db.String(120))
-    dojo_token = db.Column(db.String(120))
 
     def get_reset_token(self, expires_sec=300):
         s = Serializer(current_app.config["SECRET_KEY"], expires_sec)

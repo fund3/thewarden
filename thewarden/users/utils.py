@@ -23,7 +23,8 @@ from thewarden.users.decorators import MWT, memoized, timing
 from thewarden.pricing_engine.pricing import (PROVIDER_LIST,
                                               PriceData, HISTORICAL_PROVIDER_PRIORITY,
                                               FX_PROVIDER_PRIORITY, price_data,
-                                              price_data_fx, price_data_rt)
+                                              price_data_fx, price_data_rt,
+                                              api_keys_class)
 
 # ---------------------------------------------------------
 # Helper Functions start here
@@ -308,6 +309,9 @@ def generate_pos_table(user, fx, hidesmall):
     for ticker in list_of_tickers:
         ticker_str = ticker_str + "," + ticker
     price_list = multiple_price_grab(ticker_str, fx)
+    from thewarden.pricing_engine.pricing import api_keys_class
+    api_keys_json = api_keys_class.loader()
+    aa_apikey = api_keys_json['alphavantage']['api_key']
     if price_list == "ConnectionError":
         return ("ConnectionError", "ConnectionError")
 
@@ -341,7 +345,7 @@ def generate_pos_table(user, fx, hidesmall):
             # Couldn't find price with CryptoCompare. Let's try a different source
             # and populate data in the same format
             base = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="
-            baseURL = base + ticker + "&apikey=" + current_user.aa_apikey
+            baseURL = base + ticker + "&apikey=" + aa_apikey
             data = tor_request(baseURL)
             price_data = {}
             try:
@@ -379,12 +383,12 @@ def generate_pos_table(user, fx, hidesmall):
             # Couldn't find price with CryptoCompare. Let's try a different source
             # and populate data in the same format
             base = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="
-            baseURL = base + ticker + "&apikey=" + current_user.aa_apikey
+            baseURL = base + ticker + "&apikey=" + aa_apikey
             data = tor_request(baseURL)
             btcURL = "https://www.alphavantage.co/query?" +\
                      "function=CURRENCY_EXCHANGE_RATE&" +\
                      "from_currency=BTC&to_currency=USD&apikey=" +\
-                     current_user.aa_apikey
+                     aa_apikey
             data_BTC = tor_request(btcURL)
             price_data = {}
             try:
@@ -407,7 +411,7 @@ def generate_pos_table(user, fx, hidesmall):
                             current_user.fx_rate_USD()
                         price_data['GBTC_premium'] = float(
                             cleancsv(data['Global Quote']['05. price']) /
-                                    price_data['GBTC_fair']) - 1
+                                     price_data['GBTC_fair']) - 1
                     return (price_data)
             except Exception as e:
                 price_data['PRICE'] = 0
@@ -893,7 +897,8 @@ def alphavantage_historical(id, to_symbol=None, market="USD"):
     # https://www.alphavantage.co/support/#api-key
 
     user_info = User.query.filter_by(username=current_user.username).first()
-    api_key = user_info.aa_apikey
+    api_keys_json = api_keys_class.loader()
+    api_key = api_keys_json['alphavantage']['api_key']
     if api_key is None:
         return("API Key is empty", "error", "empty")
 

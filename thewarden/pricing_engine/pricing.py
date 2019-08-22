@@ -339,7 +339,7 @@ class ApiKeys():
     def saver(self, api_dict):
         try:
             with open(self.filename, 'w') as fp:
-                json.dump(bitmex_data, fp)
+                json.dump(api_dict, fp)
         except Exception:
             pass
 
@@ -430,9 +430,8 @@ def price_data_rt(ticker):
 # _____________________________________________
 
 # Class instance with api keys loader and saver
-key_class = ApiKeys()
-api_keys = key_class.loader()
-print(api_keys)
+api_keys_class = ApiKeys()
+api_keys = api_keys_class.loader()
 
 # List of API providers
 # name: should be unique and contain only lowecase letters

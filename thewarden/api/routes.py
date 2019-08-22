@@ -39,7 +39,7 @@ from thewarden.node.utils import (
     tor_request,
 )
 from thewarden.users.decorators import MWT
-from thewarden.pricing_engine.pricing import price_data_fx, api_keys
+from thewarden.pricing_engine.pricing import price_data_fx, api_keys_class
 
 api = Blueprint("api", __name__)
 
@@ -1391,19 +1391,12 @@ def test_dojo():
     logging.info("[API] Testing Dojo")
     auto = dojo_auth(True)
     try:
-        user_info = User.query.filter_by(
-            username=current_user.username).first()
-    except AttributeError:
-        return "User not logged in"
-    onion = user_info.dojo_onion
-    apikey = user_info.dojo_apikey
-
-    if not onion:
+        api_keys_json = api_keys_class.loader()
+        onion = api_keys_json['dojo']['onion']
+        apikey = api_keys_json['dojo']['api_key']
+    except Exception:
         onion = "empty"
-
-    if not apikey:
         apikey = "empty"
-
     response = {"onion_address": onion, "APIKey": apikey, "dojo_auth": auto}
     return simplejson.dumps(response)
 
@@ -1770,33 +1763,32 @@ def test_aakey():
         globalURL = baseURL + api_key
         try:
             logging.info(f"[ALPHAVANTAGE] Requesting URL: {globalURL}")
-            api_request = tor_request(globalURL)
+            api_request = tor_request(globalURL).json()
             data["status"] = "success"
         except requests.exceptions.ConnectionError:
-            logging.error(
-                "[ALPHAVANTAGE] Connection ERROR " +
-                "while trying to download prices"
-            )
             data["status"] = "failed"
             data["message"] = "Connection Error"
         try:
-            data["message"] = api_request.json()
-            # Success - store this in database
-            current_user.aa_apikey = api_key
-            db.session.commit()
-            regenerate_nav()
-        except AttributeError:
             data["message"] = api_request
-    return json.dumps(data)
+            # Success - store this in database
+            api_keys_json = api_keys_class.loader()
+            api_keys_json['alphavantage']['api_key'] = api_key
+            api_keys_class.saver(api_keys_json)
+            regenerate_nav()
+        except AttributeError as e:
+            data["status"] = "failed"
+            data["message"] = api_request
+    return data
 
 
 @api.route("/dojo_autoconfig", methods=["GET"])
 # Registers an onion and api key to the database and saves for this username
 def dojo_autoconfig():
     if (request.args.get("onion") != "") and (request.args.get("api_key") != ""):
-        current_user.dojo_onion = request.args.get("onion")
-        current_user.dojo_apikey = request.args.get("api_key")
-        db.session.commit()
+        api_keys_json = api_keys_class.loader()
+        api_keys_json['dojo']['onion'] = request.args.get("onion")
+        api_keys_json['dojo']['api_key'] = request.args.get("api_key")
+        api_keys_class.saver(api_keys_json)
         return json.dumps("Success")
     else:
         return json.dumps("Failed. Empty field.")
@@ -1840,9 +1832,9 @@ def test_bitmex():
         resp = mex.User.User_get().result()[0]
         # Save locally to json
         bitmex_data = {"api_key": api_key, "api_secret": api_secret}
-        with open('thewarden/api/bitmex.json', 'w') as fp:
-            json.dump(bitmex_data, fp)
-        logging.info("Credentials saved to bitmex.json")
+        api_keys_json = api_keys_class.loader()
+        api_keys_json['bitmex'] = bitmex_data
+        api_keys_class.saver(api_keys_json)
         return ({'status': 'success', 'message': resp})
     except Exception as e:
         return ({'status': 'error', 'message': f'Error when connecting to Bitmex. Check credentials. Error: {e}'})
@@ -1853,9 +1845,9 @@ def test_bitmex():
 def load_bitmex_json():
     # First check if API key and secret are stored locally
     try:
-        with open('thewarden/api/bitmex.json', 'r') as fp:
-            data = json.load(fp)
-            return (data)
+        api_keys_json = api_keys_class.loader()
+        data = api_keys_json['bitmex']
+        return (data)
     except (FileNotFoundError, KeyError):
         return ({'status': 'error', 'message': 'API credentials not found'})
 

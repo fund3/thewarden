@@ -14,8 +14,10 @@ from thewarden.node.utils import (
 from thewarden import db, test_tor
 from thewarden.node.forms import DojoForm, AddressForm, Custody_Account
 from thewarden.models import User, BitcoinAddresses, AccountInfo
+from thewarden.pricing_engine.pricing import api_keys_class
 
 node = Blueprint("node", __name__)
+
 
 # Returns a JSON with Test Response on TOR
 @node.route("/testtor", methods=["GET"])
@@ -28,9 +30,9 @@ def testtor():
 @login_required
 def tor_setup():
     tor_enabled = test_tor()
-    return render_template(
-        "tor.html", title="Tor Config and Check", tor_enabled=tor_enabled
-    )
+    return render_template("tor.html",
+                           title="Tor Config and Check",
+                           tor_enabled=tor_enabled)
 
 
 @node.route("/dojo_setup", methods=["GET", "POST"])
@@ -45,15 +47,17 @@ def dojo_setup():
     user_info = User.query.filter_by(username=current_user.username).first()
     form = DojoForm()
     if form.validate_on_submit():
-        user_info.dojo_onion = form.dojo_onion.data
-        user_info.dojo_apikey = form.dojo_apikey.data
-        user_info.dojo_token = form.dojo_token.data
-        db.session.commit()
+        api_keys_json = api_keys_class.loader()
+        api_keys_json['dojo']['onion'] = form.dojo_onion.data
+        api_keys_json['dojo']['api_key'] = form.dojo_apikey.data
+        api_keys_json['dojo']['token'] = form.dojo_token.data
+        api_keys_class.saver(api_keys_json)
         at = dojo_auth()
     elif request.method == "GET":
         at = dojo_auth()
-        form.dojo_onion.data = user_info.dojo_onion
-        form.dojo_apikey.data = user_info.dojo_apikey
+        api_keys_json = api_keys_class.loader()
+        form.dojo_onion.data = api_keys_json['dojo']['onion']
+        form.dojo_apikey.data = api_keys_json['dojo']['api_key']
         try:
             form.dojo_token.data = at["authorizations"]["access_token"]
         except (KeyError, TypeError):
@@ -68,8 +72,7 @@ def dojo_setup():
             if status["blocks"]:
                 last_block = last_block.json()
                 progress = float(status["blocks"]) / float(
-                    last_block["data"][0]["height"]
-                )
+                    last_block["data"][0]["height"])
             else:
                 progress = "unknown"
         except (KeyError, TypeError):
@@ -97,7 +100,9 @@ def bitcoin_address():
     if form.validate_on_submit():
         id = request.args.get("id")
         if id:
-            bitcoin_address = BitcoinAddresses.query.filter_by(user_id=current_user.username).filter_by(address_id=id).first()
+            bitcoin_address = BitcoinAddresses.query.filter_by(
+                user_id=current_user.username).filter_by(
+                    address_id=id).first()
             if bitcoin_address is None:
                 flash("Address id not found", "danger")
                 return redirect(url_for("node.bitcoin_monitor"))
@@ -151,7 +156,8 @@ def bitcoin_address():
             flash(f"Address included.", "success")
         except Exception as err:
             flash(
-                "Address included in database but something went wrong while trying " +
+                "Address included in database but something went wrong while trying "
+                +
                 f"to register this address at the Dojo. Check if your Dojo is connected | Error {err}",
                 "warning",
             )
@@ -164,11 +170,9 @@ def bitcoin_address():
         id = request.args.get("id")
         if id:
             title = form_title = "Edit Bitcoin Address"
-            bitcoinaddress = (
-                BitcoinAddresses.query.filter_by(user_id=current_user.username)
-                .filter_by(address_id=id)
-                .first()
-            )
+            bitcoinaddress = (BitcoinAddresses.query.filter_by(
+                user_id=current_user.username).filter_by(
+                    address_id=id).first())
             if bitcoinaddress is None:
                 flash("Address id not found", "danger")
                 return redirect(url_for("node.bitcoin_monitor"))
@@ -178,9 +182,10 @@ def bitcoin_address():
             form.hd_parent.data = bitcoinaddress.imported_from_hdaddress
             form.notes.data = bitcoinaddress.notes
 
-    return render_template(
-        "new_address.html", form=form, form_title=form_title, title=title
-    )
+    return render_template("new_address.html",
+                           form=form,
+                           form_title=form_title,
+                           title=title)
 
 
 @node.route("/bitcoin_addresses", methods=["GET", "POST"])
@@ -190,9 +195,9 @@ def bitcoin_addresses():
     if addresses.count() == 0:
         return render_template("bitcoin_empty.html", dojo=dojo_get_settings())
 
-    return render_template(
-        "bitcoin_addresses.html", title="Transaction History", addresses=addresses
-    )
+    return render_template("bitcoin_addresses.html",
+                           title="Transaction History",
+                           addresses=addresses)
 
 
 @node.route("/bitcoin_monitor", methods=["GET", "POST"])
@@ -201,12 +206,11 @@ def bitcoin_monitor():
     # Create a list of all addresses both in accounts and in bitcoin addresses
     account_list = []
     for account in BitcoinAddresses.query.filter_by(
-        user_id=current_user.username
-    ).distinct(BitcoinAddresses.account_id):
+            user_id=current_user.username).distinct(
+                BitcoinAddresses.account_id):
         account_list.append(account.account_id)
-    for account in AccountInfo.query.filter_by(user_id=current_user.username).distinct(
-        AccountInfo.account_id
-    ):
+    for account in AccountInfo.query.filter_by(
+            user_id=current_user.username).distinct(AccountInfo.account_id):
         account_list.append(account.account_longname)
     # Remove duplicates
     account_list = list(set(account_list))
@@ -214,12 +218,9 @@ def bitcoin_monitor():
     acc_dict = {}
     for ac_name in account_list:
         try:
-            ac_id = (
-                AccountInfo.query.filter_by(user_id=current_user.username)
-                .filter_by(account_longname=ac_name)
-                .first()
-                .account_id
-            )
+            ac_id = (AccountInfo.query.filter_by(
+                user_id=current_user.username).filter_by(
+                    account_longname=ac_name).first().account_id)
         except AttributeError:
             ac_id = 0
         acc_dict[ac_name] = ac_id
@@ -227,12 +228,13 @@ def bitcoin_monitor():
     addresses = BitcoinAddresses.query.filter_by(user_id=current_user.username)
     accounts = AccountInfo.query.filter_by(user_id=current_user.username)
     # accounts_addresses = BitcoinAddresses.query().filter_by(user_id=current_user.username)
-    total_accounts = AccountInfo.query.filter_by(user_id=current_user.username).count()
-    accounts_none = ((AccountInfo.query
-                      .filter_by(user_id=current_user.username)
-                      .filter_by(account_blockchain_id=None).count()) +
-                     AccountInfo.query.filter_by(user_id=current_user.username)
-                     .filter_by(account_blockchain_id='').count())
+    total_accounts = AccountInfo.query.filter_by(
+        user_id=current_user.username).count()
+    accounts_none = (
+        (AccountInfo.query.filter_by(user_id=current_user.username).filter_by(
+            account_blockchain_id=None).count()) +
+        AccountInfo.query.filter_by(user_id=current_user.username).filter_by(
+            account_blockchain_id='').count())
 
     if addresses.count() == 0:
         if (total_accounts - accounts_none) != 0:
@@ -244,7 +246,9 @@ def bitcoin_monitor():
                 acc_dict=acc_dict,
                 account_info=accounts,
             )
-        return render_template("bitcoin_empty.html", title="Addresses Not Found", dojo=dojo_get_settings())
+        return render_template("bitcoin_empty.html",
+                               title="Addresses Not Found",
+                               dojo=dojo_get_settings())
 
     return render_template(
         "bitcoin_monitor.html",
@@ -267,20 +271,16 @@ def bitcoin_transactions(address):
     if address.lower().startswith(hd_address_list):
         hd_address = True
         # Get address data from DB
-        bitcoin_address = (
-            AccountInfo.query.filter_by(user_id=current_user.username)
-            .filter_by(account_blockchain_id=address)
-            .first()
-        )
+        bitcoin_address = (AccountInfo.query.filter_by(
+            user_id=current_user.username).filter_by(
+                account_blockchain_id=address).first())
     else:
         hd_address = False
         # Get address data from DB
         # Check first if this address is in database
-        bitcoin_address = (
-            BitcoinAddresses.query.filter_by(user_id=current_user.username)
-            .filter_by(address_hash=address)
-            .first()
-        )
+        bitcoin_address = (BitcoinAddresses.query.filter_by(
+            user_id=current_user.username).filter_by(
+                address_hash=address).first())
     transactions["error"] = ""
     meta["hd"] = hd_address
     meta["success"] = False
@@ -312,8 +312,7 @@ def bitcoin_transactions(address):
                 meta["success"] = True
         except (KeyError, UnboundLocalError):
             transactions[
-                "error"
-            ] += "Could not retrieve a balance for this address. Check the address."
+                "error"] += "Could not retrieve a balance for this address. Check the address."
             logging.warn("No balance found on this address")
         except TypeError:
             try:
@@ -321,8 +320,7 @@ def bitcoin_transactions(address):
                 transactions["error"] += balance["error"]
             except TypeError:
                 transactions[
-                    "error"
-                ] += "An unknown error occured. Check connection settings and address info."
+                    "error"] += "An unknown error occured. Check connection settings and address info."
         # Check if there are transactions in this address
         try:
             # the [0] here is needed since we're using multiaddr but only returning the 1st (and only) address
@@ -343,11 +341,11 @@ def bitcoin_transactions(address):
 
     # OK, this address is not in Database, so do nothing
     else:
-        logging.warn("Address not found in database - returning an error message")
+        logging.warn(
+            "Address not found in database - returning an error message")
         meta["found"] = False
         transactions[
-            "error"
-        ] = "This address was not found in your list of addresses. Please include."
+            "error"] = "This address was not found in your list of addresses. Please include."
 
     return render_template(
         "bitcoin_transactions.html",
@@ -368,17 +366,13 @@ def custody_account():
         id = request.args.get("id")
         account_name = request.args.get("name")
         if id:
-            account = (
-                AccountInfo.query.filter_by(user_id=current_user.username)
-                .filter_by(account_id=id)
-                .first()
-            )
+            account = (AccountInfo.query.filter_by(
+                user_id=current_user.username).filter_by(
+                    account_id=id).first())
         if account_name:
-            account = (
-                AccountInfo.query.filter_by(user_id=current_user.username)
-                .filter_by(account_longname=account_name)
-                .first()
-            )
+            account = (AccountInfo.query.filter_by(
+                user_id=current_user.username).filter_by(
+                    account_longname=account_name).first())
 
         if id or account_name:
             if account is None:
@@ -443,17 +437,13 @@ def custody_account():
         account = None
         account_name = request.args.get("name")
         if id:
-            account = (
-                AccountInfo.query.filter_by(user_id=current_user.username)
-                .filter_by(account_id=id)
-                .first()
-            )
+            account = (AccountInfo.query.filter_by(
+                user_id=current_user.username).filter_by(
+                    account_id=id).first())
         if account_name:
-            account = (
-                AccountInfo.query.filter_by(user_id=current_user.username)
-                .filter_by(account_longname=account_name)
-                .first()
-            )
+            account = (AccountInfo.query.filter_by(
+                user_id=current_user.username).filter_by(
+                    account_longname=account_name).first())
         if not account:
             title = form_title = "Include Custody Account Info"
             form.account_longname.data = account_name
@@ -465,9 +455,10 @@ def custody_account():
             form.account_blockchain_id.data = account.account_blockchain_id
             form.notes.data = account.notes
 
-    return render_template(
-        "custody_account.html", form=form, form_title=form_title, title=title
-    )
+    return render_template("custody_account.html",
+                           form=form,
+                           form_title=form_title,
+                           title=title)
 
 
 @node.route("/delete_baccount/<id>", methods=["GET", "POST"])
@@ -477,16 +468,15 @@ def delete_baccount(id):
     account = None
     type = request.args.get("type")
     if type == "account":
-        account = AccountInfo.query.filter_by(user_id=current_user.username).filter_by(
-            account_id=id
-        )
+        account = AccountInfo.query.filter_by(
+            user_id=current_user.username).filter_by(account_id=id)
     if type == "address":
         account = BitcoinAddresses.query.filter_by(
-            user_id=current_user.username
-        ).filter_by(address_id=id)
+            user_id=current_user.username).filter_by(address_id=id)
 
     if (account is None) or (account.count() == 0):
-        flash(f"{type.capitalize()} id: {id} not found. Nothing done.", "warning")
+        flash(f"{type.capitalize()} id: {id} not found. Nothing done.",
+              "warning")
         return redirect(url_for("node.bitcoin_monitor"))
     if account.first().user_id != current_user.username:
         abort(403)
@@ -500,6 +490,5 @@ def delete_baccount(id):
 @node.route("/import_addresses/", methods=["GET", "POST"])
 @login_required
 def import_addresses():
-    return render_template(
-        "import_addresses.html", title="Import Bitcoin Addresses"
-    )
+    return render_template("import_addresses.html",
+                           title="Import Bitcoin Addresses")

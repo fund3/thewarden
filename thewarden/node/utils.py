@@ -64,42 +64,28 @@ def dojo_get_settings(force=False):
     # Get and test settings. If not working get a new at
     logging.info("Getting Dojo settings")
     # check if dojo_settings are already stored
-
-    if current_app.config["DOJO_SETTINGS"]:
-        if (not force) and (current_app.config["DOJO_SETTINGS"]["token"] !=
-                            'error'):
-            logging.info(
-                f"Returning local Config settings of: {current_app.config['DOJO_SETTINGS']}"
-            )
-            return current_app.config["DOJO_SETTINGS"]
-    logging.info(
-        f"Local stored settings have an error or are empty. Requesting new token and settings."
-    )
-
-    user_info = User.query.filter_by(username=current_user.username).first()
-    onion_address = user_info.dojo_onion
-    api_key = user_info.dojo_apikey
-
+    from thewarden.pricing_engine.pricing import api_keys_class
+    api_keys_json = api_keys_class.loader()
+    onion_address = api_keys_json['dojo']['onion']
+    api_key = api_keys_json['dojo']['api_key']
     at = dojo_auth()
     try:
         logging.info("Trying to get token")
         logging.info(f"Received back from auth: {at}")
         token = at["authorizations"]["access_token"]
+        api_keys_json['dojo']['token'] = token
+        api_keys_class.saver(api_keys_json)
     except (KeyError, TypeError) as e:
         logging.warn(f"Unable to get Dojo Token: {e}")
         logging.warn(f"Received back from auth: {at}, setting token to error.")
         token = "error"
+        api_keys_json['dojo']['token'] = token
+        api_keys_class.saver(api_keys_json)
         logging.error(f"Error while getting token.")
 
     logging.info(f"Current token: {token}")
-    current_app.config["DOJO_SETTINGS"] = dict({
-        "onion": onion_address,
-        "api": api_key,
-        "token": token
-    })
-    logging.info(
-        f"Current app settings: {current_app.config['DOJO_SETTINGS']}")
-    return current_app.config["DOJO_SETTINGS"]
+
+    return (api_keys_json['dojo'])
 
 
 @memoized
@@ -125,37 +111,17 @@ def dojo_auth(force=False):
 
     TIME_OUT = 20
     logging.info("Starting DOJO Auth")
-
-    if current_app.config["DOJO_SETTINGS"]:
-        if not force:
-            logging.info("Config variable [DOJO SETTINGS] found. Using it.")
-            logging.info(
-                f"Current settings are: {current_app.config['DOJO_SETTINGS']}")
-            return current_app.config["DOJO_SETTINGS"]["token"]
-        else:
-            logging.info("[DOJO Auth] Force is True, getting a new token.")
-
-    try:
-        user_info = User.query.filter_by(
-            username=current_user.username).first()
-    except AttributeError:
-        logging.info("DOJO TEST: User not logged in")
-        try:
-            current_app.config["DOJO_SETTINGS"]["token"] = 'error'
-        except TypeError:
-            # If new user, dojo_settings are still None
-            current_app.config["DOJO_SETTINGS"] = {}
-            current_app.config["DOJO_SETTINGS"]["token"] = 'error'
-        return {"status": "error", "error": "User not logged in"}
-
-    # Check if variables are at database
-    onion_address = user_info.dojo_onion
-    APIKey = user_info.dojo_apikey
+    # Check if variables are saved
+    from thewarden.pricing_engine.pricing import api_keys_class
+    api_keys_json = api_keys_class.loader()
+    onion_address = api_keys_json['dojo']['onion']
+    APIKey = api_keys_json['dojo']['api_key']
+    token = api_keys_json['dojo']['token']
     if (onion_address is None) or (APIKey is None):
         logging.info("DOJO Auth: No Onion Address or API Key")
         auth_response = {"status": "error", "error": "missing config"}
         try:
-            current_app.config["DOJO_SETTINGS"]["token"] = 'error'
+            api_keys_json['dojo']['token'] = 'error'
         except TypeError:
             logging.info("Dojo_AUTH: Dojo Settings not found at database")
         return auth_response
@@ -180,18 +146,10 @@ def dojo_auth(force=False):
         auth_response = {"status": "error", "error": f"Error: {e}"}
         token = 'error'
     # Store for this session in Global Variable
-
-    current_app.config["DOJO_SETTINGS"] = dict({
-        "onion": onion_address,
-        "api": APIKey,
-        "token": token,
-        "auth_response": auth_response
-    })
+    api_keys_json['dojo']['token'] = token
+    api_keys_class.saver(api_keys_json)
     logging.info(f"DOJO Settings updated")
-    logging.info(
-        f"DOJO Settings: Stored token at app.config. New value: {current_app.config['DOJO_SETTINGS']}"
-    )
-    return (current_app.config['DOJO_SETTINGS']['auth_response'])
+    return (auth_response)
 
 
 @MWT(20)

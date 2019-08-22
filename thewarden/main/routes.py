@@ -33,7 +33,10 @@ def before_request():
         if current_user.is_authenticated:
             user_info = User.query.filter_by(
                 username=current_user.username).first()
-            if user_info.aa_apikey is None:
+            from thewarden.pricing_engine.pricing import api_keys_class
+            api_keys_json = api_keys_class.loader()
+            aa_apikey = api_keys_json['alphavantage']['api_key']
+            if aa_apikey is None:
                 logging.error("NO AA API KEY FOUND!")
                 return render_template("welcome.html", title="Welcome")
             transactions = Trades.query.filter_by(
