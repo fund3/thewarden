@@ -23,8 +23,6 @@ from thewarden.users.utils import (
     generate_pos_table,
     generatenav,
     heatmap_generator,
-    rt_price_grab,
-    price_ondate,
     regenerate_nav,
     transactions_fx,
     fxsymbol
@@ -39,7 +37,10 @@ from thewarden.node.utils import (
     tor_request,
 )
 from thewarden.users.decorators import MWT
-from thewarden.pricing_engine.pricing import price_data_fx, api_keys_class
+from thewarden.pricing_engine.pricing import (price_data_fx,
+                                              api_keys_class, PROVIDER_LIST,
+                                              PriceData, price_data_rt,
+                                              FX_PROVIDER_PRIORITY)
 
 api = Blueprint("api", __name__)
 
@@ -1561,6 +1562,7 @@ def getprice_ondate():
             return 0
         ticker = ticker.upper()
         get_date = datetime.strptime(date_input, "%Y-%m-%d")
+
         return price_ondate(ticker, get_date)
 
 
@@ -1858,9 +1860,9 @@ def load_bitmex_json():
 def realtime_user():
     try:
         # get fx rate
-        fx_rate = rt_price_grab('BTC', current_user.fx())
+        fx_rate = []
         fx_rate['base'] = current_user.fx()
-        fx_rate['fx_rate'] = fx_rate[current_user.fx()] / fx_rate['USD']
+        fx_rate['fx_rate'] = price_data_rt(current_user.fx(), FX_PROVIDER_PRIORITY)
         fx_rate['cross'] = "USD" + " / " + current_user.fx()
         return json.dumps(fx_rate)
     except Exception as e:
@@ -1869,23 +1871,25 @@ def realtime_user():
 
 @api.route("/test_pricing", methods=["GET"])
 def test_pricing():
-    from thewarden.pricing_engine.pricing import PROVIDER_LIST, PriceData, price_data_rt
-    provider = PROVIDER_LIST['cc_digital']
-    fx_provider = PROVIDER_LIST['cc_fx']
-    rt_provider = PROVIDER_LIST['cc_realtime_full']
-    a = PriceData("BTC", provider)
-    print(price_data_rt("aapl"))
+
+    # provider = PROVIDER_LIST['cc_digital']
+    # fx_provider = PROVIDER_LIST['cc_fx']
+    # rt_provider = PROVIDER_LIST['cc_realtime_full']
+    # a = PriceData("BTC", provider)
+    # print(price_data_rt("aapl"))
     # print (a.df)
     # print (a.errors)
     # print (provider.errors)
     # merge_fx = a.df_fx('BRL', fx_provider)
     # print (merge_fx)
+    fx = fx_rate(current_user.fx())
+    print(fx)
     return ("OK")
 
 @api.route("/positions_json", methods=["GET"])
 def positions_json():
-    from thewarden.users.utils import (positions)
+    from thewarden.users.utils import (positions, positions_dynamic)
     # Get all transactions
-    df = positions()
-    return(df.to_html())
+    df2 = positions_dynamic()
+    return(df2.to_html())
     # Get a list of all tickers in this portfolio

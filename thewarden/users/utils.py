@@ -1,30 +1,29 @@
 import configparser
 import csv
+import glob
 import hashlib
 import json
 import logging
 import os
-import glob
-import pickle
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import pandas as pd
-import requests
 from flask import flash, url_for
 from flask_login import current_user
 from flask_mail import Message
 
 from thewarden import db, mail
 from thewarden import mhp as mrh
-from thewarden.models import Trades, User
+from thewarden.models import Trades
 from thewarden.node.utils import tor_request
+from thewarden.pricing_engine.pricing import (FX_PROVIDER_PRIORITY,
+                                              HISTORICAL_PROVIDER_PRIORITY,
+                                              PROVIDER_LIST, PriceData,
+                                              api_keys_class,
+                                              multiple_price_grab, price_data,
+                                              price_data_fx, price_data_rt)
 from thewarden.users.decorators import MWT, memoized, timing
-from thewarden.pricing_engine.pricing import (PROVIDER_LIST,
-                                              PriceData, HISTORICAL_PROVIDER_PRIORITY,
-                                              FX_PROVIDER_PRIORITY, price_data,
-                                              price_data_fx, price_data_rt,
-                                              api_keys_class)
 
 # ---------------------------------------------------------
 # Helper Functions start here
@@ -47,37 +46,6 @@ except KeyError:
     PORTFOLIO_MIN_SIZE_NAV = 5
     logging.error("Could not find PORTFOLIO_MIN_SIZE_NAV at config.ini." +
                   " Defaulting to 5.")
-
-
-@MWT(5)
-@timing
-def multiple_price_grab(tickers, fx):
-    # tickers should be in comma sep string format like "BTC,ETH,LTC"
-    baseURL = \
-        "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="\
-        + tickers+"&tsyms="+fx+",BTC"
-    try:
-        request = tor_request(baseURL)
-    except requests.exceptions.ConnectionError:
-        return ("ConnectionError")
-    try:
-        data = request.json()
-    except AttributeError:
-        data = "ConnectionError"
-    return (data)
-
-
-@MWT(1)
-def rt_price_grab(ticker, user_fx='USD'):
-    baseURL =\
-        "https://min-api.cryptocompare.com/data/price?fsym=" + ticker + \
-        "&tsyms=USD,BTC," + user_fx
-    request = tor_request(baseURL)
-    try:
-        data = request.json()
-    except AttributeError:
-        data = "ConnectionError"
-    return (data)
 
 
 @MWT(timeout=5)
@@ -125,10 +93,10 @@ def cost_calculation(ticker):
     fifo_df['adjusted_cv'] = fifo_df['cash_value_fx'] * fifo_df['Q'] /\
         fifo_df['trade_quantity']
     cost_matrix['FIFO'] = {}
-    cost_matrix['FIFO']['cash'] = fifo_df['adjusted_cv'].sum()
-    cost_matrix['FIFO']['quantity'] = open_position
-    cost_matrix['FIFO']['count'] = int(fifo_df['trade_operation'].count())
-    cost_matrix['FIFO']['average_cost'] = fifo_df['adjusted_cv'].sum()\
+    cost_matrix['FIFO']['FIFO_cash'] = fifo_df['adjusted_cv'].sum()
+    cost_matrix['FIFO']['FIFO_quantity'] = open_position
+    cost_matrix['FIFO']['FIFO_count'] = int(fifo_df['trade_operation'].count())
+    cost_matrix['FIFO']['FIFO_average_cost'] = fifo_df['adjusted_cv'].sum()\
         / open_position
 
     # ---------------------------------------------------
@@ -149,66 +117,11 @@ def cost_calculation(ticker):
         lifo_df['trade_quantity']
 
     cost_matrix['LIFO'] = {}
-    cost_matrix['LIFO']['cash'] = lifo_df['adjusted_cv'].sum()
-    cost_matrix['LIFO']['quantity'] = open_position
-    cost_matrix['LIFO']['count'] = int(lifo_df['trade_operation'].count())
-    cost_matrix['LIFO']['average_cost'] = lifo_df['adjusted_cv'].sum() / open_position
+    cost_matrix['LIFO']['LIFO_cash'] = lifo_df['adjusted_cv'].sum()
+    cost_matrix['LIFO']['LIFO_quantity'] = open_position
+    cost_matrix['LIFO']['LIFO_count'] = int(lifo_df['trade_operation'].count())
+    cost_matrix['LIFO']['LIFO_average_cost'] = lifo_df['adjusted_cv'].sum() / open_position
     return (cost_matrix)
-
-
-@MWT(timeout=5)
-@timing
-def fx_rate():
-    # To avoid multiple requests to grab a new FX, the data is
-    # saved to a local json file and only refreshed if older than
-    # This grabs the current currency against USD
-    # REFRESH seconds
-    REFRESH = 60
-    filename = "thewarden/dailydata/USD_" + current_user.fx() + ".json"
-    logging.info(f"[FX] Requesting data for {current_user.fx()}")
-    try:
-        # Check if NAV saved file is recent enough to be used
-        # Local file has to have a saved time less than RENEW_NAV min old
-        # See config.ini to change RENEW_NAV
-        modified = datetime.utcfromtimestamp(os.path.getmtime(filename))
-        elapsed_seconds = (datetime.utcnow() - modified).total_seconds()
-        logging.info(f"[FX] Last time file was modified {modified} is " +
-                     f" {elapsed_seconds} seconds ago")
-        if (elapsed_seconds) < int(REFRESH):
-            with open(filename, 'r') as json_data:
-                rate = json.load(json_data)
-            logging.info(f"[FX] Success: Open {filename} - no need to request")
-            return (rate)
-        else:
-            logging.info("[FX] File found but too old - sending request")
-
-    except FileNotFoundError:
-        logging.warn(f"[FX] File not found" +
-                     " - rebuilding")
-    try:
-        # get fx rate
-        rate = rt_price_grab('BTC', current_user.fx())
-        rate['base'] = current_user.fx()
-        rate['fx_rate'] = rate[current_user.fx()] / rate['USD']
-        rate['cross'] = "USD" + " / " + current_user.fx()
-        with open(filename, 'w') as outfile:
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            json.dump(rate, outfile)
-            logging.info("[FX] Success - requested fx and saved")
-        return (rate)
-    except Exception as e:
-        rate = {}
-        flash(f"An error occured getting fx rate: {e}", "danger")
-        rate['error'] = (f"Error: {e}")
-        rate['fx_rate'] = 1
-        return json.dumps(rate)
-
-
-@MWT(timeout=5)
-def fx():
-    # Returns a float with the conversion of fx in the format of
-    # Currency / USD
-    return (float(fx_rate()['fx_rate']))
 
 
 def to_epoch(in_date):
@@ -216,6 +129,11 @@ def to_epoch(in_date):
 
 
 def find_fx(row, fx=None):
+    # row.name is the date being passed
+    # row['trade_currency'] is the base fx (the one where the trade was included)
+    # Create an instance of PriceData:
+    fx_df = PriceData(row['trade_currency'])
+    fx = fx_df.price_ondate(row.name)
     return price_ondate(current_user.fx(), row.name, row['trade_currency'])
 
 
@@ -261,7 +179,35 @@ def is_currency(id):
     return False
 
 
-@MWT(timeout=5)
+# ---------------- PANDAS HELPER FUNCTION --------------------------
+# This is a function to concatenate a function returning multiple columns into
+# a dataframe.
+def apply_and_concat(dataframe, field, func, column_names):
+    return pd.concat((
+        dataframe,
+        dataframe[field].apply(
+            lambda cell: pd.Series(func(cell), index=column_names))), axis=1)
+
+
+# ---------------- PANDAS HELPER FUNCTION --------------------------
+# Pandas helper function to unpack a dictionary stored within a
+# single pandas column cells.
+def df_unpack(df, column, fillna=None):
+    ret = None
+    if fillna is None:
+        ret = pd.concat([df, pd.DataFrame(
+            (d for idx, d in df[column].iteritems()))], axis=1)
+        del ret[column]
+    else:
+        ret = pd.concat([df, pd.DataFrame(
+            (d for idx, d in df[column].iteritems())).fillna(fillna)], axis=1)
+        del ret[column]
+    print(ret)
+    return ret
+
+
+
+@MWT(timeout=1)
 @timing
 def positions():
     # Method to create a user's position table
@@ -292,9 +238,103 @@ def positions():
     main_df = pd.merge(main_df, summary_table, on='trade_asset_ticker')
     # Include FIFO and LIFO calculations for each ticker
     main_df['cost_frame'] = main_df['trade_asset_ticker'].apply(cost_calculation)
+    # Unpack this into multiple columns now
+    main_df = df_unpack(main_df, 'cost_frame', 0)
+    main_df = df_unpack(main_df, 'FIFO', 0)
+    main_df = df_unpack(main_df, 'LIFO', 0)
     main_df['is_currency'] = main_df['trade_asset_ticker'].apply(is_currency)
     return main_df
 
+
+
+# This function is used to grab a single price that was missing from
+# the multiprice request. Since this is a bit more time intensive, it's
+# separated so it can be memoized for a period of time (this price will
+# not refresh as frequently)
+# default: timeout=30
+@MWT(timeout=30)
+def single_price(ticker):
+    return (price_data_rt(ticker), datetime.now())
+
+
+def positions_dynamic():
+    # This method is the realtime updater for the front page. It gets the
+    # position information from positions above and returns a dataframe
+    # with all the realtime pricing and positions data - this method
+    # should be called from an AJAX request at the front page in order
+    # to reduce loading time.
+    df = positions()
+    # Drop all currencies from table
+    df = df[df['is_currency'] == False]
+    list_of_tickers = df.trade_asset_ticker.unique().tolist()
+    tickers_string = ",".join(list_of_tickers)
+    # Let's try to get as many prices as possible into the df with a
+    # single request - first get all the prices in current currency and USD
+    print("REQUESTING MULTI PRICE")
+    multi_price = multiple_price_grab(tickers_string, 'USD,' + current_user.fx())
+
+    # PARSER Function to fing the ticker price inside the matrix. First part
+    # looks into the cryptocompare matrix. In the exception, if price is not
+    # found, it sends a request to other providers
+    def find_data(ticker):
+        try:
+            price = multi_price["RAW"][ticker][current_user.fx()]["PRICE"]
+            price = float(price * current_user.fx_rate_USD())
+            high = float(multi_price["RAW"][ticker][
+                current_user.fx()]["HIGHDAY"] * current_user.fx_rate_USD())
+            low = float(multi_price["RAW"][ticker][
+                current_user.fx()]["LOWDAY"] * current_user.fx_rate_USD())
+            chg = multi_price["RAW"][ticker][current_user.fx()]["CHANGEPCT24HOUR"]
+            mktcap = multi_price["RAW"][ticker][current_user.fx()]["MKTCAP"]
+            last_up_source = multi_price["RAW"][ticker][current_user.fx()]["LASTUPDATE"]
+            last_update = datetime.now()
+        except KeyError as e:
+            # Couldn't find price with CryptoCompare. Let's try a different source
+            # and populate data in the same format
+            try:
+                price, last_update = single_price(ticker)
+                high = low = chg = mktcap = last_up_source = 0
+                if price is None:
+                    flash(f"Price for ticker {ticker} not found. Error: {e}", "danger")
+                price = float(price * current_user.fx_rate_USD())
+            except Exception as e:
+                price = high = low = chg = mktcap = last_up_source = 0
+                print(f"Ticker: {ticker}. Error {e}")
+                flash(f"Ticker: {ticker}. Error {e}")
+        return price, last_update, high, low, chg, mktcap, last_up_source
+    df = apply_and_concat(df, 'trade_asset_ticker',
+                          find_data, ['price', 'last_update', '24h_high', '24h_low',
+                                      '24h_change', 'mktcap', 'last_up_source'])
+
+    # Now create additional columns with calculations
+    df['position_fx'] = df['price'] * df['trade_quantity']
+    df['allocation'] = df['position_fx'] / df['position_fx'].sum()
+    df['change_fx'] = df['position_fx'] * df['24h_change'] / 100
+    # Pnl and Cost calculations
+    df['breakeven'] = df['cash_value_fx'] / df['trade_quantity']
+    df['pnl_gross'] = df['position_fx'] - df['cash_value_fx']
+    df['pnl_net'] = df['pnl_gross'] - df['trade_fees_fx']
+    # FIFO and LIFO PnL calculations
+    df['LIFO_unreal'] = (df['price'] - df['LIFO_average_cost']) * \
+                        df['trade_quantity']
+    df['FIFO_unreal'] = (df['price'] - df['FIFO_average_cost']) * \
+                        df['trade_quantity']
+    df['LIFO_real'] = df['pnl_net'] - df['LIFO_unreal']
+    df['FIFO_real'] = df['pnl_net'] - df['FIFO_unreal']
+    df['LIFO_unrealized_be'] = df['price'] - \
+                               (df['LIFO_unreal'] / df['trade_quantity'])
+    df['FIFO_unrealized_be'] = df['price'] - \
+                                (df['FIFO_unreal'] / df['trade_quantity'])
+
+
+    # Allocations below 0.01% are marked as small
+    # this is used to hide small and closed positions at html
+    df.loc[df.allocation <= 0.0001, 'small_pos'] = 'True'
+    df.loc[df.allocation >= 0.0001, 'small_pos'] = 'False'
+
+
+
+    return(df)
 
 @MWT(timeout=5)
 @timing
@@ -441,7 +481,7 @@ def generate_pos_table(user, fx, hidesmall):
     try:
         consol_table['btc_price'] =\
             consol_table.price_data_BTC.map(lambda v: v['PRICE'])
-    except TypeError:
+    except (TypeError, KeyError):
         consol_table['btc_price'] = 0
 
     consol_table['usd_position'] = consol_table['usd_price'] *\
@@ -874,198 +914,6 @@ def regenerate_nav():
     logging.info("Change to database - generated new NAV")
 
 
-def alphavantage_historical(id, to_symbol=None, market="USD"):
-    # Downloads Historical prices from Alphavantage
-    # Can handle both Stock and Crypto tickers - try stock first, then crypto
-    # Returns:
-    #  - data matrix (prices)
-    #  - notification messages: error, stock, crypto
-    #  - Metadata:
-    #     "Meta Data": {
-    #     "1. Information": "Daily Prices and Volumes for Digital Currency",
-    #     "2. Digital Currency Code": "BTC",
-    #     "3. Digital Currency Name": "Bitcoin",
-    #     "4. Market Code": "USD",
-    #     "5. Market Name": "United States Dollar",
-    #     "6. Last Refreshed": "2019-06-02 (end of day)",
-    #     "7. Time Zone": "UTC"
-    # },
-    # To limit the number of requests to ALPHAVANTAGE, if data is Downloaded
-    # successfully, it will be saved locally to be reused during that day
-
-    # Alphavantage Keys can be generated free at
-    # https://www.alphavantage.co/support/#api-key
-
-    user_info = User.query.filter_by(username=current_user.username).first()
-    api_keys_json = api_keys_class.loader()
-    api_key = api_keys_json['alphavantage']['api_key']
-    if api_key is None:
-        return("API Key is empty", "error", "empty")
-
-    if to_symbol is not None:
-        from_symbol = id
-        id = id + "_" + to_symbol
-
-    id = id.upper()
-
-    filename = "thewarden/alphavantage_data/" + id + "_" + market + ".aap"
-    meta_filename = "thewarden/alphavantage_data/" + id + "_" + market + "_meta.aap"
-
-    try:
-        # Check if saved file is recent enough to be used
-        # Local file has to have a modified time in today
-        today = datetime.now().date()
-        filetime = datetime.fromtimestamp(os.path.getctime(filename))
-
-        if filetime.date() == today:
-            logging.info("[ALPHAVANTAGE] Local file is fresh. Using it.")
-            id_pickle = pd.read_pickle(filename)
-            with open(meta_filename, 'rb') as handle:
-                meta_pickle = pickle.load(handle)
-            logging.info(f"Success: Open {filename} - no need to rebuild")
-            return (id_pickle, "downloaded", meta_pickle)
-        else:
-            logging.info("[ALPHAVANTAGE] File found but too old" +
-                         " - downloading a fresh one.")
-
-    except FileNotFoundError:
-        logging.info(f"[ALPHAVANTAGE] File not found for {id} - downloading")
-
-    if to_symbol is None:
-        baseURL = "https://www.alphavantage.co/query?"
-        func = "DIGITAL_CURRENCY_DAILY"
-        globalURL = baseURL + "function=" + func + "&symbol=" + id +\
-            "&market=" + market + "&outputsize=full&apikey=" + api_key
-        logging.info(f"[ALPHAVANTAGE] {id}: Downloading data")
-        logging.info(f"[ALPHAVANTAGE] Fetching URL: {globalURL}")
-    else:
-        baseURL = "https://www.alphavantage.co/query?"
-        func = "FX_DAILY"
-        globalURL = baseURL + "function=" + func + "&from_symbol=" + from_symbol +\
-            "&to_symbol=" + to_symbol + "&outputsize=full&apikey=" + api_key
-        logging.info(f"[ALPHAVANTAGE - FX] {id}: Downloading data")
-        logging.info(f"[ALPHAVANTAGE - FX] Fetching URL: {globalURL}")
-
-    try:
-        logging.info(f"[ALPHAVANTAGE] Requesting URL: {globalURL}")
-        request = tor_request(globalURL)
-    except requests.exceptions.ConnectionError:
-        logging.error("[ALPHAVANTAGE] Connection ERROR " +
-                      "while trying to download prices")
-        return("Connection Error", 'error', 'empty')
-    try:
-        data = request.json()
-    except AttributeError:
-        logging.error("[ALPHAVANTAGE] Connection ERROR " +
-                      "while trying to download prices")
-        return("Connection Error", 'error', 'empty')
-    # if FX request
-    try:
-        if to_symbol is not None:
-            meta_data = (data['Meta Data'])
-            logging.info(f"[ALPHAVANTAGE FX] Downloaded historical price for {id}")
-            df = pd.DataFrame.from_dict(data[
-                'Time Series FX (Daily)'],
-                orient="index")
-            # Save locally for reuse today
-            filename = "thewarden/alphavantage_data/" + id + "_" + market + ".aap"
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            df.to_pickle(filename)
-            meta_filename = "thewarden/alphavantage_data/" + id + "_" + market + "_meta.aap"
-            with open(meta_filename, 'wb') as handle:
-                pickle.dump(meta_data, handle,
-                            protocol=pickle.HIGHEST_PROTOCOL)
-            logging.info(f"[ALPHAVANTAGE FX] {filename}: Filed saved locally")
-            return (df, 'FX', meta_data)
-    except KeyError:
-        return("Invalid FX Ticker", "error", "empty")
-    # Try first as a crypto request
-    try:
-        meta_data = (data['Meta Data'])
-        logging.info(f"[ALPHAVANTAGE] Downloaded historical price for {id}")
-        df = pd.DataFrame.from_dict(data[
-            'Time Series (Digital Currency Daily)'],
-            orient="index")
-        # Save locally for reuse today
-        filename = "thewarden/alphavantage_data/" + id + "_" + market + ".aap"
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        df.to_pickle(filename)
-        meta_filename = "thewarden/alphavantage_data/" + id + "_" + market + "_meta.aap"
-        with open(meta_filename, 'wb') as handle:
-            pickle.dump(meta_data, handle,
-                        protocol=pickle.HIGHEST_PROTOCOL)
-        logging.info(f"[ALPHAVANTAGE] {filename}: Filed saved locally")
-        return (df, 'crypto', meta_data)
-    except KeyError:
-        logging.info(
-            f"[ALPHAVANTAGE] Ticker {id} not found as Crypto. Trying Stock.")
-        # Data not found - try as STOCK request
-        func = "TIME_SERIES_DAILY_ADJUSTED"
-        globalURL = baseURL + "function=" + func + "&symbol=" + id +\
-            "&market=" + market + "&outputsize=full&apikey=" +\
-            api_key
-        try:
-            request = tor_request(globalURL)
-        except requests.exceptions.ConnectionError:
-            logging.error("[ALPHAVANTAGE] Connection ERROR while" +
-                          " trying to download prices")
-            return("Connection Error", "error", "empty")
-        data = request.json()
-        try:
-            meta_data = (data['Meta Data'])
-            logging.info(
-                f"[ALPHAVANTAGE] Downloaded historical price for stock {id}")
-            df = pd.DataFrame.from_dict(
-                data['Time Series (Daily)'],
-                orient="index")
-            # Save locally for reuse today
-            filename = "thewarden/alphavantage_data/" + id + "_" + market + ".aap"
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
-            df.to_pickle(filename)
-            meta_filename = "thewarden/alphavantage_data/" + id + "_" + market + "_meta.aap"
-            with open(meta_filename, 'wb') as handle:
-                pickle.dump(meta_data, handle,
-                            protocol=pickle.HIGHEST_PROTOCOL)
-            logging.info(f"[ALPHAVANTAGE] {filename}: Filed saved locally")
-            return (df, "stock", meta_data)
-
-        except KeyError as e:
-            logging.warning(
-                f"[ALPHAVANTAGE] {id} not found as Stock or Crypto" +
-                f" - INVALID TICKER - {e}")
-            # Last Try - look at Bitmex for  this ticker
-            logging.info("Trying Bitmex as a final alternative for this ticker")
-            data = bitmex_gethistory(id)
-            try:
-                if data == 'error':  # In case a df is returned this raises an error
-                    return("Invalid Ticker", "error", "empty")
-            except ValueError:
-                # Match the AA data and save locally before returning
-                data = data.rename(columns={'close': '4a. close (USD)'})
-                data['4b. close (USD)'] = data['4a. close (USD)']
-                # Remove tzutc() time type from timestamp (otherwise merging would fail)
-                data['timestamp'] = pd.to_datetime(data['timestamp'], utc=False)
-
-                # Change timestamp column to index
-                data.set_index('timestamp', inplace=True)
-                # Convert to UTC and remove localization
-                data = data.tz_convert(None)
-                meta_data = "Bitmex Metadata not available"
-
-                # Save locally for reuse today
-                filename = "thewarden/alphavantage_data/" + id + "_" + market + ".aap"
-                os.makedirs(os.path.dirname(filename), exist_ok=True)
-                data.to_pickle(filename)
-                meta_filename = "thewarden/alphavantage_data/" + id + "_" + market + "_meta.aap"
-                with open(meta_filename, 'wb') as handle:
-                    pickle.dump(meta_data, handle,
-                                protocol=pickle.HIGHEST_PROTOCOL)
-                logging.info(f"[BITMEX] {filename}: Filed saved locally")
-                return (data, "bitmex", meta_data)
-
-    return("Invalid Ticker", "error", "empty")
-
-
 def send_reset_email(user):
     token = user.get_reset_token()
     msg = Message('Password Reset Request',
@@ -1147,37 +995,6 @@ def heatmap_generator():
     return (heatmap, heatmap_stats, years, cols)
 
 
-@MWT(timeout=5)
-def price_ondate(ticker, date_input, to_symbol=None):
-    # Returns the price of a ticker on a given date
-    # if to_symbol is passed, it assumes FX and ticker is from_symbol
-
-    if to_symbol is not None:
-        local_json, message, error = alphavantage_historical(ticker, to_symbol)
-    else:
-        local_json, message, error = alphavantage_historical(ticker)
-    if message == 'error':
-        return '0'
-    try:
-        prices = pd.DataFrame(local_json)
-        prices.reset_index(inplace=True)
-        # Reassign index to the date column
-        prices = prices.set_index(
-            list(prices.columns[[0]]))
-        if to_symbol is None:
-            prices = prices['4a. close (USD)']
-        else:
-            prices = prices['4. close']
-        # convert string date to datetime
-        prices.index = pd.to_datetime(prices.index)
-        # rename index to date to match dailynav name
-        prices.index.rename('date', inplace=True)
-        idx = prices[prices.index.get_loc(date_input, method='nearest')]
-    except KeyError:
-        return ("0")
-    return (idx)
-
-
 @memoized
 def fx_list():
     with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
@@ -1207,7 +1024,6 @@ def fxsymbol(fx, output='symbol'):
         out = fx_list[fx][output]
     except Exception:
         out = fx
-
     return (out)
 
 

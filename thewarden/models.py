@@ -56,12 +56,15 @@ class User(db.Model, UserMixin):
     def fx(self):
         return (f'{self.image_file}')
 
+    def fx_rate_data(self):
+        from thewarden.pricing_engine.pricing import fx_rate
+        return fx_rate()
+
     def fx_rate_USD(self):
-        # Returns the current fx matrix for this user
-        if self is not None:
-            from thewarden.users.utils import fx
-            return (fx())
-        else:
+        from thewarden.pricing_engine.pricing import fx_rate
+        try:
+            return float(fx_rate['fx_rate'])
+        except Exception:
             return (1)
 
     def __repr__(self):

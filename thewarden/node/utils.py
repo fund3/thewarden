@@ -9,7 +9,7 @@ from thewarden.models import User
 from thewarden.users.decorators import MWT, memoized
 
 
-@MWT(30)
+@MWT(1)
 # Requests within 30sec of each other will return the same result
 # This is an optimization variable, too short and the app will run
 # slow, too high and the data refresh will suffer.

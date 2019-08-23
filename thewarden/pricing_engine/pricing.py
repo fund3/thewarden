@@ -91,6 +91,22 @@ class PriceProvider:
         return (data)
 
 
+# PriceData Class Information
+# Example on how to create a ticker class (PriceData)
+# provider = PROVIDER_LIST['cc_digital']
+# btc = PriceData("BTC", provider)
+# btc.errors:       Any error messages
+# btc.provider:     Provider being used for requests
+# btc.filename:     Local filename where historical prices are saved
+# Other info:
+# btc.ticker, btc.last_update, btc.first_update, btc.last_close
+# btc.update_history(force=False)
+# btc.df_fx(currency, fx_provider): returns a df with
+#                                   prices and fx conversions
+# btc.price_ondate(date)
+# btc.price_parder(): do not use directly. This is used to parse
+#                     the requested data from the API provider
+# btc.realtime(provider): returns realtime price (float)
 @timing
 class PriceData():
     # All methods related to a ticker
@@ -416,13 +432,62 @@ def price_data_fx(ticker):
 
 # Returns realtime price for a ticker using the provider list
 # Price is returned in USD
-@MWT(timeout=2)
-def price_data_rt(ticker):
-    for provider in REALTIME_PROVIDER_PRIORITY:
+REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock']
+
+
+def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY):
+    for provider in priority_list:
+        print("running rt")
         price_data = PriceData(ticker, PROVIDER_LIST[provider])
         if price_data.realtime(PROVIDER_LIST[provider]) is not None:
             break
     return (price_data.realtime(PROVIDER_LIST[provider]))
+
+
+
+# Gets Currency data for current user
+@MWT(timeout=5)
+@timing
+def fx_rate(fx, base='USD'):
+    # This grabs the realtime current currency conversion against USD
+    if current_user is not None:
+        fx = current_user.fx()
+    try:
+        # get fx rate
+        rate = {}
+        rate['base'] = fx
+        rate['fx_rate'] = price_data_rt(fx, base, FX_PROVIDER_PRIORITY)
+        rate['cross'] = base + " / " + current_user.fx()
+        return (rate)
+    except Exception as e:
+        rate = {}
+        flash(f"An error occured getting fx rate: {e}", "danger")
+        rate['error'] = (f"Error: {e}")
+        rate['fx_rate'] = 1
+        return (rate)
+
+
+@timing
+# For Tables that need multiple prices at the same time, it's quicker to get
+# a single price request
+# This will attempt to get all prices from cryptocompare api and return a single df
+# If a price for a security is not found, other rt providers will be used.
+def multiple_price_grab(tickers, fx):
+    # tickers should be in comma sep string format like "BTC,ETH,LTC"
+    baseURL = \
+        "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="\
+        + tickers+"&tsyms="+fx
+    try:
+        request = tor_request(baseURL)
+    except requests.exceptions.ConnectionError:
+        return ("ConnectionError")
+    try:
+        data = request.json()
+    except AttributeError:
+        data = "ConnectionError"
+
+    df = pd.DataFrame.from_dict(data, orient='index')
+    return (data)
 
 
 # _____________________________________________
@@ -534,7 +599,7 @@ PROVIDER_LIST = {
 # Generic Requests will try each of these before failing
 HISTORICAL_PROVIDER_PRIORITY = [
     'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',  'bitmex']
-REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock']
+
 FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 
 
