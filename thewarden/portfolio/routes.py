@@ -4,8 +4,8 @@ from flask import render_template, Blueprint
 from flask_login import current_user, login_required
 from thewarden.models import Trades, User
 from datetime import datetime
-from thewarden.users.utils import (generatenav, generate_pos_table,
-                                   heatmap_generator, fxsymbol)
+from thewarden.users.utils import (generatenav, positions, heatmap_generator,
+                                   fxsymbol)
 
 portfolio = Blueprint("portfolio", __name__)
 
@@ -24,19 +24,16 @@ def before_request():
 @login_required
 # Home Page - details of the portfolio
 def portfolio_main():
-    user = current_user.username
     transactions = Trades.query.filter_by(user_id=current_user.username)
     if transactions.count() == 0:
         return render_template("empty.html")
     # Keep the line below as USD - prices are gathered in USD then converted
-    portfolio_data, pie_data = generate_pos_table(user, 'USD', False)
-    if portfolio_data == "empty":
+    portfolio_data, pie_data = positions()
+    if portfolio_data is None:
         return render_template("empty.html")
-    if portfolio_data == "ConnectionError":
-        return render_template("offline.html", title="Connection Error")
     return render_template(
         "portfolio.html",
-        title="Portfolio View",
+        title="Portfolio Dashboard",
         portfolio_data=portfolio_data,
         pie_data=pie_data,
     )

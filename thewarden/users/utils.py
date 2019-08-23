@@ -202,9 +202,7 @@ def df_unpack(df, column, fillna=None):
         ret = pd.concat([df, pd.DataFrame(
             (d for idx, d in df[column].iteritems())).fillna(fillna)], axis=1)
         del ret[column]
-    print(ret)
     return ret
-
 
 
 @MWT(timeout=1)
@@ -257,6 +255,7 @@ def single_price(ticker):
     return (price_data_rt(ticker), datetime.now())
 
 
+@MWT(timeout=1)
 def positions_dynamic():
     # This method is the realtime updater for the front page. It gets the
     # position information from positions above and returns a dataframe
@@ -270,9 +269,7 @@ def positions_dynamic():
     tickers_string = ",".join(list_of_tickers)
     # Let's try to get as many prices as possible into the df with a
     # single request - first get all the prices in current currency and USD
-    print("REQUESTING MULTI PRICE")
     multi_price = multiple_price_grab(tickers_string, 'USD,' + current_user.fx())
-
     # PARSER Function to fing the ticker price inside the matrix. First part
     # looks into the cryptocompare matrix. In the exception, if price is not
     # found, it sends a request to other providers
@@ -299,13 +296,11 @@ def positions_dynamic():
                 price = float(price * current_user.fx_rate_USD())
             except Exception as e:
                 price = high = low = chg = mktcap = last_up_source = 0
-                print(f"Ticker: {ticker}. Error {e}")
                 flash(f"Ticker: {ticker}. Error {e}")
         return price, last_update, high, low, chg, mktcap, last_up_source
     df = apply_and_concat(df, 'trade_asset_ticker',
                           find_data, ['price', 'last_update', '24h_high', '24h_low',
                                       '24h_change', 'mktcap', 'last_up_source'])
-
     # Now create additional columns with calculations
     df['position_fx'] = df['price'] * df['trade_quantity']
     df['allocation'] = df['position_fx'] / df['position_fx'].sum()
@@ -316,25 +311,41 @@ def positions_dynamic():
     df['pnl_net'] = df['pnl_gross'] - df['trade_fees_fx']
     # FIFO and LIFO PnL calculations
     df['LIFO_unreal'] = (df['price'] - df['LIFO_average_cost']) * \
-                        df['trade_quantity']
+                         df['trade_quantity']
     df['FIFO_unreal'] = (df['price'] - df['FIFO_average_cost']) * \
-                        df['trade_quantity']
+                         df['trade_quantity']
     df['LIFO_real'] = df['pnl_net'] - df['LIFO_unreal']
     df['FIFO_real'] = df['pnl_net'] - df['FIFO_unreal']
     df['LIFO_unrealized_be'] = df['price'] - \
-                               (df['LIFO_unreal'] / df['trade_quantity'])
+                              (df['LIFO_unreal'] / df['trade_quantity'])
     df['FIFO_unrealized_be'] = df['price'] - \
-                                (df['FIFO_unreal'] / df['trade_quantity'])
-
-
+                              (df['FIFO_unreal'] / df['trade_quantity'])
     # Allocations below 0.01% are marked as small
     # this is used to hide small and closed positions at html
     df.loc[df.allocation <= 0.0001, 'small_pos'] = 'True'
     df.loc[df.allocation >= 0.0001, 'small_pos'] = 'False'
 
+    # Prepare for delivery. Change index, add total
+    df.set_index('trade_asset_ticker', inplace=True)
+    df.loc['Total'] = 0
+    # Need to add only some fields - strings can't be added for example
+    columns_sum = ['cash_value_fx', 'trade_fees_fx', 'position_fx',
+                   'allocation', 'change_fx', 'pnl_gross', 'pnl_net',
+                   'LIFO_unreal', 'FIFO_unreal', 'LIFO_real', 'FIFO_real']
+    for field in columns_sum:
+        df.loc['Total', field] = df[field].sum()
+    # Create a pie chart data in HighCharts format excluding small pos
+    pie_data = []
+    for ticker in list_of_tickers:
+        if df.loc[ticker, 'small_pos'] == 'False':
+            tmp_dict = {}
+            tmp_dict['y'] = round(df.loc[ticker, 'allocation'] * 100, 2)
+            tmp_dict['name'] = ticker
+            pie_data.append(tmp_dict)
 
+    print(pie_data)
+    return(df, pie_data)
 
-    return(df)
 
 @MWT(timeout=5)
 @timing
