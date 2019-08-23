@@ -7,11 +7,6 @@
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <script src="static/highcharts.js"></script>
-
-<script>
-    var piechartjs = {{ pie_data| tojson | safe}};
-</script>
-
 <div class="row">
 
     <!-- Start of left side column with positions, etc -->
@@ -22,21 +17,21 @@
                 <tr>
                     <td id="pvalue" class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
                         title="Market Value in {{current_user.fx() | fxsymbol}}">
-                        {{current_user.fx() | fxsymbol}} {{"{:,.0f}".format(portfolio_data.TOTAL.fx_position)}}
+                        {{current_user.fx() | fxsymbol}} --
                     </td>
                     <td></td>
                     <td id="pvaluebtc" class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
                         title="Market Value in BTC">
-                        &#8383 {{"{:,.4f}".format(portfolio_data.TOTAL.btc_position)}}
+                        &#8383 --
                     </td>
                     <td></td>
                     <td id="chg1" class="redgreen border-bottom hinumber text-right">
-                        {{"{:+,.2f}".format(portfolio_data.TOTAL.chg_perc_24h)}}%
+                        --
 
                     </td>
                     <td></td>
                     <td id="chg2" class="redgreen border-bottom hinumber text-right">
-                        {{current_user.fx() | fxsymbol}} {{"{:+,.0f}".format(portfolio_data.TOTAL.chg_fx_24h)}}
+                        {{current_user.fx() | fxsymbol}} --
 
                     </td>
 
@@ -77,7 +72,7 @@
 
                     <td id="lstupd" class="border-bottom hinumbersmall text-right">
                         <span>
-                            {{(portfolio_data.TOTAL.refresh_time.strftime('%Y-%m-%d, %I:%M %p'))}}
+                            -
                         </span>
                         <button class="btn btn-clean" onClick="window.location.reload();">
                             <i class="fas fa-sync-alt" onClick="window.location.reload();"></i>
@@ -149,12 +144,8 @@
 
                     </tr>
                 </thead>
-
                 <tbody id="portfolio">
                     {% for position in portfolio_data %}
-
-                    {% if position != "TOTAL" %}
-
                     {% if portfolio_data[position]['small_pos']== 'False' %}
                     <tr id="ticker{{position}}">
                         {% else %}
@@ -164,22 +155,18 @@
                         <th class="align-middle" scope="row">{{position}}</th>
 
                         <td class="text-right align-middle">
-                            {{"{:,.4f}".format(portfolio_data[position]['position'])}}
+                            {{(portfolio_data[position]['trade_quantity'] | jformat(4))}}
 
                         </td>
 
                         <td class="text-right align-middle hinumbersmall">
                             <strong>{{current_user.fx() | fxsymbol}}
-                                {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['PRICE'] * current_user.fx_rate_USD())}}</strong>
+                                --
+                            </strong>
                         </td>
 
                         <td class="text-right small align-middle redgreen">
-                            {{"{:+,.2f}".format(portfolio_data[position]['chg_pct_24h'])}}%
-                            {% if (portfolio_data[position]['chg_pct_24h'] >= 0) %}
-                            <img src="static/images/btc_up.png" width="10" height="10"></img>
-                            {% else %}
-                            <img src="static/images/btc_down.png" width="10" height="10"></img>
-                            {% endif %}
+
                         </td>
 
                         <td class="text-center align-middle">
@@ -187,11 +174,11 @@
                         </td>
 
                         <td class="text-right align-middle">
-                            {{current_user.fx() | fxsymbol}}{{"{:,.0f}".format(portfolio_data[position]['fx_position'])}}
+
                         </td>
 
                         <td class="text-right small align-middle">
-                            {{"{:,.2f}".format(portfolio_data[position]['fx_perc']*100)}}%
+
                         </td>
 
 
@@ -199,7 +186,6 @@
 
                     </tr>
 
-                    {% endif %}
                     {% endfor %}
 
 
@@ -279,22 +265,21 @@
 
                             <td class="text-right align-middle">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['fx_position'])}}
+
                             </td>
                             <td class="text-right align-middle redgreen">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['realized_pnl'])}}
+
                             </td>
 
                             <td class="text-right align-middle redgreen">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['unrealized_pnl'])}}
+
                             </td>
 
                             <td class="text-right align-middle small">
                                 {% if portfolio_data[position]['small_pos'] == 'False' %}
-                                {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['LIFO']['unrealized_be'])}}
+                                000
                                 {% else %}
                                 ---
                                 {% endif %}
@@ -303,17 +288,17 @@
 
                             <td class="text-right align-middle">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['total_fees_fx'])}}
+
                             </td>
 
                             <td class="text-right align-middle redgreen">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['total_pnl_net_fx'])}}
+
                             </td>
 
                             <td class="text-right align-middle">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['breakeven'])}}
+
                             </td>
 
                         </tr>
@@ -325,7 +310,7 @@
 
                             <td class="text-right align-middle">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data['TOTAL']['fx_position'])}}
+
 
                             </td>
 
@@ -342,12 +327,12 @@
 
                             <td class="text-right align-middle">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data['TOTAL'].trade_fees_fx)}}
+
                             </td>
 
                             <td class="text-right align-middle">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data['TOTAL'].total_pnl_net_fx)}}
+
                             </td>
 
                             <td class="text-right small align-middle">
@@ -401,7 +386,7 @@
                     <tbody id="portfolio">
                         {% for position in portfolio_data %}
 
-                        {% if position != "TOTAL" %}
+                        {% if position != "Total" %}
 
                         {% if portfolio_data[position]['small_pos']== 'False' %}
                         <tr id="ticker{{position}}">
@@ -413,25 +398,23 @@
 
                             <td class="text-right align-middle">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['fx_position'])}}
 
                             </td>
 
 
                             <td class="text-right align-middle redgreen">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['FIFO']['realized_pnl'])}}
+
                             </td>
 
                             <td class="text-right align-middle redgreen">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['FIFO']['unrealized_pnl'])}}
+
                             </td>
 
                             <td class="text-right align-middle small">
                                 {% if portfolio_data[position]['small_pos'] == 'False' %}
-                                {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['cost_matrix']['FIFO']['unrealized_be'])}}
+                                000
                                 {% else %}
                                 ---
                                 {% endif %}
@@ -440,17 +423,17 @@
 
                             <td class="text-right align-middle">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['total_fees_fx'])}}
+
                             </td>
 
                             <td class="text-right align-middle redgreen">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['total_pnl_net_fx'])}}
+
                             </td>
 
                             <td class="text-right align-middle">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data[position]['breakeven'])}}
+
                             </td>
 
                         </tr>
@@ -462,7 +445,7 @@
 
                             <td class="text-right align-middle">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data['TOTAL']['fx_position'])}}
+
 
                             </td>
 
@@ -479,12 +462,11 @@
 
                             <td class="text-right align-middle">
                                 {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data['TOTAL'].trade_fees_fx)}}
+
                             </td>
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
-                                {{"{:,.0f}".format(portfolio_data['TOTAL'].total_pnl_net_fx)}}
+
                             </td>
 
                             <td class="text-right small align-middle">
@@ -556,63 +538,41 @@
 
                         <td class="text-right align-middle hinumbersmall">
                             <strong> {{current_user.fx() | fxsymbol}}
-                                {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['PRICE'] * current_user.fx_rate_USD())}}
+
                             </strong>
                         </td>
 
                         <td class="text-right align-middle small redgreen">
-                            {{"{:+,.2f}".format(portfolio_data[position]['usd_price_data']['CHANGEPCT24HOUR'])}}%
-                            {% if (portfolio_data[position]['usd_price_data']['CHANGEPCT24HOUR'] >= 0) %}
-                            <img src="static/images/btc_up.png" width="15" height="15"></img>
-                            {% else %}
-                            <img src="static/images/btc_down.png" width="15" height="15"></img>
-                            {% endif %}
+
                         </td>
 
                         <td class="text-center small">
-                            {{current_user.fx() | fxsymbol}}
-                            {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['LOWDAY'] * current_user.fx_rate_USD())}}</br>
-                            {{current_user.fx() | fxsymbol}}
-                            {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['HIGHDAY'] * current_user.fx_rate_USD())}}
+
                         </td>
 
-                        {%if position.upper() == "GBTC"%}
-                        <td class="text-left align-middle" style="color: lightslategray;" colspan="4">
-                            {% if 'GBTC_premium' in portfolio_data[position]['btc_price']%}
-                            <strong>GBTC currently trading at a premium of
-                                {{(portfolio_data[position]['btc_price']['GBTC_premium'] * 100) | jformat(2)}}%<br></strong>
-                            Fair value is
-                            {{current_user.fx() | fxsymbol}}{{(portfolio_data[position]['btc_price']['GBTC_fair'] * current_user.fx_rate_USD()) | jformat(2)}}
-                            {%else%}
-                            -
-                            {%endif%}
-                        </td>
+
                         {%else%}
                         <td class="text-right align-middle small">
-                            {{"{:,.0f}".format(portfolio_data[position]['usd_price_data']['VOLUMEDAY'])}}
-                            {{position}}
+
                         </td>
 
 
                         <td class="text-right align-middle small">
-                            {{current_user.fx() | fxsymbol}}
-                            {{"{:,.2f}".format(portfolio_data[position]['usd_price_data']['MKTCAP']/1000000000 * current_user.fx_rate_USD())}}
-                            Bl
+
                         </td>
 
                         <td class="text-right align-middle small">
 
-                            {{portfolio_data[position]['usd_price_data']['LASTUPDATE']}} UTC
                         </td>
 
 
                         <td class="text-right align-middle small">
-                            {{portfolio_data[position]['usd_price_data']['LASTMARKET']}}
+
                         </td>
                         {%endif%}
 
                     </tr>
-                    {% endif %}
+
                     {% endfor %}
 
 

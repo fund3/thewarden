@@ -273,6 +273,7 @@ def positions_dynamic():
     # PARSER Function to fing the ticker price inside the matrix. First part
     # looks into the cryptocompare matrix. In the exception, if price is not
     # found, it sends a request to other providers
+
     def find_data(ticker):
         try:
             price = multi_price["RAW"][ticker][current_user.fx()]["PRICE"]
@@ -328,12 +329,31 @@ def positions_dynamic():
     # Prepare for delivery. Change index, add total
     df.set_index('trade_asset_ticker', inplace=True)
     df.loc['Total'] = 0
+    # Column names can't be tuples - otherwise json generates an error
+    df.rename(columns={
+        ('trade_quantity', 'B'): 'trade_quantity_B',
+        ('trade_quantity', 'S'): 'trade_quantity_S',
+        ('trade_quantity', 'D'): 'trade_quantity_D',
+        ('trade_quantity', 'W'): 'trade_quantity_W',
+        ('cash_value_fx', 'B'): 'cash_value_fx_B',
+        ('cash_value_fx', 'S'): 'cash_value_fx_S',
+        ('cash_value_fx', 'D'): 'cash_value_fx_D',
+        ('cash_value_fx', 'W'): 'cash_value_fx_W',
+        ('trade_fees_fx', 'B'): 'trade_fees_fx_B',
+        ('trade_fees_fx', 'S'): 'trade_fees_fx_S',
+        ('trade_fees_fx', 'D'): 'trade_fees_fx_D',
+        ('trade_fees_fx', 'W'): 'trade_fees_fx_W'
+
+        }, inplace=True)
+    df['last_update'] = df['last_update'].astype(str)
     # Need to add only some fields - strings can't be added for example
     columns_sum = ['cash_value_fx', 'trade_fees_fx', 'position_fx',
                    'allocation', 'change_fx', 'pnl_gross', 'pnl_net',
                    'LIFO_unreal', 'FIFO_unreal', 'LIFO_real', 'FIFO_real']
     for field in columns_sum:
         df.loc['Total', field] = df[field].sum()
+    # Set the portfolio last update to be equal to the latest update in df
+    df.loc['Total', 'last_up_source'] = df['last_up_source'].max()
     # Create a pie chart data in HighCharts format excluding small pos
     pie_data = []
     for ticker in list_of_tickers:
@@ -342,333 +362,334 @@ def positions_dynamic():
             tmp_dict['y'] = round(df.loc[ticker, 'allocation'] * 100, 2)
             tmp_dict['name'] = ticker
             pie_data.append(tmp_dict)
-
-    print(pie_data)
     return(df, pie_data)
 
 
-@MWT(timeout=5)
-@timing
-def generate_pos_table(user, fx, hidesmall):
-    # This function creates all relevant data for the main page
-    # Including current positions, cost and other market info
-    # Gets all transactions
-    df = transactions_fx()
-    # Create string of tickers and grab all prices in one request
-    list_of_tickers = df.trade_asset_ticker.unique().tolist()
-    ticker_str = ""
-    for ticker in list_of_tickers:
-        ticker_str = ticker_str + "," + ticker
-    price_list = multiple_price_grab(ticker_str, fx)
-    from thewarden.pricing_engine.pricing import api_keys_class
-    api_keys_json = api_keys_class.loader()
-    aa_apikey = api_keys_json['alphavantage']['api_key']
-    if price_list == "ConnectionError":
-        return ("ConnectionError", "ConnectionError")
+# ------------------------------------------------
+# MARKED FOR DELETION ----------------------------
+# ------------------------------------------------
+# @MWT(timeout=5)
+# @timing
+# def generate_pos_table(user, fx, hidesmall):
+#     # This function creates all relevant data for the main page
+#     # Including current positions, cost and other market info
+#     # Gets all transactions
+#     df = transactions_fx()
+#     # Create string of tickers and grab all prices in one request
+#     list_of_tickers = df.trade_asset_ticker.unique().tolist()
+#     ticker_str = ""
+#     for ticker in list_of_tickers:
+#         ticker_str = ticker_str + "," + ticker
+#     price_list = multiple_price_grab(ticker_str, fx)
+#     from thewarden.pricing_engine.pricing import api_keys_class
+#     api_keys_json = api_keys_class.loader()
+#     aa_apikey = api_keys_json['alphavantage']['api_key']
+#     if price_list == "ConnectionError":
+#         return ("ConnectionError", "ConnectionError")
 
-    summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
-                                ["cash_value", "trade_fees", "trade_quantity",
-                                 "cash_value_fx", "trade_fees_fx"]].sum()
+#     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
+#                                 ["cash_value", "trade_fees", "trade_quantity",
+#                                  "cash_value_fx", "trade_fees_fx"]].sum()
 
-    summary_table['count'] = df.groupby([
-        'trade_asset_ticker', 'trade_operation'])[
-        "cash_value_fx"].count()
+#     summary_table['count'] = df.groupby([
+#         'trade_asset_ticker', 'trade_operation'])[
+#         "cash_value_fx"].count()
 
-    consol_table = df.groupby(['trade_asset_ticker'])[
-                                ["cash_value", "trade_fees",
-                                 "trade_quantity", "cash_value_fx",
-                                 "trade_fees_fx"]].sum()
+#     consol_table = df.groupby(['trade_asset_ticker'])[
+#                                 ["cash_value", "trade_fees",
+#                                  "trade_quantity", "cash_value_fx",
+#                                  "trade_fees_fx"]].sum()
 
-    consol_table['symbol'] = consol_table.index.values
-    try:
-        consol_table = consol_table.drop('USD')
-        consol_table = consol_table.drop(current_user.fx())
-        if consol_table.empty:
-            return ("empty", "empty")
+#     consol_table['symbol'] = consol_table.index.values
+#     try:
+#         consol_table = consol_table.drop('USD')
+#         consol_table = consol_table.drop(current_user.fx())
+#         if consol_table.empty:
+#             return ("empty", "empty")
 
-    except KeyError:
-        logging.info(f"[generate_pos_table] No USD or {current_user.fx()} positions found")
+#     except KeyError:
+#         logging.info(f"[generate_pos_table] No USD or {current_user.fx()} positions found")
 
-    def find_price_data(ticker):
-        try:
-            price_data = price_list["RAW"][ticker]['USD']
-        except KeyError:
-            # Couldn't find price with CryptoCompare. Let's try a different source
-            # and populate data in the same format
-            base = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="
-            baseURL = base + ticker + "&apikey=" + aa_apikey
-            data = tor_request(baseURL)
-            price_data = {}
-            try:
-                data = data.json()
-                if "Global Quote" in data:
-                    price_data['PRICE'] = cleancsv(data['Global Quote']['05. price'])
-                    price_data['CHANGEPCT24HOUR'] = cleancsv(data[
-                                'Global Quote'][
-                                '10. change percent'])
-                    price_data['LASTUPDATE'] = "-"
-                    price_data['VOLUMEDAY'] = cleancsv(data[
-                                'Global Quote']['06. volume'])
-                    price_data['LOWDAY'] = cleancsv(data[
-                                'Global Quote']['04. low'])
-                    price_data['HIGHDAY'] = cleancsv(data[
-                                'Global Quote']['03. high'])
-                    price_data['MKTCAP'] = 0
-                    return (price_data)
-            except Exception as e:
-                price_data['PRICE'] = 0
-                price_data['CHANGEPCT24HOUR'] = 0
-                price_data['LASTUPDATE'] = 0
-                price_data['VOLUMEDAY'] = 0
-                price_data['LOWDAY'] = 0
-                price_data['HIGHDAY'] = 0
-                price_data['MKTCAP'] = 0
-                flash(f"Price for ticker {ticker} not found. Error: {e}", "danger")
-        return (price_data)
+#     def find_price_data(ticker):
+#         try:
+#             price_data = price_list["RAW"][ticker]['USD']
+#         except KeyError:
+#             # Couldn't find price with CryptoCompare. Let's try a different source
+#             # and populate data in the same format
+#             base = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="
+#             baseURL = base + ticker + "&apikey=" + aa_apikey
+#             data = tor_request(baseURL)
+#             price_data = {}
+#             try:
+#                 data = data.json()
+#                 if "Global Quote" in data:
+#                     price_data['PRICE'] = cleancsv(data['Global Quote']['05. price'])
+#                     price_data['CHANGEPCT24HOUR'] = cleancsv(data[
+#                                 'Global Quote'][
+#                                 '10. change percent'])
+#                     price_data['LASTUPDATE'] = "-"
+#                     price_data['VOLUMEDAY'] = cleancsv(data[
+#                                 'Global Quote']['06. volume'])
+#                     price_data['LOWDAY'] = cleancsv(data[
+#                                 'Global Quote']['04. low'])
+#                     price_data['HIGHDAY'] = cleancsv(data[
+#                                 'Global Quote']['03. high'])
+#                     price_data['MKTCAP'] = 0
+#                     return (price_data)
+#             except Exception as e:
+#                 price_data['PRICE'] = 0
+#                 price_data['CHANGEPCT24HOUR'] = 0
+#                 price_data['LASTUPDATE'] = 0
+#                 price_data['VOLUMEDAY'] = 0
+#                 price_data['LOWDAY'] = 0
+#                 price_data['HIGHDAY'] = 0
+#                 price_data['MKTCAP'] = 0
+#                 flash(f"Price for ticker {ticker} not found. Error: {e}", "danger")
+#         return (price_data)
 
-    def find_price_data_BTC(ticker):
-        try:
-            price_data = price_list["RAW"][ticker]['BTC']
-            return (price_data)
-        except KeyError:
-            # Couldn't find price with CryptoCompare. Let's try a different source
-            # and populate data in the same format
-            base = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="
-            baseURL = base + ticker + "&apikey=" + aa_apikey
-            data = tor_request(baseURL)
-            btcURL = "https://www.alphavantage.co/query?" +\
-                     "function=CURRENCY_EXCHANGE_RATE&" +\
-                     "from_currency=BTC&to_currency=USD&apikey=" +\
-                     aa_apikey
-            data_BTC = tor_request(btcURL)
-            price_data = {}
-            try:
-                data = data.json()
-                data_BTC = data_BTC.json()
-                price_BTC = data_BTC[
-                    "Realtime Currency Exchange Rate"][
-                    "5. Exchange Rate"]
-                price_BTC = cleancsv(price_BTC)
-                if price_BTC == 0:
-                    price_BTC = 1
-                if "Global Quote" in data:
-                    price_data['PRICE'] = float(
-                        cleancsv(data['Global Quote']['05. price']) /
-                        price_BTC)
-                    if ticker.upper() == "GBTC":
-                        # For GBTC, let's calculate the premium to NAV
-                        # Each GBTC share contains 0.00099727 bitcoins
-                        price_data['GBTC_fair'] = float(price_BTC * 0.00099727) *\
-                            current_user.fx_rate_USD()
-                        price_data['GBTC_premium'] = float(
-                            cleancsv(data['Global Quote']['05. price']) /
-                                     price_data['GBTC_fair']) - 1
-                    return (price_data)
-            except Exception as e:
-                price_data['PRICE'] = 0
-                flash(f"Price for ticker {ticker} not found. Error: {e}", "danger")
-        return (price_data)
+#     def find_price_data_BTC(ticker):
+#         try:
+#             price_data = price_list["RAW"][ticker]['BTC']
+#             return (price_data)
+#         except KeyError:
+#             # Couldn't find price with CryptoCompare. Let's try a different source
+#             # and populate data in the same format
+#             base = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol="
+#             baseURL = base + ticker + "&apikey=" + aa_apikey
+#             data = tor_request(baseURL)
+#             btcURL = "https://www.alphavantage.co/query?" +\
+#                      "function=CURRENCY_EXCHANGE_RATE&" +\
+#                      "from_currency=BTC&to_currency=USD&apikey=" +\
+#                      aa_apikey
+#             data_BTC = tor_request(btcURL)
+#             price_data = {}
+#             try:
+#                 data = data.json()
+#                 data_BTC = data_BTC.json()
+#                 price_BTC = data_BTC[
+#                     "Realtime Currency Exchange Rate"][
+#                     "5. Exchange Rate"]
+#                 price_BTC = cleancsv(price_BTC)
+#                 if price_BTC == 0:
+#                     price_BTC = 1
+#                 if "Global Quote" in data:
+#                     price_data['PRICE'] = float(
+#                         cleancsv(data['Global Quote']['05. price']) /
+#                         price_BTC)
+#                     if ticker.upper() == "GBTC":
+#                         # For GBTC, let's calculate the premium to NAV
+#                         # Each GBTC share contains 0.00099727 bitcoins
+#                         price_data['GBTC_fair'] = float(price_BTC * 0.00099727) *\
+#                             current_user.fx_rate_USD()
+#                         price_data['GBTC_premium'] = float(
+#                             cleancsv(data['Global Quote']['05. price']) /
+#                                      price_data['GBTC_fair']) - 1
+#                     return (price_data)
+#             except Exception as e:
+#                 price_data['PRICE'] = 0
+#                 flash(f"Price for ticker {ticker} not found. Error: {e}", "danger")
+#         return (price_data)
 
-    consol_table['price_data_USD'] = consol_table['symbol'].\
-        apply(find_price_data)
-    consol_table['price_data_BTC'] = consol_table['symbol'].\
-        apply(find_price_data_BTC)
+#     consol_table['price_data_USD'] = consol_table['symbol'].\
+#         apply(find_price_data)
+#     consol_table['price_data_BTC'] = consol_table['symbol'].\
+#         apply(find_price_data_BTC)
 
-    try:
-        consol_table['usd_price'] =\
-            consol_table.price_data_USD.map(lambda v: v['PRICE'])
-    except (KeyError, TypeError) as e:
-        flash(f"There was an error generating positions: {e}", "danger")
-        consol_table['usd_price'] = 0
+#     try:
+#         consol_table['usd_price'] =\
+#             consol_table.price_data_USD.map(lambda v: v['PRICE'])
+#     except (KeyError, TypeError) as e:
+#         flash(f"There was an error generating positions: {e}", "danger")
+#         consol_table['usd_price'] = 0
 
-    consol_table['fx_price'] = consol_table['usd_price'] * current_user.fx_rate_USD()
+#     consol_table['fx_price'] = consol_table['usd_price'] * current_user.fx_rate_USD()
 
-    try:
-        consol_table['chg_pct_24h'] =\
-            consol_table.price_data_USD.map(lambda v: v['CHANGEPCT24HOUR'])
-    except KeyError:
-        consol_table['chg_pct_24h'] = 0
+#     try:
+#         consol_table['chg_pct_24h'] =\
+#             consol_table.price_data_USD.map(lambda v: v['CHANGEPCT24HOUR'])
+#     except KeyError:
+#         consol_table['chg_pct_24h'] = 0
 
-    try:
-        consol_table['btc_price'] =\
-            consol_table.price_data_BTC.map(lambda v: v['PRICE'])
-    except (TypeError, KeyError):
-        consol_table['btc_price'] = 0
+#     try:
+#         consol_table['btc_price'] =\
+#             consol_table.price_data_BTC.map(lambda v: v['PRICE'])
+#     except (TypeError, KeyError):
+#         consol_table['btc_price'] = 0
 
-    consol_table['usd_position'] = consol_table['usd_price'] *\
-        consol_table['trade_quantity']
-    consol_table['btc_position'] = consol_table['btc_price'] *\
-        consol_table['trade_quantity']
-    consol_table['fx_position'] = consol_table['usd_position'] * current_user.fx_rate_USD()
+#     consol_table['usd_position'] = consol_table['usd_price'] *\
+#         consol_table['trade_quantity']
+#     consol_table['btc_position'] = consol_table['btc_price'] *\
+#         consol_table['trade_quantity']
+#     consol_table['fx_position'] = consol_table['usd_position'] * current_user.fx_rate_USD()
 
-    consol_table['chg_usd_24h'] =\
-        consol_table['chg_pct_24h']/100*consol_table['usd_position']
-    consol_table['chg_fx_24h'] =\
-        consol_table['chg_pct_24h']/100*consol_table['fx_position']
+#     consol_table['chg_usd_24h'] =\
+#         consol_table['chg_pct_24h']/100*consol_table['usd_position']
+#     consol_table['chg_fx_24h'] =\
+#         consol_table['chg_pct_24h']/100*consol_table['fx_position']
 
-    consol_table['usd_perc'] = consol_table['usd_position']\
-        / consol_table['usd_position'].sum()
-    consol_table['btc_perc'] = consol_table['btc_position']\
-        / consol_table['btc_position'].sum()
-    consol_table['fx_perc'] = consol_table['fx_position']\
-        / consol_table['fx_position'].sum()
+#     consol_table['usd_perc'] = consol_table['usd_position']\
+#         / consol_table['usd_position'].sum()
+#     consol_table['btc_perc'] = consol_table['btc_position']\
+#         / consol_table['btc_position'].sum()
+#     consol_table['fx_perc'] = consol_table['fx_position']\
+#         / consol_table['fx_position'].sum()
 
-    consol_table.loc[consol_table.fx_perc <= 0.001, 'small_pos'] = 'True'
-    consol_table.loc[consol_table.fx_perc >= 0.001, 'small_pos'] = 'False'
+#     consol_table.loc[consol_table.fx_perc <= 0.001, 'small_pos'] = 'True'
+#     consol_table.loc[consol_table.fx_perc >= 0.001, 'small_pos'] = 'False'
 
-    # Should rename this to breakeven:
-    consol_table['average_cost'] = consol_table['cash_value']\
-        / consol_table['trade_quantity']
-    consol_table['average_cost_fx'] = consol_table['cash_value_fx']\
-        / consol_table['trade_quantity']
+#     # Should rename this to breakeven:
+#     consol_table['average_cost'] = consol_table['cash_value']\
+#         / consol_table['trade_quantity']
+#     consol_table['average_cost_fx'] = consol_table['cash_value_fx']\
+#         / consol_table['trade_quantity']
 
-    consol_table['total_pnl_gross_USD'] = consol_table['usd_position'] -\
-        consol_table['cash_value']
-    consol_table['total_pnl_gross_fx'] = consol_table['fx_position'] -\
-        consol_table['cash_value_fx']
+#     consol_table['total_pnl_gross_USD'] = consol_table['usd_position'] -\
+#         consol_table['cash_value']
+#     consol_table['total_pnl_gross_fx'] = consol_table['fx_position'] -\
+#         consol_table['cash_value_fx']
 
-    consol_table['total_pnl_net_USD'] = consol_table['usd_position'] -\
-        consol_table['cash_value'] - consol_table['trade_fees']
-    consol_table['total_pnl_net_fx'] = consol_table['fx_position'] -\
-        consol_table['cash_value_fx'] - consol_table['trade_fees_fx']
+#     consol_table['total_pnl_net_USD'] = consol_table['usd_position'] -\
+#         consol_table['cash_value'] - consol_table['trade_fees']
+#     consol_table['total_pnl_net_fx'] = consol_table['fx_position'] -\
+#         consol_table['cash_value_fx'] - consol_table['trade_fees_fx']
 
-    summary_table['symbol_operation'] = summary_table.index.values
-    # This is wrong:
-    summary_table['average_price'] = summary_table['cash_value'] /\
-        summary_table['trade_quantity']
-    summary_table['average_price_fx'] = summary_table['cash_value_fx'] /\
-        summary_table['trade_quantity']
+#     summary_table['symbol_operation'] = summary_table.index.values
+#     # This is wrong:
+#     summary_table['average_price'] = summary_table['cash_value'] /\
+#         summary_table['trade_quantity']
+#     summary_table['average_price_fx'] = summary_table['cash_value_fx'] /\
+#         summary_table['trade_quantity']
 
-    # create a dictionary in a better format to deliver to html table
-    table = {}
-    table['TOTAL'] = {}
-    table['TOTAL']['fx'] = current_user.fx()
-    table['TOTAL']['fx_symbol'] = fxsymbol(current_user.fx())
-    table['TOTAL']['cash_flow_value'] = summary_table.sum()['cash_value']
-    table['TOTAL']['cash_flow_value_fx'] = summary_table.sum()['cash_value_fx']
-    table['TOTAL']['avg_fx_rate'] = table['TOTAL']['cash_flow_value_fx'] /\
-        table['TOTAL']['cash_flow_value']
-    table['TOTAL']['trade_fees'] = summary_table.sum()['trade_fees']
-    table['TOTAL']['trade_fees_fx'] = summary_table.sum()['trade_fees_fx']
-    table['TOTAL']['trade_count'] = summary_table.sum()['count']
-    table['TOTAL']['usd_position'] = consol_table.sum()['usd_position']
-    table['TOTAL']['btc_position'] = consol_table.sum()['btc_position']
-    table['TOTAL']['fx_position'] = consol_table.sum()['fx_position']
-    table['TOTAL']['chg_usd_24h'] = consol_table.sum()['chg_usd_24h']
-    table['TOTAL']['chg_fx_24h'] = consol_table.sum()['chg_fx_24h']
-    table['TOTAL']['chg_perc_24h'] = ((table['TOTAL']['chg_usd_24h']
-                                       / table['TOTAL']['usd_position']))*100
-    table['TOTAL']['chg_perc_24h_fx'] = ((table['TOTAL']['chg_fx_24h']
-                                       / table['TOTAL']['fx_position']))*100
-    table['TOTAL']['total_pnl_gross_USD'] =\
-        consol_table.sum()['total_pnl_gross_USD']
-    table['TOTAL']['total_pnl_gross_fx'] =\
-        consol_table.sum()['total_pnl_gross_fx']
-    table['TOTAL']['total_pnl_net_USD'] =\
-        consol_table.sum()['total_pnl_net_USD']
-    table['TOTAL']['total_pnl_net_fx'] =\
-        consol_table.sum()['total_pnl_net_fx']
-    table['TOTAL']['refresh_time'] = datetime.now()
-    pie_data = []
+#     # create a dictionary in a better format to deliver to html table
+#     table = {}
+#     table['TOTAL'] = {}
+#     table['TOTAL']['fx'] = current_user.fx()
+#     table['TOTAL']['fx_symbol'] = fxsymbol(current_user.fx())
+#     table['TOTAL']['cash_flow_value'] = summary_table.sum()['cash_value']
+#     table['TOTAL']['cash_flow_value_fx'] = summary_table.sum()['cash_value_fx']
+#     table['TOTAL']['avg_fx_rate'] = table['TOTAL']['cash_flow_value_fx'] /\
+#         table['TOTAL']['cash_flow_value']
+#     table['TOTAL']['trade_fees'] = summary_table.sum()['trade_fees']
+#     table['TOTAL']['trade_fees_fx'] = summary_table.sum()['trade_fees_fx']
+#     table['TOTAL']['trade_count'] = summary_table.sum()['count']
+#     table['TOTAL']['usd_position'] = consol_table.sum()['usd_position']
+#     table['TOTAL']['btc_position'] = consol_table.sum()['btc_position']
+#     table['TOTAL']['fx_position'] = consol_table.sum()['fx_position']
+#     table['TOTAL']['chg_usd_24h'] = consol_table.sum()['chg_usd_24h']
+#     table['TOTAL']['chg_fx_24h'] = consol_table.sum()['chg_fx_24h']
+#     table['TOTAL']['chg_perc_24h'] = ((table['TOTAL']['chg_usd_24h']
+#                                        / table['TOTAL']['usd_position']))*100
+#     table['TOTAL']['chg_perc_24h_fx'] = ((table['TOTAL']['chg_fx_24h']
+#                                        / table['TOTAL']['fx_position']))*100
+#     table['TOTAL']['total_pnl_gross_USD'] =\
+#         consol_table.sum()['total_pnl_gross_USD']
+#     table['TOTAL']['total_pnl_gross_fx'] =\
+#         consol_table.sum()['total_pnl_gross_fx']
+#     table['TOTAL']['total_pnl_net_USD'] =\
+#         consol_table.sum()['total_pnl_net_USD']
+#     table['TOTAL']['total_pnl_net_fx'] =\
+#         consol_table.sum()['total_pnl_net_fx']
+#     table['TOTAL']['refresh_time'] = datetime.now()
+#     pie_data = []
 
-    # Drop small positions if hidesmall (small position = <0.01%)
-    if hidesmall:
-        consol_table = consol_table[consol_table.small_pos == 'False']
-        list_of_tickers = consol_table.index.unique().tolist()
+#     # Drop small positions if hidesmall (small position = <0.01%)
+#     if hidesmall:
+#         consol_table = consol_table[consol_table.small_pos == 'False']
+#         list_of_tickers = consol_table.index.unique().tolist()
 
-    for ticker in list_of_tickers:
-        # Check if this is a fiat currency. If so, ignore
-        found = [item for item in fx_list() if ticker in item]
-        if found != []:
-            continue
+#     for ticker in list_of_tickers:
+#         # Check if this is a fiat currency. If so, ignore
+#         found = [item for item in fx_list() if ticker in item]
+#         if found != []:
+#             continue
 
-        table[ticker] = {}
-        table[ticker]['breakeven'] = 0
-        if consol_table['small_pos'][ticker] == 'False':
-            tmp_dict = {}
-            tmp_dict['y'] = consol_table['fx_perc'][ticker]*100
-            tmp_dict['name'] = ticker
-            pie_data.append(tmp_dict)
-            table[ticker]['breakeven'] = \
-                (consol_table['price_data_USD'][ticker]['PRICE'] *
-                current_user.fx_rate_USD()) -\
-                (consol_table['total_pnl_net_fx'][ticker] /
-                 consol_table['trade_quantity'][ticker])
+#         table[ticker] = {}
+#         table[ticker]['breakeven'] = 0
+#         if consol_table['small_pos'][ticker] == 'False':
+#             tmp_dict = {}
+#             tmp_dict['y'] = consol_table['fx_perc'][ticker]*100
+#             tmp_dict['name'] = ticker
+#             pie_data.append(tmp_dict)
+#             table[ticker]['breakeven'] = \
+#                 (consol_table['price_data_USD'][ticker]['PRICE'] *
+#                 current_user.fx_rate_USD()) -\
+#                 (consol_table['total_pnl_net_fx'][ticker] /
+#                  consol_table['trade_quantity'][ticker])
 
-        table[ticker]['cost_matrix'] = cost_calculation(ticker)
-        table[ticker]['cost_matrix']['LIFO']['unrealized_pnl'] = \
-            (consol_table['fx_price'][ticker] -
-             table[ticker]['cost_matrix']['LIFO']['average_cost']) * \
-            consol_table['trade_quantity'][ticker]
-        table[ticker]['cost_matrix']['FIFO']['unrealized_pnl'] = \
-            (consol_table['fx_price'][ticker] -
-             table[ticker]['cost_matrix']['FIFO']['average_cost']) * \
-            consol_table['trade_quantity'][ticker]
+#         table[ticker]['cost_matrix'] = cost_calculation(ticker)
+#         table[ticker]['cost_matrix']['LIFO']['unrealized_pnl'] = \
+#             (consol_table['fx_price'][ticker] -
+#              table[ticker]['cost_matrix']['LIFO']['average_cost']) * \
+#             consol_table['trade_quantity'][ticker]
+#         table[ticker]['cost_matrix']['FIFO']['unrealized_pnl'] = \
+#             (consol_table['fx_price'][ticker] -
+#              table[ticker]['cost_matrix']['FIFO']['average_cost']) * \
+#             consol_table['trade_quantity'][ticker]
 
-        table[ticker]['cost_matrix']['LIFO']['realized_pnl'] = \
-            consol_table['total_pnl_net_fx'][ticker] -\
-            table[ticker]['cost_matrix']['LIFO']['unrealized_pnl']
-        table[ticker]['cost_matrix']['FIFO']['realized_pnl'] = \
-            consol_table['total_pnl_net_fx'][ticker] -\
-            table[ticker]['cost_matrix']['FIFO']['unrealized_pnl']
+#         table[ticker]['cost_matrix']['LIFO']['realized_pnl'] = \
+#             consol_table['total_pnl_net_fx'][ticker] -\
+#             table[ticker]['cost_matrix']['LIFO']['unrealized_pnl']
+#         table[ticker]['cost_matrix']['FIFO']['realized_pnl'] = \
+#             consol_table['total_pnl_net_fx'][ticker] -\
+#             table[ticker]['cost_matrix']['FIFO']['unrealized_pnl']
 
-        table[ticker]['cost_matrix']['LIFO']['unrealized_be'] =\
-            (consol_table['price_data_USD'][ticker]['PRICE'] *
-            current_user.fx_rate_USD()) - \
-            (table[ticker]['cost_matrix']['LIFO']['unrealized_pnl'] /
-             consol_table['trade_quantity'][ticker])
-        table[ticker]['cost_matrix']['FIFO']['unrealized_be'] =\
-            (consol_table['price_data_USD'][ticker]['PRICE'] *
-            current_user.fx_rate_USD()) - \
-            (table[ticker]['cost_matrix']['FIFO']['unrealized_pnl'] /
-             consol_table['trade_quantity'][ticker])
+#         table[ticker]['cost_matrix']['LIFO']['unrealized_be'] =\
+#             (consol_table['price_data_USD'][ticker]['PRICE'] *
+#             current_user.fx_rate_USD()) - \
+#             (table[ticker]['cost_matrix']['LIFO']['unrealized_pnl'] /
+#              consol_table['trade_quantity'][ticker])
+#         table[ticker]['cost_matrix']['FIFO']['unrealized_be'] =\
+#             (consol_table['price_data_USD'][ticker]['PRICE'] *
+#             current_user.fx_rate_USD()) - \
+#             (table[ticker]['cost_matrix']['FIFO']['unrealized_pnl'] /
+#              consol_table['trade_quantity'][ticker])
 
-        table[ticker]['position'] = consol_table['trade_quantity'][ticker]
-        table[ticker]['usd_position'] = consol_table['usd_position'][ticker]
-        table[ticker]['fx_position'] = consol_table['fx_position'][ticker]
-        table[ticker]['chg_pct_24h'] = consol_table['chg_pct_24h'][ticker]
-        table[ticker]['chg_usd_24h'] = consol_table['chg_usd_24h'][ticker]
-        table[ticker]['chg_fx_24h'] = consol_table['chg_fx_24h'][ticker]
-        table[ticker]['usd_perc'] = consol_table['usd_perc'][ticker]
-        table[ticker]['btc_perc'] = consol_table['btc_perc'][ticker]
-        table[ticker]['fx_perc'] = consol_table['fx_perc'][ticker]
-        table[ticker]['total_fees'] = consol_table['trade_fees'][ticker]
-        table[ticker]['total_fees_fx'] = consol_table['trade_fees_fx'][ticker]
+#         table[ticker]['position'] = consol_table['trade_quantity'][ticker]
+#         table[ticker]['usd_position'] = consol_table['usd_position'][ticker]
+#         table[ticker]['fx_position'] = consol_table['fx_position'][ticker]
+#         table[ticker]['chg_pct_24h'] = consol_table['chg_pct_24h'][ticker]
+#         table[ticker]['chg_usd_24h'] = consol_table['chg_usd_24h'][ticker]
+#         table[ticker]['chg_fx_24h'] = consol_table['chg_fx_24h'][ticker]
+#         table[ticker]['usd_perc'] = consol_table['usd_perc'][ticker]
+#         table[ticker]['btc_perc'] = consol_table['btc_perc'][ticker]
+#         table[ticker]['fx_perc'] = consol_table['fx_perc'][ticker]
+#         table[ticker]['total_fees'] = consol_table['trade_fees'][ticker]
+#         table[ticker]['total_fees_fx'] = consol_table['trade_fees_fx'][ticker]
 
-        table[ticker]['usd_price_data'] =\
-            consol_table['price_data_USD'][ticker]
-        try:
-            table[ticker]['usd_price_data']['LASTUPDATE'] =\
-                    (datetime.utcfromtimestamp(table[ticker]['usd_price_data']['LASTUPDATE']).strftime('%H:%M:%S'))
-        except TypeError:
-            table[ticker]['usd_price_data']['LASTUPDATE'] = 0
-        table[ticker]['btc_price'] = consol_table['price_data_BTC'][ticker]
-        table[ticker]['total_pnl_gross_USD'] =\
-            consol_table['total_pnl_gross_USD'][ticker]
-        table[ticker]['total_pnl_gross_fx'] =\
-            consol_table['total_pnl_gross_fx'][ticker]
-        table[ticker]['total_pnl_net_USD'] =\
-            consol_table['total_pnl_net_USD'][ticker]
-        table[ticker]['total_pnl_net_fx'] =\
-            consol_table['total_pnl_net_fx'][ticker]
-        table[ticker]['small_pos'] = consol_table['small_pos'][ticker]
-        table[ticker]['cash_flow_value'] =\
-            summary_table['cash_value'][ticker].to_dict()
-        table[ticker]['cash_flow_value_fx'] =\
-            summary_table['cash_value_fx'][ticker].to_dict()
-        table[ticker]['trade_fees'] = \
-            summary_table['trade_fees'][ticker].to_dict()
-        table[ticker]['trade_fees_fx'] = \
-            summary_table['trade_fees_fx'][ticker].to_dict()
-        table[ticker]['trade_quantity'] = \
-            summary_table['trade_quantity'][ticker].to_dict()
-        table[ticker]['count'] = summary_table['count'][ticker].to_dict()
-        table[ticker]['average_price'] = \
-            summary_table['average_price'][ticker].to_dict()
-        table[ticker]['average_price_fx'] = \
-            summary_table['average_price_fx'][ticker].to_dict()
+#         table[ticker]['usd_price_data'] =\
+#             consol_table['price_data_USD'][ticker]
+#         try:
+#             table[ticker]['usd_price_data']['LASTUPDATE'] =\
+#                     (datetime.utcfromtimestamp(table[ticker]['usd_price_data']['LASTUPDATE']).strftime('%H:%M:%S'))
+#         except TypeError:
+#             table[ticker]['usd_price_data']['LASTUPDATE'] = 0
+#         table[ticker]['btc_price'] = consol_table['price_data_BTC'][ticker]
+#         table[ticker]['total_pnl_gross_USD'] =\
+#             consol_table['total_pnl_gross_USD'][ticker]
+#         table[ticker]['total_pnl_gross_fx'] =\
+#             consol_table['total_pnl_gross_fx'][ticker]
+#         table[ticker]['total_pnl_net_USD'] =\
+#             consol_table['total_pnl_net_USD'][ticker]
+#         table[ticker]['total_pnl_net_fx'] =\
+#             consol_table['total_pnl_net_fx'][ticker]
+#         table[ticker]['small_pos'] = consol_table['small_pos'][ticker]
+#         table[ticker]['cash_flow_value'] =\
+#             summary_table['cash_value'][ticker].to_dict()
+#         table[ticker]['cash_flow_value_fx'] =\
+#             summary_table['cash_value_fx'][ticker].to_dict()
+#         table[ticker]['trade_fees'] = \
+#             summary_table['trade_fees'][ticker].to_dict()
+#         table[ticker]['trade_fees_fx'] = \
+#             summary_table['trade_fees_fx'][ticker].to_dict()
+#         table[ticker]['trade_quantity'] = \
+#             summary_table['trade_quantity'][ticker].to_dict()
+#         table[ticker]['count'] = summary_table['count'][ticker].to_dict()
+#         table[ticker]['average_price'] = \
+#             summary_table['average_price'][ticker].to_dict()
+#         table[ticker]['average_price_fx'] = \
+#             summary_table['average_price_fx'][ticker].to_dict()
 
-    return(table, pie_data)
+#     return(table, pie_data)
 
 
 @MWT(timeout=3)

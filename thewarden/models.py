@@ -54,13 +54,25 @@ class User(db.Model, UserMixin):
         return User.query.get(user_id)
 
     def fx(self):
+        # This is just the FX ticker
         return (f'{self.image_file}')
 
     def fx_rate_data(self):
+        # This includes a dict with more data about the fx:
+        # {
+        # "base": "USD",
+        # "symbol": "$",
+        # "name": "US Dollar",
+        # "name_plural": "US dollars",
+        # "cross": "USD / USD",
+        # "fx_rate": 1
+        # }
         from thewarden.pricing_engine.pricing import fx_rate
         return fx_rate()
 
     def fx_rate_USD(self):
+        # This includes purely the latest fx conversion rate
+        # returns 1 if there's an error
         from thewarden.pricing_engine.pricing import fx_rate
         try:
             return float(fx_rate['fx_rate'])

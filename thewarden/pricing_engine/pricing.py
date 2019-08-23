@@ -6,7 +6,6 @@
 # Standardized field names:
 # open, high, low, close, volume
 import os
-import sys
 import json
 import urllib.parse
 import pandas as pd
@@ -78,14 +77,12 @@ class PriceProvider:
             ticker = ticker.upper()
             globalURL = (self.base_url + "?" + self.ticker_field + "=" +
                          ticker + self.url_args)
-            print(globalURL)
             request = tor_request(globalURL)
             try:
                 data = request.json()
             except Exception:
                 try:  # Try again - some APIs return a json already
                     data = json.loads(request)
-                    print(data)
                 except Exception as e:
                     self.errors.append(e)
         return (data)
@@ -437,7 +434,6 @@ REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital', 'aa_realtime
 
 def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY):
     for provider in priority_list:
-        print("running rt")
         price_data = PriceData(ticker, PROVIDER_LIST[provider])
         if price_data.realtime(PROVIDER_LIST[provider]) is not None:
             break
@@ -448,23 +444,29 @@ def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY):
 # Gets Currency data for current user
 @MWT(timeout=5)
 @timing
-def fx_rate(fx, base='USD'):
+def fx_rate(fx=None, base='USD'):
+    from thewarden.users.utils import fxsymbol
     # This grabs the realtime current currency conversion against USD
     if current_user is not None:
         fx = current_user.fx()
     try:
         # get fx rate
         rate = {}
-        rate['base'] = fx
-        rate['fx_rate'] = price_data_rt(fx, base, FX_PROVIDER_PRIORITY)
-        rate['cross'] = base + " / " + current_user.fx()
-        return (rate)
+        rate['base'] = current_user.fx()
+        rate['symbol'] = fxsymbol(current_user.fx())
+        rate['name'] = fxsymbol(current_user.fx(), 'name')
+        rate['name_plural'] = fxsymbol(current_user.fx(), 'name_plural')
+        rate['cross'] = "USD" + " / " + current_user.fx()
+        try:
+            rate['fx_rate'] = (1 / float(price_data_rt(
+                                         current_user.fx(), FX_RT_PROVIDER_PRIORITY)))
+        except Exception:
+            rate['fx_rate'] = 1
     except Exception as e:
         rate = {}
-        flash(f"An error occured getting fx rate: {e}", "danger")
         rate['error'] = (f"Error: {e}")
         rate['fx_rate'] = 1
-        return (rate)
+    return (rate)
 
 
 @timing
@@ -601,5 +603,5 @@ HISTORICAL_PROVIDER_PRIORITY = [
     'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',  'bitmex']
 
 FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
-
+FX_RT_PROVIDER_PRIORITY = ['cc_realtime_full', 'aa_realtime_digital']
 

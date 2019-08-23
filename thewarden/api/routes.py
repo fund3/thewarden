@@ -18,14 +18,14 @@ from flask_login import current_user, login_required
 from thewarden import db, test_tor
 from thewarden import mhp as mrh
 from thewarden.models import (
-    Trades, listofcrypto, User, BitcoinAddresses, AccountInfo)
+    Trades, listofcrypto, BitcoinAddresses, AccountInfo)
 from thewarden.users.utils import (
-    generate_pos_table,
     generatenav,
     heatmap_generator,
     regenerate_nav,
     transactions_fx,
-    fxsymbol
+    fxsymbol,
+    positions_dynamic
 )
 from thewarden.node.utils import (
     dojo_auth,
@@ -38,9 +38,7 @@ from thewarden.node.utils import (
 )
 from thewarden.users.decorators import MWT
 from thewarden.pricing_engine.pricing import (price_data_fx,
-                                              api_keys_class, PROVIDER_LIST,
-                                              PriceData, price_data_rt,
-                                              FX_PROVIDER_PRIORITY)
+                                              api_keys_class)
 
 api = Blueprint("api", __name__)
 
@@ -1858,38 +1856,24 @@ def load_bitmex_json():
 @api.route("/realtime_user", methods=["GET"])
 # Returns current BTC price and FX rate for current user
 def realtime_user():
-    try:
-        # get fx rate
-        fx_rate = []
-        fx_rate['base'] = current_user.fx()
-        fx_rate['fx_rate'] = price_data_rt(current_user.fx(), FX_PROVIDER_PRIORITY)
-        fx_rate['cross'] = "USD" + " / " + current_user.fx()
-        return json.dumps(fx_rate)
-    except Exception as e:
-        return (f"Error: {e}")
+    fx_rate = current_user.fx_rate_data()
+    return json.dumps(fx_rate)
 
-
-@api.route("/test_pricing", methods=["GET"])
-def test_pricing():
-
-    # provider = PROVIDER_LIST['cc_digital']
-    # fx_provider = PROVIDER_LIST['cc_fx']
-    # rt_provider = PROVIDER_LIST['cc_realtime_full']
-    # a = PriceData("BTC", provider)
-    # print(price_data_rt("aapl"))
-    # print (a.df)
-    # print (a.errors)
-    # print (provider.errors)
-    # merge_fx = a.df_fx('BRL', fx_provider)
-    # print (merge_fx)
-    fx = fx_rate(current_user.fx())
-    print(fx)
-    return ("OK")
 
 @api.route("/positions_json", methods=["GET"])
 def positions_json():
-    from thewarden.users.utils import (positions, positions_dynamic)
     # Get all transactions
-    df2 = positions_dynamic()
-    return(df2.to_html())
+    dfdyn, piedata = positions_dynamic()
+    dfdyn = dfdyn.to_dict(orient='index')
+    userdata = {
+        'fx': current_user.fx_rate_data()
+    }
+    json_dict = {
+        'positions': dfdyn,
+        'piechart': piedata
+    }
+
+    return simplejson.dumps(json_dict, ignore_nan=True)
     # Get a list of all tickers in this portfolio
+
+

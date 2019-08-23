@@ -1,8 +1,7 @@
 import numpy as np
-import logging
 from flask import render_template, Blueprint
 from flask_login import current_user, login_required
-from thewarden.models import Trades, User
+from thewarden.models import Trades
 from datetime import datetime
 from thewarden.users.utils import (generatenav, positions, heatmap_generator,
                                    fxsymbol)
@@ -27,16 +26,19 @@ def portfolio_main():
     transactions = Trades.query.filter_by(user_id=current_user.username)
     if transactions.count() == 0:
         return render_template("empty.html")
-    # Keep the line below as USD - prices are gathered in USD then converted
-    portfolio_data, pie_data = positions()
-    if portfolio_data is None:
+    # For now pass only static positions, will update prices and other
+    # data through javascript after loaded. This improves load time
+    # and refresh speed.
+    # Get positions and prepare df for delivery
+    df = positions()
+    df.set_index('trade_asset_ticker', inplace=True)
+    df = df[df['is_currency'] == 0].sort_index(ascending=True)
+    df = df.to_dict(orient='index')
+    if df is None:
         return render_template("empty.html")
-    return render_template(
-        "portfolio.html",
-        title="Portfolio Dashboard",
-        portfolio_data=portfolio_data,
-        pie_data=pie_data,
-    )
+    return render_template("portfolio.html",
+                           title="Portfolio Dashboard",
+                           portfolio_data=df)
 
 
 @portfolio.route("/navchart")
