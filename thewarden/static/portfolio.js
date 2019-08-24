@@ -149,7 +149,7 @@ function realtime_table() {
             $('#chg1').html(formatNumber(data.positions.Total.change_fx, 0, fx));
             pct_chg = (data.positions.Total.change_fx / data.positions.Total.position_fx) * 100
             $('#chg2').html(formatNumber(pct_chg, 2, '+', '%', 'False', true));
-            $('#lstupd').html(data.positions.Total.last_update)
+            $('#lstupd').html(data.positions.Total.last_up_source)
             // Update BTC price on layout
             $('#latest_btc_price').html(formatNumber(data.btc * data.user.fx_rate, 2, fx));
 
@@ -169,41 +169,48 @@ function realtime_table() {
             // Loop through tickers to fill the tables
             $.each(data.positions, function (key, value) {
                 // Portfolio Snapshot
-                $('#' + key + '_price').html(formatNumber(value.price, 2, fx, ''));
-                $('#' + key + '_24hchg').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true));
-                $('#' + key + '_position').html(formatNumber(value.position_fx, 0, fx, ''));
-                $('#' + key + '_allocation').html(formatNumber(value.allocation * 100, 2, '', '%'));
+                if (value.price != 0) {
+                    $('#' + key + '_price').html(formatNumber(value.price, 2, fx, ''));
+                    $('#' + key + '_24hchg').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true));
+                    $('#' + key + '_position').html(formatNumber(value.position_fx, 0, fx, ''));
+                    $('#' + key + '_allocation').html(formatNumber(value.allocation * 100, 2, '', '%'));
 
-                // FIFO Table values
-                $('#' + key + '_F_position').html(formatNumber(value.position_fx, 0, fx, ''));
-                $('#' + key + '_fifo_real').html(formatNumber(value.FIFO_real, 0, fx, ''));
-                $('#' + key + '_fifo_unreal').html(formatNumber(value.FIFO_unreal, 0, fx, ''));
-                $('#' + key + '_fifo_unreal_be').html(formatNumber(value.FIFO_unrealized_be, 2, fx, '', value.small_pos));
-                $('#' + key + '_F_trade_fees_fx').html(formatNumber(value.trade_fees_fx, 0, fx, ''));
-                $('#' + key + '_F_pnl_net').html(formatNumber(value.pnl_net, 0, fx, ''));
-                $('#' + key + '_F_breakeven').html(formatNumber(value.breakeven, 2, fx, '', value.small_pos));
+                    // FIFO Table values
+                    $('#' + key + '_F_position').html(formatNumber(value.position_fx, 0, fx, ''));
+                    $('#' + key + '_fifo_real').html(formatNumber(value.FIFO_real, 0, fx, ''));
+                    $('#' + key + '_fifo_unreal').html(formatNumber(value.FIFO_unreal, 0, fx, ''));
+                    $('#' + key + '_fifo_unreal_be').html(formatNumber(value.FIFO_unrealized_be, 2, fx, '', value.small_pos));
+                    $('#' + key + '_F_trade_fees_fx').html(formatNumber(value.trade_fees_fx, 0, fx, ''));
+                    $('#' + key + '_F_pnl_net').html(formatNumber(value.pnl_net, 0, fx, ''));
+                    $('#' + key + '_F_breakeven').html(formatNumber(value.breakeven, 2, fx, '', value.small_pos));
 
-                // LIFO Table values
-                $('#' + key + '_L_position').html(formatNumber(value.position_fx, 0, fx, ''));
-                $('#' + key + '_lifo_real').html(formatNumber(value.LIFO_real, 0, fx, ''));
-                $('#' + key + '_lifo_unreal').html(formatNumber(value.LIFO_unreal, 0, fx, ''));
-                $('#' + key + '_lifo_unreal_be').html(formatNumber(value.LIFO_unrealized_be, 2, fx, '', value.small_pos));
-                $('#' + key + '_L_trade_fees_fx').html(formatNumber(value.trade_fees_fx, 0, fx, ''));
-                $('#' + key + '_L_pnl_net').html(formatNumber(value.pnl_net, 0, fx, ''));
-                $('#' + key + '_L_breakeven').html(formatNumber(value.breakeven, 2, fx, '', value.small_pos));
+                    // LIFO Table values
+                    $('#' + key + '_L_position').html(formatNumber(value.position_fx, 0, fx, ''));
+                    $('#' + key + '_lifo_real').html(formatNumber(value.LIFO_real, 0, fx, ''));
+                    $('#' + key + '_lifo_unreal').html(formatNumber(value.LIFO_unreal, 0, fx, ''));
+                    $('#' + key + '_lifo_unreal_be').html(formatNumber(value.LIFO_unrealized_be, 2, fx, '', value.small_pos));
+                    $('#' + key + '_L_trade_fees_fx').html(formatNumber(value.trade_fees_fx, 0, fx, ''));
+                    $('#' + key + '_L_pnl_net').html(formatNumber(value.pnl_net, 0, fx, ''));
+                    $('#' + key + '_L_breakeven').html(formatNumber(value.breakeven, 2, fx, '', value.small_pos));
 
-                // Market Data values
-                $('#' + key + '_mkt_price').html(formatNumber(value.price, 2, fx, ''));
-                $('#' + key + '_24h_change').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true));
-                var price_range = formatNumber(value['24h_low'], 2, fx, '') + ' - ' + formatNumber(value['24h_high'], 2, fx, '')
-                $('#' + key + '_24h_range').html(price_range);
-                $('#' + key + '_volume').html(value.volume);
-                $('#' + key + '_mktcap').html(value.mktcap);
-                $('#' + key + '_source').html(value.source);
-                update = new Date(value.last_update)
-                update = update.toLocaleTimeString()
-                $('#' + key + '_lastupdate').html(update);
-
+                    // Market Data values
+                    $('#' + key + '_mkt_price').html(formatNumber(value.price, 2, fx, ''));
+                    $('#' + key + '_24h_change').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true));
+                    var price_range = formatNumber(value['24h_low'], 2, fx, '') + ' - ' + formatNumber(value['24h_high'], 2, fx, '')
+                    $('#' + key + '_24h_range').html(price_range);
+                    $('#' + key + '_volume').html(value.volume);
+                    if (value.notes != null) {
+                        $('#' + key + '_volume').html(value.notes);
+                    }
+                    $('#' + key + '_mktcap').html(value.mktcap);
+                    $('#' + key + '_source').html(value.source);
+                    update = new Date(value.last_update)
+                    update = update.toLocaleTimeString()
+                    if (update == 'Invalid Date') {
+                        update = '-'
+                    }
+                    $('#' + key + '_lastupdate').html(update);
+                }
                 // Add small position class to hide/show small positions
                 if (value.small_pos == "True") {
                     $('#ticker' + key).addClass('small_pos')
@@ -211,6 +218,7 @@ function realtime_table() {
                     $('#tickerlifo_' + key).addClass('small_pos')
                     $('#tickerdata_' + key).addClass('small_pos')
                 }
+
             })
 
             // Functions that should only be run once during the page refresh

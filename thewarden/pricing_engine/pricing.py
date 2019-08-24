@@ -358,6 +358,10 @@ class ApiKeys():
             pass
 
 
+# Class instance with api keys loader and saver
+api_keys_class = ApiKeys()
+api_keys = api_keys_class.loader()
+
 # _____________________________________________
 # Helper functions go here
 # _____________________________________________
@@ -441,6 +445,89 @@ def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY):
     return (price_data.realtime(PROVIDER_LIST[provider]))
 
 
+
+@MWT(timeout=60)
+def GBTC_premium(price):
+    # Calculates the current GBTC premium in percentage points
+    # to BTC (see https://grayscale.co/bitcoin-trust/)
+    SHARES = 0.00097630
+    fairvalue = price_data_rt("BTC") * SHARES
+    premium = (price / fairvalue) - 1
+    return fairvalue, premium
+
+@MWT(timeout=30)
+def price_data_rt_full(ticker, provider):
+    # Function to get a complete data set for realtime prices
+    # Loop through the providers to get the following info:
+    # price, chg, high, low, volume, mkt cap, last_update, source
+    # For some specific assets, a field 'note' can be passed and
+    # will replace volume and market cap at the main page
+    # ex: GBTC premium can be calculated here
+    # returns a list with the format:
+    # price, last_update, high, low, chg, mktcap,
+    # last_up_source, volume, source, notes
+    # All data returned in USD
+    # -----------------------------------------------------------
+    # This function is used to grab a single price that was missing from
+    # the multiprice request. Since this is a bit more time intensive, it's
+    # separated so it can be memoized for a period of time (this price will
+    # not refresh as frequently)
+    # default: timeout=30
+
+    if provider == 'cc':
+        multi_price = multiple_price_grab(ticker, 'USD,' + current_user.fx())
+        try:
+            # Parse the cryptocompare data
+            price = multi_price["RAW"][ticker][current_user.fx()]["PRICE"]
+            price = float(price * current_user.fx_rate_USD())
+            high = float(multi_price["RAW"][ticker][
+                current_user.fx()]["HIGHDAY"] * current_user.fx_rate_USD())
+            low = float(multi_price["RAW"][ticker][
+                current_user.fx()]["LOWDAY"] * current_user.fx_rate_USD())
+            chg = multi_price["RAW"][ticker][current_user.fx()]["CHANGEPCT24HOUR"]
+            mktcap = multi_price["DISPLAY"][ticker][current_user.fx()]["MKTCAP"]
+            volume = multi_price["DISPLAY"][ticker][current_user.fx()]["VOLUME24HOURTO"]
+            last_up_source = multi_price["RAW"][ticker][current_user.fx()]["LASTUPDATE"]
+            source = multi_price["DISPLAY"][ticker][current_user.fx()]["LASTMARKET"]
+            last_update = datetime.now()
+            notes = None
+            return (price, last_update, high, low, chg, mktcap,
+                    last_up_source, volume, source, notes)
+        except Exception:
+            return (None)
+    if provider == 'aa':
+        try:
+            globalURL = 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&apikey='
+            globalURL += api_keys['alphavantage']['api_key'] + '&symbol=' + ticker
+            data = tor_request(globalURL).json()
+            price = float(data['Global Quote']['05. price']) * current_user.fx_rate_USD()
+            high = float(data['Global Quote']['03. high']) * current_user.fx_rate_USD()
+            low = float(data['Global Quote']['04. low']) * current_user.fx_rate_USD()
+            chg = data['Global Quote']['10. change percent'].replace('%', '')
+            try:
+                chg = float(chg) / 100
+            except Exception:
+                chg = chg
+            mktcap = '-'
+            volume = '-'
+            last_up_source = '-'
+            last_update = '-'
+            source = 'Alphavantage'
+            notes = None
+
+            # Start Notes methods for specific assets. For example, for
+            # GBTC we report the premium to BTC
+            if ticker == 'GBTC':
+                fairvalue, premium = GBTC_premium(float(data['Global Quote']['05. price']))
+                fairvalue = "{0:,.2f}".format(fairvalue)
+                premium = "{0:,.2f}".format(premium * 100)
+                notes = f"Fair Value: {fairvalue}<br>Premium: {premium}%"
+            return (price, last_update, high, low, chg, mktcap,
+                    last_up_source, volume, source, notes)
+        except Exception:
+            return None
+
+
 # Gets Currency data for current user
 @MWT(timeout=5)
 @timing
@@ -491,10 +578,6 @@ def multiple_price_grab(tickers, fx):
 # _____________________________________________
 # Variables go here
 # _____________________________________________
-
-# Class instance with api keys loader and saver
-api_keys_class = ApiKeys()
-api_keys = api_keys_class.loader()
 
 # List of API providers
 # name: should be unique and contain only lowecase letters

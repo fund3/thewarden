@@ -1879,3 +1879,10 @@ def positions_json():
     # Get a list of all tickers in this portfolio
 
 
+@api.route("/test_price", methods=["GET"])
+def test_price():
+    from thewarden.pricing_engine.pricing import price_data_rt_full
+    a = price_data_rt_full('GBTC', 'aa')
+    print (a)
+    return (a)
+
