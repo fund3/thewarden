@@ -89,9 +89,8 @@ function BTC_price() {
             if ('cross' in data) {
                 $('#fx_cross').html(data['cross']);
                 $('#fx_rate').html(data['fx_rate'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
-                $('#btc_fx').html(data[data['base']].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
-                $('#btc_usd').html(data['USD'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
-
+                $('#btc_fx').html(data['btc_fx'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
+                $('#btc_usd').html(data['btc_usd'].toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
             } else {
                 $('#fx_cross').html(data);
             }

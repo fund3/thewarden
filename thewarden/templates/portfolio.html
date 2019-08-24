@@ -15,26 +15,23 @@
 
             <tbody>
                 <tr>
-                    <td id="pvalue" class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
+                    <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
                         title="Market Value in {{current_user.fx() | fxsymbol}}">
-                        {{current_user.fx() | fxsymbol}} --
+                        <span id="pvalue"><img src='static/images/loading_small.gif' width="30" height="30"></span>
                     </td>
                     <td></td>
-                    <td id="pvaluebtc" class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
+                    <td class="border-bottom hinumber" data-toggle="tooltip" data-placement="top"
                         title="Market Value in BTC">
-                        &#8383 --
+                        <span id="pvaluebtc"><img src='static/images/loading_small.gif' width="30" height="30"></span>
                     </td>
                     <td></td>
                     <td id="chg1" class="redgreen border-bottom hinumber text-right">
-                        --
-
+                        <span id="pvaluebtc"><img src='static/images/loading_small.gif' width="30" height="30"></span>
                     </td>
                     <td></td>
                     <td id="chg2" class="redgreen border-bottom hinumber text-right">
-                        {{current_user.fx() | fxsymbol}} --
-
+                        <img src='static/images/loading_small.gif' width="30" height="30">
                     </td>
-
                 </tr>
                 <tr>
                     <td class="small">
@@ -65,23 +62,30 @@
             <tbody>
                 <tr>
 
-                    <td id='latest_btc_block' class="text-left border-bottom hinumbersmall" data-toggle="tooltip"
-                        data-placement="top" title="Bitcoin's Latest Block">
-                        <img class="mx-auto d-block" src="static/images/loading3.gif" width="15" height="15"></img>
+                    <td id='latest_btc_price' class="text-left border-bottom hinumbersmall" data-toggle="tooltip"
+                        data-placement="top" title="Bitcoin's Latest Price">
+                        <img src='static/images/loading_small.gif' width="30" height="30"></img>
                     </td>
 
-                    <td id="lstupd" class="border-bottom hinumbersmall text-right">
-                        <span>
-                            -
+                    <td id='latest_btc_block' class="text-left border-bottom hinumbersmall" data-toggle="tooltip"
+                        data-placement="top" title="Bitcoin's Latest Block">
+                        <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                    </td>
+
+                    <td class="border-bottom hinumbersmall text-right">
+                        <span id="lstupd">
+                            <img src='static/images/loading_small.gif' width="30" height="30"></img>
                         </span>
-                        <button class="btn btn-clean" onClick="window.location.reload();">
-                            <i class="fas fa-sync-alt" onClick="window.location.reload();"></i>
-                        </button>
+
                     </td>
 
 
                 </tr>
                 <tr>
+                    <td class="small text-left">
+                        &#8383 Price
+                    </td>
+
                     <td class="small text-left">
                         &#8383 Block Height
                     </td>
@@ -146,11 +150,8 @@
                 </thead>
                 <tbody id="portfolio">
                     {% for position in portfolio_data %}
-                    {% if portfolio_data[position]['small_pos']== 'False' %}
+
                     <tr id="ticker{{position}}">
-                        {% else %}
-                    <tr id="ticker{{position}}" class="small_pos">
-                        {% endif %}
 
                         <th class="align-middle" scope="row">{{position}}</th>
 
@@ -160,24 +161,35 @@
                         </td>
 
                         <td class="text-right align-middle hinumbersmall">
-                            <strong>{{current_user.fx() | fxsymbol}}
-                                --
+                            <strong>
+                                <span id="{{position}}_price">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
                             </strong>
                         </td>
 
                         <td class="text-right small align-middle redgreen">
+                            <span id="{{position}}_24hchg">
+                                <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                            </span>
 
                         </td>
 
                         <td class="text-center align-middle">
 
+
                         </td>
 
                         <td class="text-right align-middle">
-
+                            <span id="{{position}}_position">
+                                <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                            </span>
                         </td>
 
                         <td class="text-right small align-middle">
+                            <span id="{{position}}_allocation">
+                                <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                            </span>
 
                         </td>
 
@@ -252,52 +264,56 @@
 
                     <tbody id="portfolio">
                         {% for position in portfolio_data %}
-
                         {% if position != "TOTAL" %}
-
-                        {% if portfolio_data[position]['small_pos']== 'False' %}
-                        <tr id="ticker{{position}}">
-                            {% else %}
-                        <tr id="ticker{{position}}" class="small_pos">
-                            {% endif %}
-
+                        <tr id="tickerfifo_{{position}}">
                             <th class="align-middle">{{position}}</th>
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="{{position}}_F_position">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
                             <td class="text-right align-middle redgreen">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="{{position}}_fifo_real">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
                             <td class="text-right align-middle redgreen">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="{{position}}_fifo_unreal">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
                             <td class="text-right align-middle small">
-                                {% if portfolio_data[position]['small_pos'] == 'False' %}
-                                000
-                                {% else %}
-                                ---
-                                {% endif %}
+                                <span id="{{position}}_fifo_unreal_be">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
+
                             </td>
 
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="{{position}}_F_trade_fees_fx">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
                             <td class="text-right align-middle redgreen">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="{{position}}_F_pnl_net">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="{{position}}_F_breakeven">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
@@ -309,29 +325,41 @@
                             <th class="align-middle" scope="row">TOTAL</th>
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
-
+                                <span id="F_total">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
-                            <td class="text-right align-middle">
+                            <td class="text-right align-middle redgreen">
+                                <span id="F_real">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
                             <td class="text-right small align-middle redgreen">
+                                <span id="F_unreal">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
                             </td>
 
                             <td class="text-right small align-middle redgreen">
+
                             </td>
 
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="F_fees">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="F_pnl">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
@@ -388,51 +416,55 @@
 
                         {% if position != "Total" %}
 
-                        {% if portfolio_data[position]['small_pos']== 'False' %}
-                        <tr id="ticker{{position}}">
-                            {% else %}
-                        <tr id="ticker{{position}}" class="small_pos">
-                            {% endif %}
-
+                        <tr id="tickerlifo_{{position}}">
                             <th class="align-middle">{{position}}</th>
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="{{position}}_L_position">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
+
+                            </td>
+                            <td class="text-right align-middle redgreen">
+                                <span id="{{position}}_lifo_real">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
-
                             <td class="text-right align-middle redgreen">
-                                {{current_user.fx() | fxsymbol}}
-
-                            </td>
-
-                            <td class="text-right align-middle redgreen">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="{{position}}_lifo_unreal">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
                             <td class="text-right align-middle small">
-                                {% if portfolio_data[position]['small_pos'] == 'False' %}
-                                000
-                                {% else %}
-                                ---
-                                {% endif %}
+                                <span id="{{position}}_lifo_unreal_be">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
+
                             </td>
 
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="{{position}}_L_trade_fees_fx">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
                             <td class="text-right align-middle redgreen">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="{{position}}_L_pnl_net">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="{{position}}_L_breakeven">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
@@ -444,28 +476,41 @@
                             <th class="align-middle" scope="row">TOTAL</th>
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
-
+                                <span id="L_total">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
-                            <td class="text-right align-middle">
+                            <td class="text-right align-middle redgreen">
+                                <span id="L_real">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
                             <td class="text-right small align-middle redgreen">
+                                <span id="L_unreal">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
                             </td>
 
                             <td class="text-right small align-middle redgreen">
+
                             </td>
 
 
                             <td class="text-right align-middle">
-                                {{current_user.fx() | fxsymbol}}
+                                <span id="L_fees">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
                             <td class="text-right align-middle">
+                                <span id="L_pnl">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
 
                             </td>
 
@@ -526,47 +571,63 @@
 
                     {% if position != "TOTAL" %}
 
-                    {% if portfolio_data[position]['small_pos']== 'False' %}
-                    <tr id="ticker{{position}}">
-                        {% else %}
-                    <tr id="ticker{{position}}" class="small_pos">
-                        {% endif %}
+
+                    <tr id="tickerdata_{{position}}">
+
 
                         <th class="align-middle" scope="row">
                             {{position}}
                         </th>
 
                         <td class="text-right align-middle hinumbersmall">
-                            <strong> {{current_user.fx() | fxsymbol}}
+                            <strong>
+                                <span id="{{position}}_mkt_price">
+                                    <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                                </span>
+
 
                             </strong>
                         </td>
 
                         <td class="text-right align-middle small redgreen">
-
+                            <span id="{{position}}_24h_change">
+                                <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                            </span>
                         </td>
 
                         <td class="text-center small">
-
-                        </td>
-
-
-                        {%else%}
-                        <td class="text-right align-middle small">
-
-                        </td>
-
-
-                        <td class="text-right align-middle small">
-
-                        </td>
-
-                        <td class="text-right align-middle small">
+                            <span id="{{position}}_24h_range">
+                                <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                            </span>
 
                         </td>
 
 
                         <td class="text-right align-middle small">
+                            <span id="{{position}}_volume">
+                                <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                            </span>
+                        </td>
+
+
+                        <td class="text-right align-middle small">
+                            <span id="{{position}}_mktcap">
+                                <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                            </span>
+
+                        </td>
+
+                        <td class="text-right align-middle small">
+                            <span id="{{position}}_lastupdate">
+                                <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                            </span>
+                        </td>
+
+
+                        <td class="text-right align-middle small">
+                            <span id="{{position}}_source">
+                                <img src='static/images/loading_small.gif' width="30" height="30"></img>
+                            </span>
 
                         </td>
                         {%endif%}
@@ -607,18 +668,18 @@
                 <tbody>
                     <tr>
                         <td>Current NAV</td>
-                        <td id='end_nav' class="text-right"> <img class="mx-auto d-block"
-                                src="static/images/loading3.gif" width="15" height="15"></img> </td>
+                        <td id='end_nav' class="text-right"> <img src='static/images/loading_small.gif' width="30"
+                                height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Highest NAV</td>
-                        <td id='max_nav' class="text-right"> <img class="mx-auto d-block"
-                                src="static/images/loading3.gif" width="15" height="15"></img> </td>
+                        <td id='max_nav' class="text-right"> <img src='static/images/loading_small.gif' width="30"
+                                height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Lowest NAV</td>
-                        <td id='min_nav' class="text-right"> <img class="mx-auto d-block"
-                                src="static/images/loading3.gif" width="15" height="15"></img> </td>
+                        <td id='min_nav' class="text-right"> <img src='static/images/loading_small.gif' width="30"
+                                height="30"></img> </td>
                     </tr>
                     {% if current_user.fx()!='USD'%}
                     <tr>
@@ -626,16 +687,16 @@
                     <tr hidden>
                         {%endif%}
                         <td>Portfolio Value (USD)</td>
-                        <td id='end_portvalue_usd' class="text-right"> <img class="mx-auto d-block"
-                                src="static/images/loading3.gif" width="15" height="15"></img> </td>
+                        <td id='end_portvalue_usd' class="text-right"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
                     </tr>
 
                     <tr>
                         <td>Portfolio Value</td>
                         <td class="text-right">
                             {{current_user.fx() | fxsymbol}}
-                            <span id='end_portvalue'> <img class="mx-auto d-block" src="static/images/loading3.gif"
-                                    width="15" height="15"></img>
+                            <span id='end_portvalue'> <img src='static/images/loading_small.gif' width="30"
+                                    height="30"></img>
                             </span>
                         </td>
                     </tr>
@@ -645,8 +706,7 @@
                         <td class="text-right">
                             {{current_user.fx() | fxsymbol}}
                             <span id='max_portvalue'>
-                                <img class="mx-auto d-block" src="static/images/loading3.gif" width="15"
-                                    height="15"></img>
+                                <img src='static/images/loading_small.gif' width="30" height="30"></img>
                             </span>
                         </td>
                     </tr>
@@ -658,33 +718,34 @@
 
                     <tr>
                         <td>Since last 'close'</td>
-                        <td id='return_1d' class="text-right redgreen"> <img class="mx-auto d-block"
-                                src="static/images/loading3.gif" width="15" height="15"></img> </td>
+                        <td id='return_1d' class="text-right redgreen"> <img src='static/images/loading_small.gif'
+                                width="30" height="30">
+                            </img> </td>
                     </tr>
                     <tr>
                         <td>1 week</td>
-                        <td id='return_1wk' class="text-right redgreen"> <img class="mx-auto d-block"
-                                src="static/images/loading3.gif" width="15" height="15"></img> </td>
+                        <td id='return_1wk' class="text-right redgreen"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>30 days</td>
-                        <td id='return_30d' class="text-right redgreen"> <img class="mx-auto d-block"
-                                src="static/images/loading3.gif" width="15" height="15"></img> </td>
+                        <td id='return_30d' class="text-right redgreen"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>90 days</td>
-                        <td id='return_90d' class="text-right redgreen"> <img class="mx-auto d-block"
-                                src="static/images/loading3.gif" width="15" height="15"></img> </td>
+                        <td id='return_90d' class="text-right redgreen"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Since ATH</td>
-                        <td id='return_ATH' class="text-right redgreen"> <img class="mx-auto d-block"
-                                src="static/images/loading3.gif" width="15" height="15"></img> </td>
+                        <td id='return_ATH' class="text-right redgreen"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
                     </tr>
                     <tr>
                         <td>Since inception</td>
-                        <td id='return_SI' class="text-right redgreen"> <img class="mx-auto d-block"
-                                src="static/images/loading3.gif" width="15" height="15"></img> </td>
+                        <td id='return_SI' class="text-right redgreen"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
                     </tr>
 
                 </tbody>

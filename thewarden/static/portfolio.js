@@ -9,13 +9,9 @@ $(document).ready(function () {
     console.log("--------------");
 
     // Format Red and Green Numbers (negative / positive)
-    $("td.redgreen").removeClass('red_negpos');
-    $("td.redgreen").addClass('green_negpos');
-    $("td.redgreen:contains('-')").removeClass('green_negpos');
-    $("td.redgreen:contains('-')").addClass('red_negpos');
+    red_green()
 
     // Show / hide small and closed positions on button click
-    $('.small_pos').toggle(100);
     $('.lifo_costtable').toggle();
 
     $('#myonoffswitch').on('click', function () {
@@ -31,15 +27,27 @@ $(document).ready(function () {
 
     });
 
+    // set run_once to true so some functions at ajax are only executed once
+    run_once = true;
+    realtime_table();
+    getblockheight();
 
-    // Grab Portfolio Statistics from JSON and return to table
+    window.setInterval(function () {
+        realtime_table();
+    }, 2000);
+
+    window.setInterval(function () {
+        getblockheight();
+    }, 120000);
+
+
+
+    // Grab Portfolio NAV Statistics from JSON and return to table
     $.ajax({
         type: 'GET',
         url: '/portstats',
         dataType: 'json',
         success: function (data) {
-            console.log(data)
-            createcharts(); //Load pie chart
             $('#end_nav').html(data.end_nav.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }));
             var max_nav_txt = data.max_nav.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "<span class='small'> on "
             max_nav_txt = max_nav_txt + data.max_nav_date + "</span>"
@@ -60,18 +68,10 @@ $(document).ready(function () {
             $('#return_SI').html((data.return_SI * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "%");
             var stats_dates_txt = data.start_date + " to " + data.end_date
             $('#stats_dates_txt').html(stats_dates_txt);
-
-            // re-apply redgreen filter (otherwise it's all assumed positive since fields were empty before ajax)
-            $("td.redgreen").removeClass('red_negpos');
-            $("td.redgreen").addClass('green_negpos');
-            $("td.redgreen:contains('-')").removeClass('green_negpos');
-            $("td.redgreen:contains('-')").addClass('red_negpos');
-            // Hide NaN
-            $("td.redgreen:contains('NaN%')").addClass('text-white');
+            red_green();
         }
     });
 
-    getblockheight();
 
     // Get NAV Data for chart
     $.ajax({
@@ -85,6 +85,148 @@ $(document).ready(function () {
 
 
 });
+
+//  HELPER FUNCTION
+// Runs the class to change pos numbers to green and neg to red
+function red_green() {
+    // re-apply redgreen filter (otherwise it's all assumed positive since fields were empty before ajax)
+    $("td.redgreen").removeClass('red_negpos');
+    $("td.redgreen").addClass('green_negpos');
+    $("td.redgreen:contains('-')").removeClass('green_negpos');
+    $("td.redgreen:contains('-')").addClass('red_negpos');
+    // Hide NaN
+    $("td.redgreen:contains('NaN%')").addClass('text-white');
+}
+
+//  HELPER FUNCTION
+// Formatter for numbers use
+// prepend for currencies, for positive / negative, include prepend = +
+// Small_pos signals to hide result - this is due to small positions creating
+// unrealistic breakevens (i.e. too small or too large)
+function formatNumber(amount, decimalCount = 2, prepend = '', postpend = '', small_pos = 'False', up_down = false) {
+    if (((amount == 0) | (amount == null)) | (small_pos == 'True')) {
+        return '-'
+    }
+    try {
+        var string = ''
+        string += (amount).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: decimalCount, minimumFractionDigits: decimalCount })
+        if ((prepend == '+') && (amount > 0)) {
+            string = "+" + string
+        } else if ((prepend == '+') && (amount <= 0)) {
+            string = string
+        } else {
+            string = prepend + string
+        }
+
+        if (up_down == true) {
+            if (amount > 0) {
+                postpend = postpend + '&nbsp;<img src="static/images/btc_up.png" width="10" height="10"></img>'
+            } else if (amount < 0) {
+                postpend = postpend + '&nbsp;<img src="static/images/btc_down.png" width="10" height="10"></img>'
+            }
+        }
+        return (string + postpend)
+    } catch (e) {
+        console.log(e)
+    }
+};
+
+// Updates the realtime table of prices and positions
+function realtime_table() {
+    // Grab Portfolio NAV Statistics from JSON and return to table
+    $.ajax({
+        type: 'GET',
+        url: '/positions_json',
+        dataType: 'json',
+        success: function (data) {
+            // Now assign the values from the JSON to the table
+            // variable fx will contain the user's currency symbol
+            var fx = data.user.symbol
+            // Parse the json
+            $('#pvalue').html(formatNumber(data.positions.Total.position_fx, 0, fx));
+            posbtc = data.positions.Total.position_fx / data.btc
+            $('#pvaluebtc').html(formatNumber(posbtc, 2, "&#8383 "));
+            $('#chg1').html(formatNumber(data.positions.Total.change_fx, 0, fx));
+            pct_chg = (data.positions.Total.change_fx / data.positions.Total.position_fx) * 100
+            $('#chg2').html(formatNumber(pct_chg, 2, '+', '%', 'False', true));
+            $('#lstupd').html(data.positions.Total.last_update)
+            // Update BTC price on layout
+            $('#latest_btc_price').html(formatNumber(data.btc * data.user.fx_rate, 2, fx));
+
+            // Totals for FIFO and LIFO tables
+            $('#F_total').html(formatNumber(data.positions.Total.position_fx, 0, fx, ''));
+            $('#F_real').html(formatNumber(data.positions.Total.FIFO_real, 0, fx, ''));
+            $('#F_unreal').html(formatNumber(data.positions.Total.FIFO_unreal, 0, fx, ''));
+            $('#F_pnl').html(formatNumber(data.positions.Total.pnl_net, 0, fx, ''));
+            $('#F_fees').html(formatNumber(data.positions.Total.trade_fees_fx, 0, fx, ''));
+            $('#L_total').html(formatNumber(data.positions.Total.position_fx, 0, fx, ''));
+            $('#L_real').html(formatNumber(data.positions.Total.LIFO_real, 0, fx, ''));
+            $('#L_unreal').html(formatNumber(data.positions.Total.LIFO_unreal, 0, fx, ''));
+            $('#L_pnl').html(formatNumber(data.positions.Total.pnl_net, 0, fx, ''));
+            $('#L_fees').html(formatNumber(data.positions.Total.trade_fees_fx, 0, fx, ''));
+
+
+            // Loop through tickers to fill the tables
+            $.each(data.positions, function (key, value) {
+                // Portfolio Snapshot
+                $('#' + key + '_price').html(formatNumber(value.price, 2, fx, ''));
+                $('#' + key + '_24hchg').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true));
+                $('#' + key + '_position').html(formatNumber(value.position_fx, 0, fx, ''));
+                $('#' + key + '_allocation').html(formatNumber(value.allocation * 100, 2, '', '%'));
+
+                // FIFO Table values
+                $('#' + key + '_F_position').html(formatNumber(value.position_fx, 0, fx, ''));
+                $('#' + key + '_fifo_real').html(formatNumber(value.FIFO_real, 0, fx, ''));
+                $('#' + key + '_fifo_unreal').html(formatNumber(value.FIFO_unreal, 0, fx, ''));
+                $('#' + key + '_fifo_unreal_be').html(formatNumber(value.FIFO_unrealized_be, 2, fx, '', value.small_pos));
+                $('#' + key + '_F_trade_fees_fx').html(formatNumber(value.trade_fees_fx, 0, fx, ''));
+                $('#' + key + '_F_pnl_net').html(formatNumber(value.pnl_net, 0, fx, ''));
+                $('#' + key + '_F_breakeven').html(formatNumber(value.breakeven, 2, fx, '', value.small_pos));
+
+                // LIFO Table values
+                $('#' + key + '_L_position').html(formatNumber(value.position_fx, 0, fx, ''));
+                $('#' + key + '_lifo_real').html(formatNumber(value.LIFO_real, 0, fx, ''));
+                $('#' + key + '_lifo_unreal').html(formatNumber(value.LIFO_unreal, 0, fx, ''));
+                $('#' + key + '_lifo_unreal_be').html(formatNumber(value.LIFO_unrealized_be, 2, fx, '', value.small_pos));
+                $('#' + key + '_L_trade_fees_fx').html(formatNumber(value.trade_fees_fx, 0, fx, ''));
+                $('#' + key + '_L_pnl_net').html(formatNumber(value.pnl_net, 0, fx, ''));
+                $('#' + key + '_L_breakeven').html(formatNumber(value.breakeven, 2, fx, '', value.small_pos));
+
+                // Market Data values
+                $('#' + key + '_mkt_price').html(formatNumber(value.price, 2, fx, ''));
+                $('#' + key + '_24h_change').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true));
+                var price_range = formatNumber(value['24h_low'], 2, fx, '') + ' - ' + formatNumber(value['24h_high'], 2, fx, '')
+                $('#' + key + '_24h_range').html(price_range);
+                $('#' + key + '_volume').html(value.volume);
+                $('#' + key + '_mktcap').html(value.mktcap);
+                $('#' + key + '_source').html(value.source);
+                update = new Date(value.last_update)
+                update = update.toLocaleTimeString()
+                $('#' + key + '_lastupdate').html(update);
+
+                // Add small position class to hide/show small positions
+                if (value.small_pos == "True") {
+                    $('#ticker' + key).addClass('small_pos')
+                    $('#tickerfifo_' + key).addClass('small_pos')
+                    $('#tickerlifo_' + key).addClass('small_pos')
+                    $('#tickerdata_' + key).addClass('small_pos')
+                }
+            })
+
+            // Functions that should only be run once during the page refresh
+            if (run_once == true) {
+                $('.small_pos').toggle(100);
+            }
+
+            createcharts(data.piechart); //Load pie chart
+            red_green();
+            run_once = false
+        }
+    });
+
+
+};
+
 
 
 function getblockheight() {
@@ -105,10 +247,7 @@ function getblockheight() {
 };
 
 // Pie Chart - allocation
-function createcharts() {
-
-    // Create the plot data
-    chartdata = piechartjs
+function createcharts(piechart) {
 
     var myChart = Highcharts.chart('piechart', {
         credits: {
@@ -146,8 +285,9 @@ function createcharts() {
 
         series: [{
             name: 'Allocation',
+            animation: false,
             colorByPoint: true,
-            data: chartdata,
+            data: piechart,
             size: '90%',
             innerSize: '60%',
             dataLabels: {

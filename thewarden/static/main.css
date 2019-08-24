@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css?family=Allerta');
-
+@import url("https://fonts.googleapis.com/css?family=Allerta");
 
 body {
   background: #fafafa;
@@ -7,7 +6,12 @@ body {
   margin-top: 2rem;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: #444444;
 }
 
@@ -66,7 +70,7 @@ a.article-title:hover {
 .article-metadata {
   padding-bottom: 1px;
   margin-bottom: 4px;
-  border-bottom: 1px solid #e3e3e3
+  border-bottom: 1px solid #e3e3e3;
 }
 
 .article-metadata a:hover {
@@ -92,13 +96,13 @@ a.article-title:hover {
 }
 
 .img-responsive {
-    height: auto;
-    width: auto;
-    max-height: 40px;
-    max-width: 40px;
+  height: auto;
+  width: auto;
+  max-height: 40px;
+  max-width: 40px;
 }
 
-.table-condensed{
+.table-condensed {
   width: 100%;
   font-size: 16px;
   border: none;
@@ -108,8 +112,7 @@ a.article-title:hover {
 }
 
 .small-text {
-    font-size: 14px;
-
+  font-size: 14px;
 }
 
 td.red_negpos {
@@ -121,17 +124,17 @@ td.green_negpos {
 }
 
 .hinumber {
-    color: #1F5168;
+  color: #1f5168;
 }
 
 .hinumbersmall {
-    color: #1F5168;;
+  color: #1f5168;
 }
 
 h6 {
-    color: #7c7c7c;
-    font-size: 16px;
-    font-weight: bold;
+  color: #7c7c7c;
+  font-size: 16px;
+  font-weight: bold;
 }
 
 .warning {
@@ -139,14 +142,14 @@ h6 {
 }
 
 pre {
-    font-family: monospace;
+  font-family: monospace;
 }
 
 .codetext {
-    font-family: monospace;
-    font-size: 120%;
-    background-color: LightGray;
-    font-weight: bold;
+  font-family: monospace;
+  font-size: 120%;
+  background-color: LightGray;
+  font-weight: bold;
 }
 
 .table-white {
@@ -155,19 +158,19 @@ pre {
 }
 
 .white-text {
-    color: #ffffff;
+  color: #ffffff;
 }
 
 .btn-clean {
-    padding: 0;
-    border: none;
-    background: none;
+  padding: 0;
+  border: none;
+  background: none;
 }
 
 .table-right {
-    width: 100%;
-    margin-right: 0px;
-    margin-left: auto;
+  width: 100%;
+  margin-right: 0px;
+  margin-left: auto;
 }
 
 .Absolute-Center {
@@ -176,194 +179,227 @@ pre {
   overflow: auto;
   margin: auto;
   position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
 }
 
 /* On Off Switch */
 .onoffswitch {
-    position: relative; width: 67px;
-    -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+  position: relative;
+  width: 67px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 .onoffswitch-checkbox {
-    display: none;
+  display: none;
 }
 .onoffswitch-label {
-    display: block; overflow: hidden; cursor: pointer;
-    border: 2px solid #999999; border-radius: 50px;
+  display: block;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid #999999;
+  border-radius: 50px;
 }
 .onoffswitch-inner {
-    display: block; width: 200%; margin-left: -100%;
-    transition: margin 0.1s ease-in 0s;
+  display: block;
+  width: 200%;
+  margin-left: -100%;
+  transition: margin 0.1s ease-in 0s;
 }
-.onoffswitch-inner:before, .onoffswitch-inner:after {
-    display: block; float: left; width: 50%; height: 14px; padding: 0; line-height: 14px;
-    font-size: 13px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
-    box-sizing: border-box;
+.onoffswitch-inner:before,
+.onoffswitch-inner:after {
+  display: block;
+  float: left;
+  width: 50%;
+  height: 14px;
+  padding: 0;
+  line-height: 14px;
+  font-size: 13px;
+  color: white;
+  font-family: Trebuchet, Arial, sans-serif;
+  font-weight: bold;
+  box-sizing: border-box;
 }
 .onoffswitch-inner:before {
-    content: "ON";
-    padding-left: 8px;
-    background-color: #F2F2F2; color: #000000;
+  content: "ON";
+  padding-left: 8px;
+  background-color: #f2f2f2;
+  color: #000000;
 }
 .onoffswitch-inner:after {
-    content: "OFF";
-    padding-right: 8px;
-    background-color: #FFFFFF; color: #C4C4C4;
-    text-align: right;
+  content: "OFF";
+  padding-right: 8px;
+  background-color: #ffffff;
+  color: #c4c4c4;
+  text-align: right;
 }
 .onoffswitch-switch {
-    display: block; width: 14px; margin: 2.5px;
-    background: #FFFFFF;
-    position: absolute; top: 0; bottom: 0;
-    right: 49px;
-    border: 2px solid #999999; border-radius: 50px;
-    transition: all 0.1s ease-in 0s;
+  display: block;
+  width: 14px;
+  margin: 2.5px;
+  background: #ffffff;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 49px;
+  border: 2px solid #999999;
+  border-radius: 50px;
+  transition: all 0.1s ease-in 0s;
 }
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
-    margin-left: 0;
+  margin-left: 0;
 }
 
 .onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-switch {
-    right: 0px;
+  right: 0px;
 }
 
 /* FIFO LIFO Switch  */
 .fifolifoswitch {
-    position: relative; width: 67px;
-    -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+  position: relative;
+  width: 67px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .fifolifoswitch-checkbox {
-    display: none;
+  display: none;
 }
 
 .fifolifoswitch-label {
-    display: block; overflow: hidden; cursor: pointer;
-    border: 2px solid #999999; border-radius: 50px;
+  display: block;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid #999999;
+  border-radius: 50px;
 }
 
 .fifolifoswitch-inner {
-    display: block; width: 200%; margin-left: -100%;
-    transition: margin 0.3s ease-in 0s;
+  display: block;
+  width: 200%;
+  margin-left: -100%;
+  transition: margin 0.3s ease-in 0s;
 }
 
-.fifolifoswitch-inner:before, .fifolifoswitch-inner:after {
-    display: block; float: left; width: 50%; height: 14px; padding: 0; line-height: 14px;
-    font-size: 13px; color: white; font-family: Trebuchet, Arial, sans-serif; font-weight: bold;
-    box-sizing: border-box;
+.fifolifoswitch-inner:before,
+.fifolifoswitch-inner:after {
+  display: block;
+  float: left;
+  width: 50%;
+  height: 14px;
+  padding: 0;
+  line-height: 14px;
+  font-size: 13px;
+  color: white;
+  font-family: Trebuchet, Arial, sans-serif;
+  font-weight: bold;
+  box-sizing: border-box;
 }
 
 .fifolifoswitch-inner:before {
-    content: "LIFO";
-    padding-left: 8px;
-    background-color: #F2F2F2; color: #000000;
+  content: "LIFO";
+  padding-left: 8px;
+  background-color: #f2f2f2;
+  color: #000000;
 }
 
 .fifolifoswitch-inner:after {
-    content: "FIFO";
-    padding-right: 8px;
-    background-color: #F2F2F2; color: #000000;
-    text-align: right;
+  content: "FIFO";
+  padding-right: 8px;
+  background-color: #f2f2f2;
+  color: #000000;
+  text-align: right;
 }
 
 .fifolifoswitch-switch {
-    display: block; width: 14px; margin: 2.5px;
-    background: #FFFFFF;
-    position: absolute; top: 0; bottom: 0;
-    right: 49px;
-    border: 2px solid #999999; border-radius: 50px;
-    transition: all 0.3s ease-in 0s;
+  display: block;
+  width: 14px;
+  margin: 2.5px;
+  background: #ffffff;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 49px;
+  border: 2px solid #999999;
+  border-radius: 50px;
+  transition: all 0.3s ease-in 0s;
 }
 
 .fifolifoswitch-checkbox:checked + .fifolifoswitch-label .fifolifoswitch-inner {
-    margin-left: 0;
+  margin-left: 0;
 }
 
-.fifolifoswitch-checkbox:checked + .fifolifoswitch-label .fifolifoswitch-switch {
-    right: 0px;
+.fifolifoswitch-checkbox:checked
+  + .fifolifoswitch-label
+  .fifolifoswitch-switch {
+  right: 0px;
 }
 
 .emptycell {
-    background-color: #E6E6E6;
+  background-color: #e6e6e6;
 }
 
 .chart {
-    min-width: 320px;
-    max-width: 800px;
-    height: 220px;
-    margin: 0 auto;
+  min-width: 320px;
+  max-width: 800px;
+  height: 220px;
+  margin: 0 auto;
 }
 
 /* CSS for Animated Loading info */
 #wrapper {
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 80em;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 80em;
 }
 
 .loadanim {
-    animation: text-shadow 1.0s ease-in-out infinite;
-    font-size: 14px;
-    font-weight: 300;
-    line-height: 1;
+  animation: text-shadow 1s ease-in-out infinite;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1;
 }
-
 
 a {
-    color: #024794;
+  color: #024794;
 }
-
 
 @keyframes text-shadow {
-    0% {
-        transform: translateY(0);
-        text-shadow:
-            0 0 0 #0c2ffb,
-            0 0 0 #2cfcfd,
-            0 0 0 #fb203b,
-            0 0 0 #fefc4b;
-    }
+  0% {
+    transform: translateY(0);
+    text-shadow: 0 0 0 #0c2ffb, 0 0 0 #2cfcfd, 0 0 0 #fb203b, 0 0 0 #fefc4b;
+  }
 
-    20% {
-        transform: translateY(-1em);
-        text-shadow:
-            0 0.125em 0 #0c2ffb,
-            0 0.25em 0 #2cfcfd,
-            0 -0.125em 0 #fb203b,
-            0 -0.25em 0 #fefc4b;
-    }
+  20% {
+    transform: translateY(-1em);
+    text-shadow: 0 0.125em 0 #0c2ffb, 0 0.25em 0 #2cfcfd, 0 -0.125em 0 #fb203b,
+      0 -0.25em 0 #fefc4b;
+  }
 
-    40% {
-        transform: translateY(0.5em);
-        text-shadow:
-            0 -0.0625em 0 #0c2ffb,
-            0 -0.125em 0 #2cfcfd,
-            0 0.0625em 0 #fb203b,
-            0 0.125em 0 #fefc4b;
-    }
+  40% {
+    transform: translateY(0.5em);
+    text-shadow: 0 -0.0625em 0 #0c2ffb, 0 -0.125em 0 #2cfcfd,
+      0 0.0625em 0 #fb203b, 0 0.125em 0 #fefc4b;
+  }
 
-   60% {
-        transform: translateY(-0.25em);
-        text-shadow:
-            0 0.03125em 0 #0c2ffb,
-            0 0.0625em 0 #2cfcfd,
-            0 -0.03125em 0 #fb203b,
-            0 -0.0625em 0 #fefc4b;
-    }
+  60% {
+    transform: translateY(-0.25em);
+    text-shadow: 0 0.03125em 0 #0c2ffb, 0 0.0625em 0 #2cfcfd,
+      0 -0.03125em 0 #fb203b, 0 -0.0625em 0 #fefc4b;
+  }
 
-    80% {
-        transform: translateY(0);
-        text-shadow:
-            0 0 0 #0c2ffb,
-            0 0 0 #2cfcfd,
-            0 0 0 #fb203b,
-            0 0 0 #fefc4b;
-    }
+  80% {
+    transform: translateY(0);
+    text-shadow: 0 0 0 #0c2ffb, 0 0 0 #2cfcfd, 0 0 0 #fb203b, 0 0 0 #fefc4b;
+  }
 }
 
-.noclose .ui-dialog-titlebar-close
-{
-    display:none;
+.noclose .ui-dialog-titlebar-close {
+  display: none;
 }
 
 .large-table {
@@ -400,42 +436,73 @@ a {
 }
 
 @keyframes shakeAnim {
-  0% {left: 0}
-  1% {left: -3px}
-  2% {left: 5px}
-  3% {left: -8px}
-  4% {left: 8px}
-  5% {left: -5px}
-  6% {left: 3px}
-  7% {left: 0}
+  0% {
+    left: 0;
+  }
+  1% {
+    left: -3px;
+  }
+  2% {
+    left: 5px;
+  }
+  3% {
+    left: -8px;
+  }
+  4% {
+    left: 8px;
+  }
+  5% {
+    left: -5px;
+  }
+  6% {
+    left: 3px;
+  }
+  7% {
+    left: 0;
+  }
 }
 
 @keyframes shake {
-  0% {left: 0}
-  1% {left: -3px}
-  2% {left: 5px}
-  3% {left: -8px}
-  4% {left: 8px}
-  5% {left: -5px}
-  6% {left: 3px}
-  7% {left: 0}
+  0% {
+    left: 0;
+  }
+  1% {
+    left: -3px;
+  }
+  2% {
+    left: 5px;
+  }
+  3% {
+    left: -8px;
+  }
+  4% {
+    left: 8px;
+  }
+  5% {
+    left: -5px;
+  }
+  6% {
+    left: 3px;
+  }
+  7% {
+    left: 0;
+  }
 }
-
 
 .alignleft {
   float: left;
-  width:33.33333%;
-  text-align:left;
+  width: 33.33333%;
+  text-align: left;
 }
 
 .aligncenter {
   float: left;
-  width:33.33333%;
-  text-align:center;
+  width: 33.33333%;
+  text-align: center;
 }
 
 .alignright {
- float: left;
- width:33.33333%;
- text-align:right;
-}​
+  float: left;
+  width: 33.33333%;
+  text-align: right;
+}

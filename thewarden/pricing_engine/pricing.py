@@ -9,6 +9,7 @@ import os
 import json
 import urllib.parse
 import pandas as pd
+import requests
 from datetime import datetime, timedelta, timezone
 from flask_login import current_user
 from thewarden.node.utils import tor_request
@@ -440,15 +441,12 @@ def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY):
     return (price_data.realtime(PROVIDER_LIST[provider]))
 
 
-
 # Gets Currency data for current user
 @MWT(timeout=5)
 @timing
 def fx_rate(fx=None, base='USD'):
     from thewarden.users.utils import fxsymbol
     # This grabs the realtime current currency conversion against USD
-    if current_user is not None:
-        fx = current_user.fx()
     try:
         # get fx rate
         rate = {}
@@ -478,7 +476,7 @@ def multiple_price_grab(tickers, fx):
     # tickers should be in comma sep string format like "BTC,ETH,LTC"
     baseURL = \
         "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="\
-        + tickers+"&tsyms="+fx
+        + tickers + "&tsyms=" + fx
     try:
         request = tor_request(baseURL)
     except requests.exceptions.ConnectionError:
@@ -487,8 +485,6 @@ def multiple_price_grab(tickers, fx):
         data = request.json()
     except AttributeError:
         data = "ConnectionError"
-
-    df = pd.DataFrame.from_dict(data, orient='index')
     return (data)
 
 

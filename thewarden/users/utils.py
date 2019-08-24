@@ -244,7 +244,6 @@ def positions():
     return main_df
 
 
-
 # This function is used to grab a single price that was missing from
 # the multiprice request. Since this is a bit more time intensive, it's
 # separated so it can be memoized for a period of time (this price will
@@ -265,6 +264,8 @@ def positions_dynamic():
     df = positions()
     # Drop all currencies from table
     df = df[df['is_currency'] == False]
+    if df is None:
+        return None, None
     list_of_tickers = df.trade_asset_ticker.unique().tolist()
     tickers_string = ",".join(list_of_tickers)
     # Let's try to get as many prices as possible into the df with a
@@ -276,6 +277,7 @@ def positions_dynamic():
 
     def find_data(ticker):
         try:
+            # Parse the cryptocompare data
             price = multi_price["RAW"][ticker][current_user.fx()]["PRICE"]
             price = float(price * current_user.fx_rate_USD())
             high = float(multi_price["RAW"][ticker][
@@ -283,25 +285,29 @@ def positions_dynamic():
             low = float(multi_price["RAW"][ticker][
                 current_user.fx()]["LOWDAY"] * current_user.fx_rate_USD())
             chg = multi_price["RAW"][ticker][current_user.fx()]["CHANGEPCT24HOUR"]
-            mktcap = multi_price["RAW"][ticker][current_user.fx()]["MKTCAP"]
+            mktcap = multi_price["DISPLAY"][ticker][current_user.fx()]["MKTCAP"]
+            volume = multi_price["DISPLAY"][ticker][current_user.fx()]["VOLUME24HOURTO"]
             last_up_source = multi_price["RAW"][ticker][current_user.fx()]["LASTUPDATE"]
+            source = multi_price["DISPLAY"][ticker][current_user.fx()]["MARKET"]
             last_update = datetime.now()
-        except KeyError as e:
+        except KeyError:
             # Couldn't find price with CryptoCompare. Let's try a different source
             # and populate data in the same format
             try:
                 price, last_update = single_price(ticker)
-                high = low = chg = mktcap = last_up_source = 0
-                if price is None:
-                    flash(f"Price for ticker {ticker} not found. Error: {e}", "danger")
+                high = low = chg = mktcap = last_up_source = volume = 0
+                source = '-'
                 price = float(price * current_user.fx_rate_USD())
             except Exception as e:
-                price = high = low = chg = mktcap = last_up_source = 0
-                flash(f"Ticker: {ticker}. Error {e}")
-        return price, last_update, high, low, chg, mktcap, last_up_source
+                price = high = low = chg = mktcap = last_up_source = volume = 0
+                source = '-'
+                logging.error(f"There was an error getting the price for {ticker}." +
+                              f"Error: {e}")
+        return price, last_update, high, low, chg, mktcap, last_up_source, volume, source
     df = apply_and_concat(df, 'trade_asset_ticker',
                           find_data, ['price', 'last_update', '24h_high', '24h_low',
-                                      '24h_change', 'mktcap', 'last_up_source'])
+                                      '24h_change', 'mktcap', 'last_up_source',
+                                      'volume', 'source'])
     # Now create additional columns with calculations
     df['position_fx'] = df['price'] * df['trade_quantity']
     df['allocation'] = df['position_fx'] / df['position_fx'].sum()
@@ -312,9 +318,9 @@ def positions_dynamic():
     df['pnl_net'] = df['pnl_gross'] - df['trade_fees_fx']
     # FIFO and LIFO PnL calculations
     df['LIFO_unreal'] = (df['price'] - df['LIFO_average_cost']) * \
-                         df['trade_quantity']
+                        df['trade_quantity']
     df['FIFO_unreal'] = (df['price'] - df['FIFO_average_cost']) * \
-                         df['trade_quantity']
+                        df['trade_quantity']
     df['LIFO_real'] = df['pnl_net'] - df['LIFO_unreal']
     df['FIFO_real'] = df['pnl_net'] - df['FIFO_unreal']
     df['LIFO_unrealized_be'] = df['price'] - \
@@ -343,8 +349,7 @@ def positions_dynamic():
         ('trade_fees_fx', 'S'): 'trade_fees_fx_S',
         ('trade_fees_fx', 'D'): 'trade_fees_fx_D',
         ('trade_fees_fx', 'W'): 'trade_fees_fx_W'
-
-        }, inplace=True)
+    }, inplace=True)
     df['last_update'] = df['last_update'].astype(str)
     # Need to add only some fields - strings can't be added for example
     columns_sum = ['cash_value_fx', 'trade_fees_fx', 'position_fx',

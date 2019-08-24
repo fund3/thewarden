@@ -38,7 +38,7 @@ from thewarden.node.utils import (
 )
 from thewarden.users.decorators import MWT
 from thewarden.pricing_engine.pricing import (price_data_fx,
-                                              api_keys_class)
+                                              api_keys_class, price_data_rt)
 
 api = Blueprint("api", __name__)
 
@@ -1852,11 +1852,15 @@ def load_bitmex_json():
         return ({'status': 'error', 'message': 'API credentials not found'})
 
 
-@MWT(20)
+@MWT(5)
 @api.route("/realtime_user", methods=["GET"])
 # Returns current BTC price and FX rate for current user
+# This is the function used at the layout navbar to update BTC price
+# Please note that the default is to update every 20s (MWT(20) above)
 def realtime_user():
     fx_rate = current_user.fx_rate_data()
+    fx_rate['btc_usd'] = price_data_rt("BTC")
+    fx_rate['btc_fx'] =  fx_rate['btc_usd'] * fx_rate['fx_rate']
     return json.dumps(fx_rate)
 
 
@@ -1865,14 +1869,12 @@ def positions_json():
     # Get all transactions
     dfdyn, piedata = positions_dynamic()
     dfdyn = dfdyn.to_dict(orient='index')
-    userdata = {
-        'fx': current_user.fx_rate_data()
-    }
     json_dict = {
         'positions': dfdyn,
-        'piechart': piedata
+        'piechart': piedata,
+        'user': current_user.fx_rate_data(),
+        'btc': price_data_rt("BTC")
     }
-
     return simplejson.dumps(json_dict, ignore_nan=True)
     # Get a list of all tickers in this portfolio
 
