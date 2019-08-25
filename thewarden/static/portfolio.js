@@ -32,6 +32,16 @@ $(document).ready(function () {
     realtime_table();
     getblockheight();
 
+    // Popover management
+    $(function () {
+        $('[data-toggle="popover"]').popover()
+    })
+    $('.popover-dismiss').popover({
+        trigger: 'focus'
+    })
+
+
+    // Refresh pricings
     window.setInterval(function () {
         realtime_table();
     }, 2000);
@@ -143,15 +153,15 @@ function realtime_table() {
             // variable fx will contain the user's currency symbol
             var fx = data.user.symbol
             // Parse the json
-            $('#pvalue').html(formatNumber(data.positions.Total.position_fx, 0, fx));
+            $('#pvalue').html(formatNumber(data.positions.Total.position_fx, 0, fx)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
             posbtc = data.positions.Total.position_fx / data.btc
-            $('#pvaluebtc').html(formatNumber(posbtc, 2, "&#8383 "));
-            $('#chg1').html(formatNumber(data.positions.Total.change_fx, 0, fx));
+            $('#pvaluebtc').html(formatNumber(posbtc, 2, "&#8383 ")).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
+            $('#chg1').html(formatNumber(data.positions.Total.change_fx, 0, fx)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
             pct_chg = (data.positions.Total.change_fx / data.positions.Total.position_fx) * 100
-            $('#chg2').html(formatNumber(pct_chg, 2, '+', '%', 'False', true));
-            $('#lstupd').html(data.positions.Total.last_up_source)
+            $('#chg2').html(formatNumber(pct_chg, 2, '+', '%', 'False', true)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
+            $('#lstupd').html(data.positions.Total.last_up_source).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
             // Update BTC price on layout
-            $('#latest_btc_price').html(formatNumber(data.btc * data.user.fx_rate, 2, fx));
+            $('#latest_btc_price').html(formatNumber(data.btc * data.user.fx_rate, 2, fx)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
 
             // Totals for FIFO and LIFO tables
             $('#F_total').html(formatNumber(data.positions.Total.position_fx, 0, fx, ''));
@@ -170,8 +180,8 @@ function realtime_table() {
             $.each(data.positions, function (key, value) {
                 // Portfolio Snapshot
                 if (value.price != 0) {
-                    $('#' + key + '_price').html(formatNumber(value.price, 2, fx, ''));
-                    $('#' + key + '_24hchg').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true));
+                    $('#' + key + '_price').html(formatNumber(value.price, 2, fx, '')).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
+                    $('#' + key + '_24hchg').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
                     $('#' + key + '_position').html(formatNumber(value.position_fx, 0, fx, ''));
                     $('#' + key + '_allocation').html(formatNumber(value.allocation * 100, 2, '', '%'));
 
@@ -194,8 +204,8 @@ function realtime_table() {
                     $('#' + key + '_L_breakeven').html(formatNumber(value.breakeven, 2, fx, '', value.small_pos));
 
                     // Market Data values
-                    $('#' + key + '_mkt_price').html(formatNumber(value.price, 2, fx, ''));
-                    $('#' + key + '_24h_change').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true));
+                    $('#' + key + '_mkt_price').html(formatNumber(value.price, 2, fx, '')).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
+                    $('#' + key + '_24h_change').html(formatNumber(value['24h_change'], 2, '+', '%', 'False', true)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
                     var price_range = formatNumber(value['24h_low'], 2, fx, '') + ' - ' + formatNumber(value['24h_high'], 2, fx, '')
                     $('#' + key + '_24h_range').html(price_range);
                     $('#' + key + '_volume').html(value.volume);

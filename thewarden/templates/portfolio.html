@@ -153,7 +153,11 @@
 
                     <tr id="ticker{{position}}">
 
-                        <th class="align-middle" scope="row">{{position}}</th>
+                        <th class="align-middle" scope="row">
+
+                            {{position}}
+
+                        </th>
 
                         <td class="text-right align-middle">
                             {{(portfolio_data[position]['trade_quantity'] | jformat(4))}}
@@ -256,7 +260,8 @@
                             <th class="text-right">
                                 Breakeven
                             </th>
-
+                            <th>
+                            </th>
 
 
                         </tr>
@@ -314,6 +319,16 @@
                                 <span id="{{position}}_F_breakeven">
                                     <img src='static/images/loading_small.gif' width="30" height="30"></img>
                                 </span>
+
+                            </td>
+
+
+                            <td class="text-center align-middle">
+                                <a tabindex="0" class="btn btn-link" role="button" data-toggle="popover"
+                                    data-trigger="focus" title="Dismissible popover"
+                                    data-content="And here's some amazing content. It's very engaging. Right?">
+                                    <i class="fas fa-caret-right"></i>
+                                </a>
 
                             </td>
 
@@ -828,6 +843,7 @@
     </div>
 </div>
 </br>
+
 
 
 <script src="/static/portfolio.js"></script>

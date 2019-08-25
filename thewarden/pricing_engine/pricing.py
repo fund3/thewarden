@@ -78,6 +78,12 @@ class PriceProvider:
             ticker = ticker.upper()
             globalURL = (self.base_url + "?" + self.ticker_field + "=" +
                          ticker + self.url_args)
+            # Some APIs use the ticker without a ticker field i.e. xx.xx./AAPL&...
+            # in these cases, we pass the ticker field as empty
+            if self.ticker_field == '':
+                if self.url_args[0] == '&':
+                    self.url_args = self.url_args.replace('&' , '?', 1)
+                globalURL = (self.base_url + "/" + ticker + self.url_args)
             request = tor_request(globalURL)
             try:
                 data = request.json()
@@ -102,7 +108,7 @@ class PriceProvider:
 # btc.df_fx(currency, fx_provider): returns a df with
 #                                   prices and fx conversions
 # btc.price_ondate(date)
-# btc.price_parder(): do not use directly. This is used to parse
+# btc.price_parser(): do not use directly. This is used to parse
 #                     the requested data from the API provider
 # btc.realtime(provider): returns realtime price (float)
 @timing
@@ -118,9 +124,15 @@ class PriceData():
         self.errors = []
         # makesure file path exists
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
-        # Try to read from file
+        # Try to read from file and check how recent it is
         try:
-            self.df = pd.read_pickle(self.filename)
+            today = datetime.now().date()
+            filetime = datetime.fromtimestamp(
+                        os.path.getctime(self.filename))
+            if filetime.date() == today:
+                self.df = pd.read_pickle(self.filename)
+            else:
+                self.df = self.update_history()
         except FileNotFoundError:
             self.df = self.update_history()
 
@@ -244,7 +256,29 @@ class PriceData():
                 df_save = None
             return (df_save)
 
-        # Provider: alphavantagestocks
+        # Provider: fmpstocks
+        if provider.name == 'financialmodelingprep':
+            try:
+                df = pd.DataFrame.from_records(data['historical'])
+                print(df)
+                df = df.rename(
+                    columns={
+                        'close': 'close',
+                        'open': 'open',
+                        'high': 'high',
+                        'low': 'low',
+                        'volume': 'volume'
+                    })
+                df.set_index('date', inplace=True)
+                df_save = df[['close', 'open', 'high', 'low', 'volume']]
+                print(df_save)
+            except Exception as e:
+                self.errors.append(e)
+                df_save = None
+            return (df_save)
+
+
+        # Provider:
         if provider.name == 'alphavantagefx':
             try:
                 df = pd.DataFrame.from_dict(data['Time Series FX (Daily)'],
@@ -262,6 +296,7 @@ class PriceData():
                 self.errors.append(e)
                 df_save = None
             return (df_save)
+
 
         # CryptoCompare Digital and FX use the same parser
         if provider.name == 'ccdigital' or provider.name == 'ccfx':
@@ -331,6 +366,12 @@ class PriceData():
             except Exception as e:
                 self.errors.append(e)
 
+        if rt_provider.name == 'fprealtimestock':
+            try:
+                price = (price_request['price'])
+            except Exception as e:
+                self.errors.append(e)
+
         return price
 
 
@@ -362,8 +403,18 @@ class ApiKeys():
 api_keys_class = ApiKeys()
 api_keys = api_keys_class.loader()
 
+
+# Generic Requests will try each of these before failing
+REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock',
+                              'fp_realtime_stock']
+FX_RT_PROVIDER_PRIORITY = ['cc_realtime_full', 'aa_realtime_digital']
+HISTORICAL_PROVIDER_PRIORITY = ['cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',
+                                'financialmodelingprep', 'bitmex']
+FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
+
+
 # _____________________________________________
-# Helper functions go here
+#            Helper functions go here
 # _____________________________________________
 
 # Bitmex Helper Function (uses bitmex library instead of requests)
@@ -434,16 +485,12 @@ def price_data_fx(ticker):
 
 # Returns realtime price for a ticker using the provider list
 # Price is returned in USD
-REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock']
-
-
 def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY):
     for provider in priority_list:
         price_data = PriceData(ticker, PROVIDER_LIST[provider])
         if price_data.realtime(PROVIDER_LIST[provider]) is not None:
             break
     return (price_data.realtime(PROVIDER_LIST[provider]))
-
 
 
 @MWT(timeout=60)
@@ -454,6 +501,7 @@ def GBTC_premium(price):
     fairvalue = price_data_rt("BTC") * SHARES
     premium = (price / fairvalue) - 1
     return fairvalue, premium
+
 
 @MWT(timeout=30)
 def price_data_rt_full(ticker, provider):
@@ -575,10 +623,30 @@ def multiple_price_grab(tickers, fx):
     return (data)
 
 
+def fx_price_ondate(base, cross, date):
+    # Gets price conversion on date between 2 currencies
+    # on a specific date
+    try:
+        provider = PROVIDER_LIST['cc_fx']
+        if base == 'USD':
+            price_base = 1
+        else:
+            base_class = PriceData(base, provider)
+            price_base = base_class.price_ondate(date).close
+        if cross == 'USD':
+            price_cross = 1
+        else:
+            cross_class = PriceData(cross, provider)
+            price_cross = cross_class.price_ondate(date).close
+        conversion = float(price_cross) / float(price_base)
+        return (conversion)
+    except Exception:
+        return (1)
+
+
 # _____________________________________________
 # Variables go here
 # _____________________________________________
-
 # List of API providers
 # name: should be unique and contain only lowecase letters
 PROVIDER_LIST = {
@@ -602,6 +670,15 @@ PROVIDER_LIST = {
                       'apikey': api_keys['alphavantage']['api_key']
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
+    'fmp_stock':
+    PriceProvider(name='financialmodelingprep',
+                  base_url='https://financialmodelingprep.com/api/v3/historical-price-full',
+                  ticker_field='',
+                  field_dict={
+                    'from': '2001-01-01',
+                    'to:': '2099-12-31'
+                  },
+                  doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'),
     'aa_fx':
     PriceProvider(name='alphavantagefx',
                   base_url='https://www.alphavantage.co/query',
@@ -674,13 +751,14 @@ PROVIDER_LIST = {
                   ticker_field='symbol',
                   field_dict={'function': 'GLOBAL_QUOTE',
                               'apikey': api_keys['alphavantage']['api_key']},
-                  doc_link='https://www.alphavantage.co/documentation/')
-}
+                  doc_link='https://www.alphavantage.co/documentation/'),
+    'fp_realtime_stock':
+    PriceProvider(name='fprealtimestock',
+                  base_url='https://financialmodelingprep.com/api/v3/stock/real-time-price',
+                  ticker_field='',
+                  field_dict='',
+                  doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'),
+                  }
 
-# Generic Requests will try each of these before failing
-HISTORICAL_PROVIDER_PRIORITY = [
-    'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',  'bitmex']
 
-FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
-FX_RT_PROVIDER_PRIORITY = ['cc_realtime_full', 'aa_realtime_digital']
 

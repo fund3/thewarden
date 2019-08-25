@@ -1881,8 +1881,10 @@ def positions_json():
 
 @api.route("/test_price", methods=["GET"])
 def test_price():
-    from thewarden.pricing_engine.pricing import price_data_rt_full
-    a = price_data_rt_full('GBTC', 'aa')
-    print (a)
-    return (a)
+    from thewarden.pricing_engine.pricing import fx_price_ondate, PROVIDER_LIST, PriceData
+    provider = PROVIDER_LIST['fmp_stock']
+    a = PriceData('AAPL', provider)
+    print (a.errors)
+    print (a.realtime(PROVIDER_LIST['fp_realtime_stock']))
+    return (a.df.to_json())
 

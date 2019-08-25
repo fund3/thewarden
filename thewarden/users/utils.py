@@ -16,14 +16,11 @@ from flask_mail import Message
 from thewarden import db, mail
 from thewarden import mhp as mrh
 from thewarden.models import Trades
-from thewarden.node.utils import tor_request
-from thewarden.pricing_engine.pricing import (FX_PROVIDER_PRIORITY,
-                                              HISTORICAL_PROVIDER_PRIORITY,
-                                              PROVIDER_LIST, PriceData,
-                                              api_keys_class,
+from thewarden.pricing_engine.pricing import (PriceData,
                                               multiple_price_grab, price_data,
                                               price_data_fx, price_data_rt,
-                                              price_data_rt_full)
+                                              price_data_rt_full,
+                                              fx_price_ondate)
 from thewarden.users.decorators import MWT, memoized, timing
 
 # ---------------------------------------------------------
@@ -133,9 +130,7 @@ def find_fx(row, fx=None):
     # row.name is the date being passed
     # row['trade_currency'] is the base fx (the one where the trade was included)
     # Create an instance of PriceData:
-    provider = PROVIDER_LIST['cc_fx']
-    fx_class = PriceData(row['trade_currency'], provider)
-    price = fx_class.price_ondate(row.name)
+    price = fx_price_ondate(current_user.fx(), row['trade_currency'], row.name)
     return price
 
 
