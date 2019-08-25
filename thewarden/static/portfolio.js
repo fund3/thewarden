@@ -33,12 +33,269 @@ $(document).ready(function () {
     getblockheight();
 
     // Popover management
-    $(function () {
-        $('[data-toggle="popover"]').popover()
-    })
+    // Default popover enabler from Bootstrap
+    $('[data-toggle="popover"]').popover()
+    // The below lines are needed to include a table inside a popover
+    // Taken from here:
+    // https://stackoverflow.com/questions/55362609/bootstrap-4-3-1-popover-does-not-display-table-inside-popover-content
+    $.fn.popover.Constructor.Default.whiteList.table = [];
+    $.fn.popover.Constructor.Default.whiteList.tr = [];
+    $.fn.popover.Constructor.Default.whiteList.td = [];
+    $.fn.popover.Constructor.Default.whiteList.div = [];
+    $.fn.popover.Constructor.Default.whiteList.tbody = [];
+    $.fn.popover.Constructor.Default.whiteList.thead = [];
+    // If clicked outside of popover, it closes
     $('.popover-dismiss').popover({
         trigger: 'focus'
     })
+    // Start this function whenever a popup opens
+    $('[data-toggle="popover"]').on('shown.bs.popover', onPopoverHtmlLoad)
+
+
+    function onPopoverHtmlLoad() {
+
+        ticker = $(this).data('ticker')
+        this_var = $(this)
+        accounting = $(this).data('accounting')
+        // Get the cost table for this ticker
+        $.ajax({
+            type: 'GET',
+            url: '/positions_json',
+            dataType: 'json',
+            success: function (data) {
+                // Parse data
+                var fx = data.user.symbol
+                console.log(accounting)
+                var pop_html = `
+                <div class="row">
+                    <div class='col-sm-6'>
+                        <table class="table table-condensed table-striped popover_table">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        Operation
+                                    </td>
+                                    <td class="text-right">
+                                        Quantity
+                                    </td>
+                                    <td class="text-right">
+                                    ` + data.user.name_plural + `
+                                    </td>
+                                </tr>
+                            <tr>
+                                <td>
+                                    Buys
+                                    </td>
+                                <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].trade_quantity_B, 4) + `
+                                    </td>
+                                <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].cash_value_fx_B, 0, fx) + `
+                                    </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    Sells
+                                    </td>
+                                <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].trade_quantity_S, 4) + `
+                                    </td>
+                                <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].cash_value_fx_S, 0, fx) + `
+                                    </td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    Deposits
+                                    </td>
+                                <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].trade_quantity_D, 4) + `
+                                    </td>
+                                <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].cash_value_fx_D, 0, fx) + `
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Withdraws
+                                    </td>
+                                <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].trade_quantity_W, 4) + `
+                                    </td>
+                                <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].cash_value_fx_W, 0, fx) + `
+                                    </td>
+                            </tr>
+                            <tr class="thead-dark">
+                            <td>
+                                Total
+                                </td>
+                            <td class="text-right"> <span class="numberCircle">&nbsp1&nbsp</span>
+                                ` + formatNumber(data.positions[ticker][accounting + '_quantity'], 4) + `
+                                </td>
+                            <td class="text-right"> <span class="numberCircle">&nbsp2&nbsp</span>
+                                ` + formatNumber(data.positions[ticker].cash_value_fx, 0, fx) + `
+
+                                </td>
+                            </tr>
+
+                            </tbody>
+                        </table >
+
+                        <table class="table table-condensed table-striped popover_table">
+                            <tbody>
+
+                                <tr>
+                                    <td>
+                                    ` + accounting + ` Average Cost
+                                    </td>
+                                    <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker][accounting + '_average_cost'], 2, fx) + `
+                                    <span class="numberCircle">&nbsp9&nbsp</span>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                    Unrealized PnL = ( <span class="numberCircle">&nbsp3&nbsp</span> - <span class="numberCircle">&nbsp9&nbsp</span> ) X <span class="numberCircle">&nbsp1&nbsp</span>
+                                    </td>
+                                    <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker][accounting + '_unreal'], 0, fx) + `
+                                    <span class="numberCircle">&nbsp10&nbsp</span>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                    Unrealized Break Even = <span class="numberCircle">&nbsp3&nbsp</span> - ( <span class="numberCircle">&nbsp10&nbsp</span> &#xF7 <span class="numberCircle">&nbsp1&nbsp</span> )
+                                    </td>
+                                    <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker][accounting + '_unrealized_be'], 2, fx) + `
+
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                    Realized PnL = ( <span class="numberCircle">&nbsp7&nbsp</span> - <span class="numberCircle">&nbsp10&nbsp</span> )
+                                    </td>
+                                    <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker][accounting + '_real'], 0, fx) + `
+
+                                    </td>
+                                </tr>
+
+
+                            </tbody>
+                        </table>
+
+
+                    </div>
+
+                    <div class="col-sm-6">
+                        <table class="table table-condensed table-striped popover_table">
+                            <tbody>
+
+                                <tr>
+                                    <td>
+                                    Open Position
+                                    </td>
+                                    <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker][accounting + '_quantity'], 4) + `
+                                    <span class="numberCircle">&nbsp1&nbsp</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                     Price
+                                    </td>
+                                    <td class="text-right">
+                                        ` + formatNumber(data.positions[ticker].price, 2, fx) + `
+                                        <span class="numberCircle">&nbsp3&nbsp</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                    Current Market Value = <span class="numberCircle">&nbsp1&nbsp</span> X <span class="numberCircle">&nbsp3&nbsp</span>
+                                    </td>
+                                    <td class="text-right">
+                                        ` + formatNumber(data.positions[ticker].position_fx, 0, fx) + `
+                                        <span class="numberCircle">&nbsp4&nbsp</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                    Total Cash Flow
+                                    </td>
+                                    <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].cash_value_fx, 0, fx) + `
+                                    <span class="numberCircle">&nbsp2&nbsp</span>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                    Gross PnL = <span class="numberCircle">&nbsp4&nbsp</span> - <span class="numberCircle">&nbsp2&nbsp</span>
+                                    </td>
+                                    <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].pnl_gross, 0, fx) + `
+                                    <span class="numberCircle">&nbsp5&nbsp</span>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                    Fees
+                                    </td>
+                                    <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].trade_fees_fx * -1, 0, fx) + `
+                                    <span class="numberCircle">&nbsp6&nbsp</span>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                    Net PnL = <span class="numberCircle">&nbsp5&nbsp</span> + <span class="numberCircle">&nbsp6&nbsp</span>
+                                    </td>
+                                    <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].pnl_net, 0, fx) + `
+                                    <span class="numberCircle">&nbsp7&nbsp</span>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                    Break Even price = <span class="numberCircle">&nbsp2&nbsp</span> &#xF7 <span class="numberCircle">&nbsp1&nbsp</span>
+                                    </td>
+                                    <td class="text-right">
+                                    ` + formatNumber(data.positions[ticker].breakeven, 2, fx) + `
+                                    <span class="numberCircle">&nbsp8&nbsp</span>
+                                    </td>
+                                </tr>
+
+
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                    `
+
+                this_var.attr('data-content', pop_html).data('bs.popover').setContent()
+                $('[data-toggle="popover"]').popover({
+
+                    html: true
+                })
+
+            },
+        })
+
+
+
+    }
 
 
     // Refresh pricings

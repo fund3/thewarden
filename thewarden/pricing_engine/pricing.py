@@ -1,4 +1,4 @@
-# Class to include several price providers that work together to update a single
+# Class to include several price providers that work together to update a
 # list of pricing databases
 # The databases are saved in the pickle format as pandas df for later use
 # The field dictionary is a list of column names for the provider to
@@ -570,6 +570,26 @@ def price_data_rt_full(ticker, provider):
                 fairvalue = "{0:,.2f}".format(fairvalue)
                 premium = "{0:,.2f}".format(premium * 100)
                 notes = f"Fair Value: {fairvalue}<br>Premium: {premium}%"
+            return (price, last_update, high, low, chg, mktcap,
+                    last_up_source, volume, source, notes)
+        except Exception:
+            return None
+
+    if provider == 'fp':
+        try:
+            globalURL = 'https://financialmodelingprep.com/api/v3/stock/real-time-price/'
+            globalURL += ticker
+            data = tor_request(globalURL).json()
+            price = float(data['price']) * current_user.fx_rate_USD()
+            high = '-'
+            low = '-'
+            chg = 0
+            mktcap = '-'
+            volume = '-'
+            last_up_source = '-'
+            last_update = '-'
+            source = 'FP Modeling API'
+            notes = None
             return (price, last_update, high, low, chg, mktcap,
                     last_up_source, volume, source, notes)
         except Exception:

@@ -506,3 +506,37 @@ a {
   width: 33.33333%;
   text-align: right;
 }
+
+/* Popover Header */
+.popover-header {
+  font-size: 12px;
+  text-align: center;
+}
+/* Popover Body */
+.popover-body {
+  font-size: 12px;
+  text-align: left;
+}
+.popover {
+  top: -35px !important;
+  min-width: 880px !important;
+}
+
+.popover_table {
+  font-size: 12px !important;
+}
+
+.numberCircle {
+  border-radius: 20% !important;
+  width: 12px !important;
+  height: 12px !important;
+  padding: 2px !important;
+
+  background: #da5526;
+  border: 2px solid #da552;
+  color: white;
+  text-align: center;
+
+  font: 10px Arial, sans-serif;
+  font-weight: bold;
+}

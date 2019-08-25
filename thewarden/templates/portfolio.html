@@ -62,17 +62,17 @@
             <tbody>
                 <tr>
 
-                    <td id='latest_btc_price' class="text-left border-bottom hinumbersmall" data-toggle="tooltip"
+                    <td id='latest_btc_price' class="text-center border-bottom hinumbersmall" data-toggle="tooltip"
                         data-placement="top" title="Bitcoin's Latest Price">
                         <img src='static/images/loading_small.gif' width="30" height="30"></img>
                     </td>
 
-                    <td id='latest_btc_block' class="text-left border-bottom hinumbersmall" data-toggle="tooltip"
-                        data-placement="top" title="Bitcoin's Latest Block">
+                    <td id='latest_btc_block' class="text-center border-bottom hinumbersmall small"
+                        data-toggle="tooltip" data-placement="top" title="Bitcoin's Latest Block">
                         <img src='static/images/loading_small.gif' width="30" height="30"></img>
                     </td>
 
-                    <td class="border-bottom hinumbersmall text-right">
+                    <td class="border-bottom hinumbersmall text-right small">
                         <span id="lstupd">
                             <img src='static/images/loading_small.gif' width="30" height="30"></img>
                         </span>
@@ -82,11 +82,11 @@
 
                 </tr>
                 <tr>
-                    <td class="small text-left">
+                    <td class="small text-center">
                         &#8383 Price
                     </td>
 
-                    <td class="small text-left">
+                    <td class="small text-center">
                         &#8383 Block Height
                     </td>
 
@@ -323,11 +323,13 @@
                             </td>
 
 
-                            <td class="text-center align-middle">
-                                <a tabindex="0" class="btn btn-link" role="button" data-toggle="popover"
-                                    data-trigger="focus" title="Dismissible popover"
-                                    data-content="And here's some amazing content. It's very engaging. Right?">
-                                    <i class="fas fa-caret-right"></i>
+                            <td class="text-right align-middle">
+                                <a style="color: lightslategray; position: relative; cursor: pointer;" tabindex="0"
+                                    data-toggle="popover" class="cost_popover" data-trigger="focus"
+                                    data-accounting='FIFO' title="Cost calculations for {{position}}"
+                                    data-placement="bottom" data-content="<span class='text-center'><img src='static/images/loading_small.gif' width='30'
+                                    height='30'></img></span>" data-html="true" data-ticker={{position}}>
+                                    <i class="fas fa-info-circle"></i>
                                 </a>
 
                             </td>
@@ -381,6 +383,8 @@
                             <td class="text-right small align-middle">
 
                             </td>
+                            <td>
+                            </td>
 
                         </tr>
 
@@ -420,7 +424,8 @@
                             <th class="text-right">
                                 Breakeven
                             </th>
-
+                            <th>
+                            </th>
 
 
                         </tr>
@@ -480,7 +485,15 @@
                                 <span id="{{position}}_L_breakeven">
                                     <img src='static/images/loading_small.gif' width="30" height="30"></img>
                                 </span>
-
+                            </td>
+                            <td>
+                                <a style="color: lightslategray; position: relative; cursor: pointer;" tabindex="0"
+                                    data-toggle="popover" class="cost_popover" data-trigger="focus"
+                                    data-accounting='LIFO' title="Cost calculations for {{position}}"
+                                    data-placement="bottom" data-content="<span class='text-center'><img src='static/images/loading_small.gif' width='30'
+                                    height='30'></img></span>" data-html="true" data-ticker={{position}}>
+                                    <i class="fas fa-info-circle"></i>
+                                </a>
                             </td>
 
                         </tr>
@@ -532,7 +545,9 @@
                             <td class="text-right small align-middle">
 
                             </td>
+                            <td class="text-right small align-middle">
 
+                            </td>
                         </tr>
 
                     </tbody>

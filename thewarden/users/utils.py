@@ -292,11 +292,20 @@ def positions_dynamic():
                 (price, last_update, high, low,
                     chg, mktcap, last_up_source,
                     volume, source, notes) = single_price
-            except Exception as e:
-                price = high = low = chg = mktcap = last_up_source = last_update = volume = 0
-                source = '-'
-                logging.error(f"There was an error getting the price for {ticker}." +
-                              f"Error: {e}")
+            except Exception:
+                # Let's try a final time using Financial Modeling Prep API
+                try:
+                    single_price = price_data_rt_full(ticker, 'fp')
+                    if single_price is None:
+                        raise KeyError
+                    (price, last_update, high, low,
+                        chg, mktcap, last_up_source,
+                        volume, source, notes) = single_price
+                except Exception as e:
+                    price = high = low = chg = mktcap = last_up_source = last_update = volume = 0
+                    source = '-'
+                    logging.error(f"There was an error getting the price for {ticker}." +
+                                f"Error: {e}")
         return price, last_update, high, low, chg, mktcap, last_up_source, volume, source, notes
     df = apply_and_concat(df, 'trade_asset_ticker',
                           find_data, ['price', 'last_update', '24h_high', '24h_low',
@@ -318,9 +327,9 @@ def positions_dynamic():
     df['LIFO_real'] = df['pnl_net'] - df['LIFO_unreal']
     df['FIFO_real'] = df['pnl_net'] - df['FIFO_unreal']
     df['LIFO_unrealized_be'] = df['price'] - \
-                               (df['LIFO_unreal'] / df['trade_quantity'])
+                              (df['LIFO_unreal'] / df['trade_quantity'])
     df['FIFO_unrealized_be'] = df['price'] - \
-                               (df['FIFO_unreal'] / df['trade_quantity'])
+                              (df['FIFO_unreal'] / df['trade_quantity'])
     # Allocations below 0.01% are marked as small
     # this is used to hide small and closed positions at html
     df.loc[df.allocation <= 0.0001, 'small_pos'] = 'True'
