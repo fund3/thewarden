@@ -16,7 +16,7 @@ from flask import (
 from flask_login import current_user, login_required
 from thewarden import db
 from thewarden.main.forms import ImportCSV, ContactForm
-from thewarden.models import Trades, listofcrypto, AccountInfo, Contact, User
+from thewarden.models import Trades, listofcrypto, AccountInfo, Contact
 from datetime import datetime
 import dateutil.parser as parser
 from thewarden.users.utils import generatenav, cleancsv, regenerate_nav
@@ -31,8 +31,6 @@ def before_request():
     exclude_list = ["main.get_started", "main.importcsv", "main.csvtemplate"]
     if request.endpoint not in exclude_list:
         if current_user.is_authenticated:
-            user_info = User.query.filter_by(
-                username=current_user.username).first()
             from thewarden.pricing_engine.pricing import api_keys_class
             api_keys_json = api_keys_class.loader()
             aa_apikey = api_keys_json['alphavantage']['api_key']

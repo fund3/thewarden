@@ -52,19 +52,35 @@ $(document).ready(function () {
     $('[data-toggle="popover"]').on('shown.bs.popover', onPopoverHtmlLoad)
 
     $('.FIFOLIFOmodal').click(function () {
-        ticker = ($(this).data('ticker'));
-        accounting = ($(this).data('accounting'));
-        $('#your-modal-id').modal('hide');
-        $('body').addClass('modal-open');
         $('#FIFOLIFOModal').modal('show');
-        $('#FIFO_transactions').html(accounting);
-
+        this_var = $(this)
+        updateModal(this_var);
     });
 
+    // Main function to update the Modal with some cost calculations
+    function updateModal(this_var) {
+        ticker = (this_var.data('ticker'));
+        accounting = (this_var.data('accounting'));
+        console.log('/accounting_json?ticker=' + ticker + '&method=' + accounting)
+        $.ajax({
+            type: 'GET',
+            url: '/accounting_json?ticker=' + ticker + '&method=' + accounting,
+            dataType: 'html',
+            success: function (data) {
+                console.log(data)
+                // Parse data
+                var pop_html = `
+                <div class="row">
+                `
+                $('#accounting_table').html('<br> ' + data + '<br>');
+            },
+            error: console.log("AJAX Error")
+        });
+
+    }
 
 
     function onPopoverHtmlLoad() {
-
         ticker = $(this).data('ticker')
         this_var = $(this)
         accounting = $(this).data('accounting')
@@ -76,7 +92,6 @@ $(document).ready(function () {
             success: function (data) {
                 // Parse data
                 var fx = data.user.symbol
-                console.log(accounting)
                 var pop_html = `
                 <div class="row">
                     <div class='col-sm-6'>

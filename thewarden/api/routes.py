@@ -25,7 +25,8 @@ from thewarden.users.utils import (
     regenerate_nav,
     transactions_fx,
     fxsymbol,
-    positions_dynamic
+    positions_dynamic,
+    cost_calculation
 )
 from thewarden.node.utils import (
     dojo_auth,
@@ -1866,7 +1867,8 @@ def realtime_user():
 
 @api.route("/positions_json", methods=["GET"])
 def positions_json():
-    # Get all transactions
+    # Get all transactions and cost details
+    # This serves the main page
     dfdyn, piedata = positions_dynamic()
     dfdyn = dfdyn.to_dict(orient='index')
     json_dict = {
@@ -1876,9 +1878,21 @@ def positions_json():
         'btc': price_data_rt("BTC")
     }
     return simplejson.dumps(json_dict, ignore_nan=True)
-    # Get a list of all tickers in this portfolio
 
 
+@api.route("/accounting_json", methods=["GET"])
+def accounting_json():
+    # Get all accounting details. Takes arguments:
+    # ticker
+    # method (FIFO, LIFO)
+    method = request.args.get("method")
+    ticker = request.args.get("ticker")
+    html = cost_calculation(ticker, method)
+    return (html)
+
+
+
+# DELETE THIS --- Only to test prices
 @api.route("/test_price", methods=["GET"])
 def test_price():
     from thewarden.pricing_engine.pricing import fx_price_ondate, PROVIDER_LIST, PriceData
@@ -1887,4 +1901,6 @@ def test_price():
     print (a.errors)
     print (a.realtime(PROVIDER_LIST['fp_realtime_stock']))
     return (a.df.to_json())
+
+
 

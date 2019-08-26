@@ -15,6 +15,8 @@
 - Included a new popover on front page showing the full details for pnl calculations.
 - Included support for Financial Modeling Prep API (as a backup for stock prices)
 - Dashboard now updates prices and positions in realtime
+- Fixed an issue where some modals where not showing correctly
+- Included details on how FIFO and LIFO unrealized cost is calculated
 
 ## v.13 alpha (8/15/2019)
 

@@ -46,14 +46,13 @@ except KeyError:
                   " Defaulting to 5.")
 
 
-@MWT(timeout=5)
+@MWT(timeout=10)
 @timing
-def cost_calculation(ticker):
+def cost_calculation(ticker, html_table=None):
     # This function calculates the cost basis assuming 3 different methods
     # FIFO, LIFO and avg. cost
-    # found = [item for item in fx_list() if ticker in item]
-    # if found != []:
-    #     return (0)
+    # If html_table is set to either FIFO or LIFO, it will return
+    # an html table for this ticker
 
     # Gets all transactions in local currency terms
     df = transactions_fx()
@@ -97,8 +96,6 @@ def cost_calculation(ticker):
     cost_matrix['FIFO']['FIFO_average_cost'] = fifo_df['adjusted_cv'].sum()\
         / open_position
 
-
-
     # ---------------------------------------------------
     #  LIFO
     # ---------------------------------------------------
@@ -121,6 +118,51 @@ def cost_calculation(ticker):
     cost_matrix['LIFO']['LIFO_quantity'] = open_position
     cost_matrix['LIFO']['LIFO_count'] = int(lifo_df['trade_operation'].count())
     cost_matrix['LIFO']['LIFO_average_cost'] = lifo_df['adjusted_cv'].sum() / open_position
+
+    if html_table == "FIFO":
+        # Format the df into an HTML table to be served at main page
+        html = fifo_df[[
+            'trade_operation', 'Q', 'acum_Q',
+            'trade_price_fx', 'trade_fees_fx', 'cash_value_fx', 'adjusted_cv',
+            'trade_reference_id']]
+
+    if html_table == "LIFO":
+        html = lifo_df[[
+            'trade_operation', 'Q', 'acum_Q',
+            'trade_price_fx', 'trade_fees_fx', 'cash_value_fx', 'adjusted_cv',
+            'trade_reference_id']]
+
+    # Now format the HTML properly
+    if html_table:
+        fx = current_user.fx_rate_data()['symbol']
+        # Include a link to edit this transaction
+        html["trade_reference_id"] = "<a href='/edittransaction?reference_id=" +\
+                                        html['trade_reference_id'] +\
+                                        "'><i class='fas fa-edit'></i></a>"
+
+        # format numbers
+        html['acum_Q'] = abs(html['acum_Q'])
+        html['Q'] = abs(html['Q'])
+        html['acum_Q'] = html['acum_Q'].map('{:,.4f}'.format)
+        html['Q'] = html['Q'].map('{:,.4f}'.format)
+        html['trade_price_fx'] = html['trade_price_fx'].map('{:,.2f}'.format)
+        html['trade_fees_fx'] = html['trade_fees_fx'].map('{:,.2f}'.format)
+        html['cash_value_fx'] = html['cash_value_fx'].map('{:,.2f}'.format)
+        html['adjusted_cv'] = html['adjusted_cv'].map('{:,.2f}'.format)
+        html = html.rename(
+                    columns={
+                        'trade_operation': 'B/S',
+                        'acum_Q': 'Q (acum)',
+                        'trade_price_fx': 'Price (' + fx + ')',
+                        'trade_fees_fx': 'Fees (' + fx + ')',
+                        'cash_value_fx': 'Cash Flow (' + fx + ')',
+                        'adjusted_cv': 'Adj CF (' + fx + ')',
+                        'trade_reference_id': ' '
+                    })
+
+        cost_matrix = html.to_html(
+            classes='table table-condensed table-striped small-text text-right',
+            escape=False, index_names=False, justify='right')
 
     return (cost_matrix)
 

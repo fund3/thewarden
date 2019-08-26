@@ -277,7 +277,6 @@ class PriceData():
                 df_save = None
             return (df_save)
 
-
         # Provider:
         if provider.name == 'alphavantagefx':
             try:
@@ -553,7 +552,7 @@ def price_data_rt_full(ticker, provider):
             low = float(data['Global Quote']['04. low']) * current_user.fx_rate_USD()
             chg = data['Global Quote']['10. change percent'].replace('%', '')
             try:
-                chg = float(chg) / 100
+                chg = float(chg)
             except Exception:
                 chg = chg
             mktcap = '-'

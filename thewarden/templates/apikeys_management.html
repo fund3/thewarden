@@ -1,0 +1,112 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<body class="bg-main">
+
+  <div class="content-section">
+
+
+    <form method="POST" action="" id="account_form" enctype="multipart/form-data">
+      {{ form.hidden_tag() }}
+      <fieldset class="form-group">
+
+        <legend class="mb-4">Third Parties Access Management</legend>
+        <h6 class='border-bottom'>Use this page to configure API Keys and other settings
+          for third parties that interact with the WARden.
+        </h6></br>
+
+        <div class='content-section'>
+          <legend class="mb-4">Alphavantage</legend>
+          Alphavantage is used to get realtime and historical price data for cryptocurrencies, stocks and
+          indices.
+          <p> <a href='https://www.alphavantage.co/support/#api-key' target='new_page'>Click here</a> to get a free
+            API key.</p>
+
+          <div class="form-group">
+            <h6>{{ form.aa_key.label(class="form-control-label") }}</h6>
+            {% if form.aa_key.errors %}
+            {{ form.aa_key(class="form-control form-control-lg is-invalid") }}
+            <div class="invalid-feedback">
+              {% for error in form.aa_key.errors %}
+              <span>{{ error }}</span>
+              {% endfor %}
+            </div>
+            {% else %}
+            {{ form.aa_key(class="form-control form-control-lg") }}
+            {% endif %}
+          </div>
+        </div>
+
+        <div class='content-section'>
+          <legend class="mb-4">Samourai DOJO</legend>
+          <div class="form-group">
+            <h6>{{ form.dojo_onion.label(class="form-control-label") }}</h6>
+            {% if form.dojo_onion.errors %}
+            {{ form.dojo_onion(class="form-control form-control-lg is-invalid") }}
+            <div class="invalid-feedback">
+              {% for error in form.dojo_onion.errors %}
+              <span>{{ error }}</span>
+              {% endfor %}
+            </div>
+            {% else %}
+            {{ form.dojo_onion(class="form-control form-control-lg") }}
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <h6>{{ form.dojo_key.label(class="form-control-label") }}</h6>
+            {% if form.dojo_key.errors %}
+            {{ form.dojo_key(class="form-control form-control-lg is-invalid") }}
+            <div class="invalid-feedback">
+              {% for error in form.dojo_key.errors %}
+              <span>{{ error }}</span>
+              {% endfor %}
+            </div>
+            {% else %}
+            {{ form.dojo_key(class="form-control form-control-lg") }}
+            {% endif %}
+
+          </div>
+        </div>
+
+        <div class='content-section'>
+          <legend class="mb-4">Bitmex</legend>
+          <div class="form-group">
+            <h6>{{ form.bitmex_key.label(class="form-control-label") }}</h6>
+            {% if form.bitmex_key.errors %}
+            {{ form.bitmex_key(class="form-control form-control-lg is-invalid") }}
+            <div class="invalid-feedback">
+              {% for error in form.bitmex_key.errors %}
+              <span>{{ error }}</span>
+              {% endfor %}
+            </div>
+            {% else %}
+            {{ form.bitmex_key(class="form-control form-control-lg") }}
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <h6>{{ form.bitmex_secret.label(class="form-control-label") }}</h6>
+            {% if form.bitmex_secret.errors %}
+            {{ form.bitmex_secret(class="form-control form-control-lg is-invalid") }}
+            <div class="invalid-feedback">
+              {% for error in form.bitmex_secret.errors %}
+              <span>{{ error }}</span>
+              {% endfor %}
+            </div>
+            {% else %}
+            {{ form.bitmex_secret(class="form-control form-control-lg") }}
+            {% endif %}
+
+          </div>
+        </div>
+
+        <div class="form-group">
+          {{ form.submit(class="btn btn-block btn-lg btn-info")}}
+        </div>
+
+      </fieldset>
+    </form>
+  </div>
+
+</body>
+
+{% endblock content %}

@@ -1,13 +1,9 @@
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
 from flask_login import login_user, logout_user, current_user, login_required
 from thewarden import db, Config
-from thewarden.users.forms import (
-    RegistrationForm,
-    LoginForm,
-    UpdateAccountForm,
-    RequestResetForm,
-    ResetPasswordForm,
-)
+from thewarden.users.forms import (RegistrationForm, LoginForm,
+                                   UpdateAccountForm, RequestResetForm,
+                                   ResetPasswordForm, ApiKeysForm)
 from werkzeug.security import check_password_hash, generate_password_hash
 from thewarden.models import User, Trades, AccountInfo
 from thewarden.users.utils import send_reset_email, fx_list, generatenav, regenerate_nav
@@ -168,3 +164,35 @@ def reset_token(token):
 @users.route("/services", methods=["GET"])
 def services():
     return render_template("services.html", title="Services Available")
+
+
+# API Keys Management
+@users.route("/apikeys_management", methods=["GET", "POST"])
+def apikeys_management():
+    from thewarden.pricing_engine.pricing import api_keys_class
+    api_keys_json = api_keys_class.loader()
+    form = ApiKeysForm()
+
+    if request.method == "GET":
+        form.dojo_key.data = api_keys_json['dojo']['api_key']
+        form.dojo_onion.data = api_keys_json['dojo']['onion']
+        form.bitmex_key.data = api_keys_json['bitmex']['api_key']
+        form.bitmex_secret.data = api_keys_json['bitmex']['api_secret']
+        form.aa_key.data = api_keys_json['alphavantage']['api_key']
+
+        return render_template("apikeys_management.html",
+                               title="API Keys Management",
+                               form=form)
+
+    if request.method == "POST":
+        api_keys_json['dojo']['api_key'] = form.dojo_key.data
+        api_keys_json['dojo']['onion'] = form.dojo_onion.data
+        api_keys_json['bitmex']['api_key'] = form.bitmex_key.data
+        api_keys_json['bitmex']['api_secret'] = form.bitmex_secret.data
+        api_keys_json['alphavantage']['api_key'] = form.aa_key.data
+        api_keys_class.saver(api_keys_json)
+
+        flash("Keys Updated Successfully", "success")
+        return render_template("apikeys_management.html",
+                               title="API Keys Management",
+                               form=form)
