@@ -4,7 +4,7 @@
  * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap/blob/gh-pages/LICENSE)
  */
 
- body {
+body {
   overflow-x: hidden;
 }
 
@@ -23,7 +23,6 @@
 }
 
 #sidebar-wrapper {
-  z-index: 1000;
   position: fixed;
   left: 250px;
   width: 0;
@@ -71,14 +70,13 @@
 .sidebar-nav li a {
   display: block;
   text-decoration: none;
-  color: #FFBF8F;
-  
+  color: #ffbf8f;
 }
 
 .sidebar-nav li a:hover {
   text-decoration: none;
   color: #fff;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .sidebar-nav li a:active,
@@ -117,47 +115,44 @@
 .sidebar-subitem:hover {
   text-decoration: none;
   color: #fff;
-  background: rgba(255,255,255,0.2);
-  
+  background: rgba(255, 255, 255, 0.2);
 }
 
-
-@media(min-width:768px) {
+@media (min-width: 768px) {
   #wrapper {
-      padding-top: 30px;
+    padding-top: 30px;
   }
 
   #wrapper.toggled {
-      padding-left: 0;
+    padding-left: 0;
   }
 
   #sidebar-wrapper {
-      width: 250px;
+    width: 250px;
   }
 
   #wrapper.toggled #sidebar-wrapper {
-      width: 0;
+    width: 0;
   }
 
   #page-content-wrapper {
-      padding: 20px;
-      position: relative;
+    padding: 20px;
+    position: relative;
   }
 
   #wrapper.toggled #page-content-wrapper {
-      position: relative;
-      margin-right: 0;
+    position: relative;
+    margin-right: 0;
   }
 }
 
-
-.rotate{
+.rotate {
   -moz-transition: all 0.5s linear;
   -webkit-transition: all 0.5s linear;
   transition: all 0.5s linear;
 }
 
-.rotate.down{
+.rotate.down {
   -ms-transform: rotate(90deg);
   -moz-transform: rotate(90deg);
   -webkit-transform: rotate(90deg);

@@ -3,10 +3,10 @@
 
 <!--  High Charts -->
 <script src="https://code.highcharts.com/stock/highstock.js"></script>
-<!-- <script src="https://code.highcharts.com/highcharts.js"></script> -->
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <script src="static/highcharts.js"></script>
+
 <div class="row">
 
     <!-- Start of left side column with positions, etc -->
@@ -249,7 +249,8 @@
                             <th class="text-right small">
                                 Unr. Breakeven
                             </th>
-
+                            <th>
+                            </th>
 
                             <th class="text-right">
                                 Fees
@@ -297,6 +298,13 @@
                                 <span id="{{position}}_fifo_unreal_be">
                                     <img src='static/images/loading_small.gif' width="30" height="30"></img>
                                 </span>
+                            </td>
+                            <td>
+
+                                <span data-ticker='{{position}}' data-accounting="FIFO" class='FIFOLIFOmodal small'
+                                    onmouseover="" style="color: lightslategray; cursor: pointer;">
+                                    <span class='btn-link text-muted'><i class="fas fa-plus-square"></i></span>
+
 
                             </td>
 
@@ -862,6 +870,29 @@
 
 
 <script src="/static/portfolio.js"></script>
-
-
 {% endblock content %}
+
+
+{%block modals%}
+<!-- Modal for FIFO Transactions -->
+<div class="modal fade" id="FIFOLIFOModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" style="width:65%;" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">FIFO Transactions</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id='FIFO_transactions'>
+
+                Transactions
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock modals %}

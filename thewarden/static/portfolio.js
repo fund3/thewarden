@@ -51,6 +51,17 @@ $(document).ready(function () {
     // Start this function whenever a popup opens
     $('[data-toggle="popover"]').on('shown.bs.popover', onPopoverHtmlLoad)
 
+    $('.FIFOLIFOmodal').click(function () {
+        ticker = ($(this).data('ticker'));
+        accounting = ($(this).data('accounting'));
+        $('#your-modal-id').modal('hide');
+        $('body').addClass('modal-open');
+        $('#FIFOLIFOModal').modal('show');
+        $('#FIFO_transactions').html(accounting);
+
+    });
+
+
 
     function onPopoverHtmlLoad() {
 

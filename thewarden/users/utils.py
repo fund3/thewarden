@@ -97,6 +97,8 @@ def cost_calculation(ticker):
     cost_matrix['FIFO']['FIFO_average_cost'] = fifo_df['adjusted_cv'].sum()\
         / open_position
 
+
+
     # ---------------------------------------------------
     #  LIFO
     # ---------------------------------------------------
@@ -119,6 +121,7 @@ def cost_calculation(ticker):
     cost_matrix['LIFO']['LIFO_quantity'] = open_position
     cost_matrix['LIFO']['LIFO_count'] = int(lifo_df['trade_operation'].count())
     cost_matrix['LIFO']['LIFO_average_cost'] = lifo_df['adjusted_cv'].sum() / open_position
+
     return (cost_matrix)
 
 

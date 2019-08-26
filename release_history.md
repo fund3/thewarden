@@ -12,6 +12,9 @@
 - Included support for GBTC (realtime prices and history)
 - Included GBTC premium on front page when position is present
 - All API keys are now saved under a single file `/thewarden/pricing_engine/api_keys.conf` for easier key management.
+- Included a new popover on front page showing the full details for pnl calculations.
+- Included support for Financial Modeling Prep API (as a backup for stock prices)
+- Dashboard now updates prices and positions in realtime
 
 ## v.13 alpha (8/15/2019)
 

@@ -32,7 +32,6 @@ body {
 #sidebar-wrapper {
   display: flex;
   flex-grow: 100;
-  z-index: 1000;
   position: fixed;
   left: 250px;
   width: 250px;
@@ -194,4 +193,8 @@ body {
   -moz-transform: rotate(90deg);
   -webkit-transform: rotate(90deg);
   transform: rotate(90deg);
+}
+
+.modal-content {
+  top: 200px;
 }

@@ -531,12 +531,10 @@ a {
   width: 12px !important;
   height: 12px !important;
   padding: 2px !important;
-
   background: #da5526;
   border: 2px solid #da552;
   color: white;
   text-align: center;
-
   font: 10px Arial, sans-serif;
   font-weight: bold;
 }
