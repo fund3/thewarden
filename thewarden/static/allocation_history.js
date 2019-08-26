@@ -16,10 +16,7 @@ $(document).ready(function () {
             console.log(status);
         }
     });
-
 });
-
-
 function run_ajax(tickers) {
     // Ajax to get the NAV json
     $.ajax({
@@ -43,12 +40,12 @@ function run_ajax(tickers) {
     $.ajax({
         type: "GET",
         dataType: 'json',
-        url: "/generate_pos_table_json",
+        url: "/positions_json",
         success: function (pnl_data) {
             $('#alerts').html("")
             console.log("ajax request [PnL Data]: OK")
             console.log(pnl_data)
-            run_alloc(pnl_data, tickers, pnl_data.TOTAL.fx_symbol);
+            run_alloc(pnl_data, tickers, pnl_data.user.symbol);
         },
         error: function (xhr, status, error) {
             $('#alerts').html("<div class='small alert alert-danger alert-dismissible fade show' role='alert'>An error occured while refreshing data." +
@@ -64,7 +61,6 @@ function handle_ajax_data(data, tickers) {
     // // Looping through Tickers (only ones that downloaded ok)
     $.each(tickers, function (key_ticker) {
         ticker = tickers[key_ticker]
-        console.log(data)
         if (data[ticker + '_pos']) {
             // if (ticker != "USD") {
             // Prep data for chart
@@ -151,42 +147,21 @@ function createChart(data, tickers) {
 
 // CREATE SECOND CHART - PNL ATTRIBUTION
 function run_alloc(data, tickers, fx) {
-
-
-
     // Prepare data for charts
     var chart_data_list = [];
     // // Looping through Tickers (only ones that downloaded ok)
-
-
     $.each(tickers, function (key_ticker) {
         ticker = tickers[key_ticker]
         if (ticker != "USD") {
             // // Prep data for chart
-            // tmp_dict = [];
-            // tmp_dict['name'] = ticker;
-            // tmp_dict['type'] = 'bar';
-            // tmp_dict['turboThreshold'] = 0;
-            // The line below maps in a format that HighCharts can understand. the *1 (for date) is necessary for some weird reason.
-            // it maps to (date, value)
-            // console.log(data[ticker]['total_pnl_gross_USD']);
-            // data_tmp = [];
-            tmp_tuple = [ticker, data[ticker]['total_pnl_gross_fx']]
-            // tmp_dict['data'] = data_tmp
-            // tmp_dict['y'] = data[ticker]['total_pnl_gross_USD']
-            // tmp_dict['yAxis'] = 0;
+            tmp_tuple = [ticker, data['positions'][ticker]['pnl_gross']]
             chart_data_list.push(tmp_tuple);
         }
     });
-
-    console.log((chart_data_list));
-    console.log(tickers)
     var index;
     while ((index = tickers.indexOf("USD")) > -1) {
         tickers.splice(index, 1);
     }
-    console.log(tickers)
-
     var myPNLChart = Highcharts.chart('atrib_chart', {
         credits: {
             enabled: false
@@ -221,7 +196,4 @@ function run_alloc(data, tickers, fx) {
             // chart_list format: [['ETH', -30.28], ['BTC', 62.15]]
         }]
     });
-
-
-
 };

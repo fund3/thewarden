@@ -738,18 +738,6 @@ def portfolio_tickers_json():
         return jsonify(list_of_tickers)
 
 
-@api.route("/generate_pos_table_json", methods=["GET", "POST"])
-@login_required
-# Creates a table with PnL summary for positions
-def generate_pos_table_json():
-    if request.method == "GET":
-        pos_table, _ = generate_pos_table(current_user.username, "USD", False)
-        # SimpleJson needs to be used here since Pandas DF are returning
-        # values like NaN and inf which are nor JSON compatible and would
-        # result in parse error at javascript
-        return simplejson.dumps(pos_table, ignore_nan=True, default=datetime.isoformat)
-
-
 @api.route("/scatter_json", methods=["GET"])
 @login_required
 # Compare portfolio performance to a list of assets
@@ -812,8 +800,8 @@ def scatter_json():
             messages = data.errors
             return jsonify(messages)
 
-        data = data.rename(columns={'close_converted': ticker+'_price'})
-        data = data[[ticker+'_price']]
+        data = data.rename(columns={'close_converted': ticker + '_price'})
+        data = data[[ticker + '_price']]
         data = data.astype(float)
 
         # Fill dailyNAV with prices for each ticker

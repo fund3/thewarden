@@ -11,8 +11,9 @@
 - Fixed NAV calculation issues
 - Included support for GBTC (realtime prices and history)
 - Included GBTC premium on front page when position is present
-- All API keys are now saved under a single file `/thewarden/pricing_engine/api_keys.conf` for easier key management.
-- Included a new popover on front page showing the full details for pnl calculations.
+- All API keys are now saved under a single file `/thewarden/pricing_engine/api_keys.conf` for easier key management
+- Included new settings page to manage api keys and other 3rd party access variables
+- Included a new popover on front page showing the full details for pnl calculations
 - Included support for Financial Modeling Prep API (as a backup for stock prices)
 - Dashboard now updates prices and positions in realtime
 - Fixed an issue where some modals where not showing correctly
