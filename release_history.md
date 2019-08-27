@@ -5,11 +5,12 @@
 - Complete refactory of pricing feeds
 - Support for multiple pricing APIs (currently CryptoCompare, Alphavantage and Bitmex)
 - Included pricing model for easy inclusion of new APIs
+- Included new page to test price feeds
 - Enhanced calculations with new pricing requests
 - With the new APIs, users can access pricing info since 2011 (compared to 2014 before)
 - Fixed issues with drawdown calculation
 - Fixed NAV calculation issues
-- Included support for GBTC (realtime prices and history)
+- Included support for GBTC (realtime prices, history and premium calculation)
 - Included GBTC premium on front page when position is present
 - All API keys are now saved under a single file `/thewarden/pricing_engine/api_keys.conf` for easier key management
 - Included new settings page to manage api keys and other 3rd party access variables
@@ -19,6 +20,7 @@
 - Fixed an issue where some modals where not showing correctly
 - Included details on how FIFO and LIFO unrealized cost is calculated
 - Fixed issues in fx calculations
+- Remodelled the 'Welcome' page.
 
 ## v.13 alpha (8/15/2019)
 

@@ -1850,7 +1850,7 @@ def load_bitmex_json():
 def realtime_user():
     fx_rate = current_user.fx_rate_data()
     fx_rate['btc_usd'] = price_data_rt("BTC")
-    fx_rate['btc_fx'] =  fx_rate['btc_usd'] * fx_rate['fx_rate']
+    fx_rate['btc_fx'] = price_data_rt("BTC") * current_user.fx_rate_USD()
     return json.dumps(fx_rate)
 
 

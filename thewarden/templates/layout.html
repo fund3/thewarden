@@ -107,7 +107,7 @@
                     <a data-toggle="collapse" href="#collapse_transactions" role="button" aria-expanded="true"
                         aria-controls="collapse_transactions">
                         <i class="fas fa-coins fa-lg"></i>
-                        &nbsp;&nbsp;&nbsp;&nbsp;Portfolio Transactions
+                        &nbsp;&nbsp;&nbsp;&nbsp;Portfolio
                         <i class="fas fa-caret-down"></i></a>
                 </li>
                 <div class="collapse show" id="collapse_transactions"">
@@ -129,7 +129,7 @@
             <a data-toggle="collapse" href="#collapse_charts" role="button" aria-expanded="false"
                 aria-controls="collapse_charts">
                 <i class="fas fa-chart-area fa-lg"></i>
-                &nbsp;&nbsp;&nbsp;&nbsp;Charts & Analysis
+                &nbsp;&nbsp;&nbsp;&nbsp;Analysis
                 <i class="fas fa-caret-down"></i></a>
         </li>
         <div class="collapse show" id="collapse_charts">
@@ -165,7 +165,7 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;Step into the Dojo
                 <i class="fas fa-caret-down"></i></a>
         </li>
-        <div class="collapse hide" id="collapse_bitcoin">
+        <div class="collapse show" id="collapse_bitcoin">
             <div class="list-group bg-transparent text-white">
                 <a class="sidebar-subitem" href="{{ url_for('node.bitcoin_monitor') }}"><i
                         class="fas fa-tachometer-alt fa-lg"></i>&nbsp;&nbsp;Dashboard</a>
@@ -184,7 +184,7 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;Account & Tools
                 <i class="fas fa-caret-down"></i></a>
         </li>
-        <div class="collapse hide" id="collapse_actools">
+        <div class="collapse show" id="collapse_actools">
             <div class="list-group bg-transparent text-white">
                 <a class="sidebar-subitem" href="{{ url_for('main.get_started') }}"><i
                         class="fas fa-play-circle fa-lg"></i>&nbsp;&nbsp;Setup Guide</a>
@@ -212,18 +212,11 @@
 
             </div>
         </div>
-
+        <br>
 
         <!-- FX Rate -->
-        <li class="border-top">
-            <span class="text-white">
-                <span class="fa-2x">{{current_user.fx() | fxsymbol}}</span>
-                <strong>
-                    &nbsp;&nbsp;&nbsp;&nbsp;Base Currency
-                </strong>
-            </span>
+        <li class="border-top" style="padding-top: 20px;">
         </li>
-
         <div class="show" id="collapse_fx">
 
             <div class="list-group bg-transparent text-white">
@@ -257,12 +250,16 @@
 
             <div class="list-group bg-transparent text-white">
                 <a class="sidebar-subitem" href="{{ url_for('users.account') }}">
-                    <i class="fas fa-exchange-alt fa-lg"></i>&nbsp;&nbsp;Change from
-                    {{current_user.fx() | fxsymbol}}</a>
-
+                    <i class="fas fa-exchange-alt fa-lg"></i>
+                    <strong>
+                        {{current_user.fx_rate_data()['name_plural']}}
+                    </strong>
+                </a>
             </div>
 
         </div>
+
+
         <br>
 
         <div class="show" id="collapse_fx">

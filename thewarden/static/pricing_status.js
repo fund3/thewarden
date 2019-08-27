@@ -78,7 +78,7 @@ function test_price(ticker, provider, rtprovider = null, this_var = null) {
             } else {
                 if (rtprovider == null) {
                     html = "<span style='color: green;'><i class='fas fa-check fa-2x'></i></span></br>"
-                    html += 'Last Close: <strong>'
+                    html += 'Last Close: $<strong>'
                     html += formatNumber(data.price_data.last_close, 2) + '</strong><br>'
                     html += "<span class='small'>Prices available<br>"
                     html += "from: <strong>" + data.price_data.first_update + '</strong><br>'
@@ -86,7 +86,7 @@ function test_price(ticker, provider, rtprovider = null, this_var = null) {
 
                 } else {
                     html = "<span style='color: green;'><i class='fas fa-check fa-2x'></i></span></br>"
-                    html += 'Realtime Price: <strong>'
+                    html += 'Realtime Price: $<strong>'
                     html += formatNumber(data.realtime.price, 2) + '</strong><br>'
                 }
             }

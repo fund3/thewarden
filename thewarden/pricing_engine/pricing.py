@@ -39,10 +39,10 @@ from thewarden.users.decorators import timing, memoized, MWT
 #     edit the realtime function to parse the date correctly and
 #     return a price float
 
-
 # _____________________________________________
 # Classes go here
 # _____________________________________________
+
 
 class PriceProvider:
     # This class manages a list of all pricing providers
@@ -82,7 +82,7 @@ class PriceProvider:
             # in these cases, we pass the ticker field as empty
             if self.ticker_field == '':
                 if self.url_args[0] == '&':
-                    self.url_args = self.url_args.replace('&' , '?', 1)
+                    self.url_args = self.url_args.replace('&', '?', 1)
                 globalURL = (self.base_url + "/" + ticker + self.url_args)
             request = tor_request(globalURL)
             try:
@@ -126,8 +126,7 @@ class PriceData():
         # Try to read from file and check how recent it is
         try:
             today = datetime.now().date()
-            filetime = datetime.fromtimestamp(
-                        os.path.getctime(self.filename))
+            filetime = datetime.fromtimestamp(os.path.getctime(self.filename))
             if filetime.date() == today:
                 self.df = pd.read_pickle(self.filename)
             else:
@@ -179,11 +178,13 @@ class PriceData():
             if currency != 'USD':
                 fx = PriceData(currency, fx_provider)
                 fx.df = fx.df.rename(columns={'close': 'fx_close'})
-                fx.df["fx_close"] = pd.to_numeric(fx.df.fx_close, errors='coerce')
+                fx.df["fx_close"] = pd.to_numeric(fx.df.fx_close,
+                                                  errors='coerce')
                 # Merge the two dfs:
                 merge_df = pd.merge(self.df, fx.df, on='date', how='inner')
                 merge_df['close'] = merge_df['close'].astype(float)
-                merge_df['close_converted'] = merge_df['close'] * merge_df['fx_close']
+                merge_df['close_converted'] = merge_df['close'] * merge_df[
+                    'fx_close']
                 return (merge_df)
             else:  # If currency is USD no conversion is needed - prices are all in USD
                 self.df['fx_close'] = 1
@@ -339,17 +340,14 @@ class PriceData():
 
         if rt_provider.name == 'aarealtime':
             try:
-                price = (price_request[
-                    'Realtime Currency Exchange Rate'][
-                    '5. Exchange Rate'])
+                price = (price_request['Realtime Currency Exchange Rate']
+                         ['5. Exchange Rate'])
             except Exception as e:
                 self.errors.append(e)
 
         if rt_provider.name == 'aarealtimestock':
             try:
-                price = (price_request[
-                    'Global Quote'][
-                    '05. price'])
+                price = (price_request['Global Quote']['05. price'])
             except Exception as e:
                 self.errors.append(e)
 
@@ -396,19 +394,22 @@ class ApiKeys():
 api_keys_class = ApiKeys()
 api_keys = api_keys_class.loader()
 
-
 # Generic Requests will try each of these before failing
-REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock',
-                              'fp_realtime_stock']
+REALTIME_PROVIDER_PRIORITY = [
+    'cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock',
+    'fp_realtime_stock'
+]
 FX_RT_PROVIDER_PRIORITY = ['cc_realtime_full', 'aa_realtime_digital']
-HISTORICAL_PROVIDER_PRIORITY = ['cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',
-                                'fmp_stock', 'bitmex']
+HISTORICAL_PROVIDER_PRIORITY = [
+    'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock',
+    'bitmex'
+]
 FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
-
 
 # _____________________________________________
 #            Helper functions go here
 # _____________________________________________
+
 
 # Bitmex Helper Function (uses bitmex library instead of requests)
 # Returns a df with history
@@ -521,29 +522,40 @@ def price_data_rt_full(ticker, provider):
             # Parse the cryptocompare data
             price = multi_price["RAW"][ticker][current_user.fx()]["PRICE"]
             price = float(price * current_user.fx_rate_USD())
-            high = float(multi_price["RAW"][ticker][
-                current_user.fx()]["HIGHDAY"] * current_user.fx_rate_USD())
-            low = float(multi_price["RAW"][ticker][
-                current_user.fx()]["LOWDAY"] * current_user.fx_rate_USD())
-            chg = multi_price["RAW"][ticker][current_user.fx()]["CHANGEPCT24HOUR"]
-            mktcap = multi_price["DISPLAY"][ticker][current_user.fx()]["MKTCAP"]
-            volume = multi_price["DISPLAY"][ticker][current_user.fx()]["VOLUME24HOURTO"]
-            last_up_source = multi_price["RAW"][ticker][current_user.fx()]["LASTUPDATE"]
-            source = multi_price["DISPLAY"][ticker][current_user.fx()]["LASTMARKET"]
+            high = float(
+                multi_price["RAW"][ticker][current_user.fx()]["HIGHDAY"] *
+                current_user.fx_rate_USD())
+            low = float(
+                multi_price["RAW"][ticker][current_user.fx()]["LOWDAY"] *
+                current_user.fx_rate_USD())
+            chg = multi_price["RAW"][ticker][
+                current_user.fx()]["CHANGEPCT24HOUR"]
+            mktcap = multi_price["DISPLAY"][ticker][
+                current_user.fx()]["MKTCAP"]
+            volume = multi_price["DISPLAY"][ticker][
+                current_user.fx()]["VOLUME24HOURTO"]
+            last_up_source = multi_price["RAW"][ticker][
+                current_user.fx()]["LASTUPDATE"]
+            source = multi_price["DISPLAY"][ticker][
+                current_user.fx()]["LASTMARKET"]
             last_update = datetime.now()
             notes = None
-            return (price, last_update, high, low, chg, mktcap,
-                    last_up_source, volume, source, notes)
+            return (price, last_update, high, low, chg, mktcap, last_up_source,
+                    volume, source, notes)
         except Exception:
             return (None)
     if provider == 'aa':
         try:
             globalURL = 'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&apikey='
-            globalURL += api_keys['alphavantage']['api_key'] + '&symbol=' + ticker
+            globalURL += api_keys['alphavantage'][
+                'api_key'] + '&symbol=' + ticker
             data = tor_request(globalURL).json()
-            price = float(data['Global Quote']['05. price']) * current_user.fx_rate_USD()
-            high = float(data['Global Quote']['03. high']) * current_user.fx_rate_USD()
-            low = float(data['Global Quote']['04. low']) * current_user.fx_rate_USD()
+            price = float(data['Global Quote']
+                          ['05. price']) * current_user.fx_rate_USD()
+            high = float(
+                data['Global Quote']['03. high']) * current_user.fx_rate_USD()
+            low = float(
+                data['Global Quote']['04. low']) * current_user.fx_rate_USD()
             chg = data['Global Quote']['10. change percent'].replace('%', '')
             try:
                 chg = float(chg)
@@ -559,12 +571,13 @@ def price_data_rt_full(ticker, provider):
             # Start Notes methods for specific assets. For example, for
             # GBTC we report the premium to BTC
             if ticker == 'GBTC':
-                fairvalue, premium = GBTC_premium(float(data['Global Quote']['05. price']))
+                fairvalue, premium = GBTC_premium(
+                    float(data['Global Quote']['05. price']))
                 fairvalue = "{0:,.2f}".format(fairvalue)
                 premium = "{0:,.2f}".format(premium * 100)
                 notes = f"Fair Value: {fairvalue}<br>Premium: {premium}%"
-            return (price, last_update, high, low, chg, mktcap,
-                    last_up_source, volume, source, notes)
+            return (price, last_update, high, low, chg, mktcap, last_up_source,
+                    volume, source, notes)
         except Exception:
             return None
 
@@ -583,8 +596,8 @@ def price_data_rt_full(ticker, provider):
             last_update = '-'
             source = 'FP Modeling API'
             notes = None
-            return (price, last_update, high, low, chg, mktcap,
-                    last_up_source, volume, source, notes)
+            return (price, last_update, high, low, chg, mktcap, last_up_source,
+                    volume, source, notes)
         except Exception:
             return None
 
@@ -604,8 +617,8 @@ def fx_rate(fx=None, base='USD'):
         rate['name_plural'] = fxsymbol(current_user.fx(), 'name_plural')
         rate['cross'] = "USD" + " / " + current_user.fx()
         try:
-            rate['fx_rate'] = 1 / (float(price_data_rt(
-                                current_user.fx(), FX_RT_PROVIDER_PRIORITY)['PRICE']))
+            rate['fx_rate'] = 1 / (float(
+                price_data_rt(current_user.fx(), FX_RT_PROVIDER_PRIORITY)))
         except Exception:
             rate['fx_rate'] = 1
     except Exception as e:
@@ -684,14 +697,17 @@ PROVIDER_LIST = {
                   },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'fmp_stock':
-    PriceProvider(name='financialmodelingprep',
-                  base_url='https://financialmodelingprep.com/api/v3/historical-price-full',
-                  ticker_field='',
-                  field_dict={
-                    'from': '2001-01-01',
-                    'to:': '2099-12-31'
-                  },
-                  doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'),
+    PriceProvider(
+        name='financialmodelingprep',
+        base_url=
+        'https://financialmodelingprep.com/api/v3/historical-price-full',
+        ticker_field='',
+        field_dict={
+            'from': '2001-01-01',
+            'to:': '2099-12-31'
+        },
+        doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'
+    ),
     'aa_fx':
     PriceProvider(name='alphavantagefx',
                   base_url='https://www.alphavantage.co/query',
@@ -727,7 +743,6 @@ PROVIDER_LIST = {
         doc_link=
         'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
-
     'bitmex':
     PriceProvider(name='bitmex',
                   base_url=None,
@@ -745,33 +760,40 @@ PROVIDER_LIST = {
                   field_dict={'tsyms': 'USD'},
                   doc_link=None),
     'cc_realtime_full':
-    PriceProvider(name='ccrealtimefull',
-                  base_url='https://min-api.cryptocompare.com/data/pricemultifull',
-                  ticker_field='fsyms',
-                  field_dict={'tsyms': 'USD'},
-                  doc_link='https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'),
+    PriceProvider(
+        name='ccrealtimefull',
+        base_url='https://min-api.cryptocompare.com/data/pricemultifull',
+        ticker_field='fsyms',
+        field_dict={'tsyms': 'USD'},
+        doc_link=
+        'https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
+    ),
     'aa_realtime_digital':
     PriceProvider(name='aarealtime',
                   base_url='https://www.alphavantage.co/query',
                   ticker_field='from_currency',
-                  field_dict={'function': 'CURRENCY_EXCHANGE_RATE',
-                              'to_currency': 'USD',
-                              'apikey': api_keys['alphavantage']['api_key']},
+                  field_dict={
+                      'function': 'CURRENCY_EXCHANGE_RATE',
+                      'to_currency': 'USD',
+                      'apikey': api_keys['alphavantage']['api_key']
+                  },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'aa_realtime_stock':
     PriceProvider(name='aarealtimestock',
                   base_url='https://www.alphavantage.co/query',
                   ticker_field='symbol',
-                  field_dict={'function': 'GLOBAL_QUOTE',
-                              'apikey': api_keys['alphavantage']['api_key']},
+                  field_dict={
+                      'function': 'GLOBAL_QUOTE',
+                      'apikey': api_keys['alphavantage']['api_key']
+                  },
                   doc_link='https://www.alphavantage.co/documentation/'),
     'fp_realtime_stock':
-    PriceProvider(name='fprealtimestock',
-                  base_url='https://financialmodelingprep.com/api/v3/stock/real-time-price',
-                  ticker_field='',
-                  field_dict='',
-                  doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'),
-                  }
-
-
-
+    PriceProvider(
+        name='fprealtimestock',
+        base_url=
+        'https://financialmodelingprep.com/api/v3/stock/real-time-price',
+        ticker_field='',
+        field_dict='',
+        doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'
+    ),
+}

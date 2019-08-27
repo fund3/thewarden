@@ -34,7 +34,7 @@ body {
   flex-grow: 100;
   position: fixed;
   left: 250px;
-  width: 260px;
+  width: 280px;
   height: 100%;
   margin-left: -250px;
   margin-top: 0px;
@@ -54,6 +54,7 @@ body {
 #page-content-wrapper {
   position: absolute;
   padding: 0px;
+  margin-left: 20px;
   width: auto;
   height: 100%;
 }
@@ -70,7 +71,7 @@ body {
 .sidebar-nav {
   position: absolute;
   top: 50px;
-  width: 250px;
+  width: 280px;
   margin: 0;
   padding: 0;
   list-style: none;
