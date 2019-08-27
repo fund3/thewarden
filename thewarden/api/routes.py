@@ -39,7 +39,8 @@ from thewarden.node.utils import (
 )
 from thewarden.users.decorators import MWT
 from thewarden.pricing_engine.pricing import (price_data_fx,
-                                              api_keys_class, price_data_rt)
+                                              api_keys_class, price_data_rt,
+                                              PriceData, PROVIDER_LIST)
 
 api = Blueprint("api", __name__)
 
@@ -1879,16 +1880,36 @@ def accounting_json():
     return (html)
 
 
-
-# DELETE THIS --- Only to test prices
 @api.route("/test_price", methods=["GET"])
 def test_price():
-    from thewarden.pricing_engine.pricing import fx_price_ondate, PROVIDER_LIST, PriceData, price_data_fx
-    # provider = PROVIDER_LIST['fmp_stock']
-    # a = PriceData('SQ', provider)
-    # print (a.errors)
-    # print (a.realtime(PROVIDER_LIST['fp_realtime_stock']))
-    # return (a.df.to_json())
-    a = price_data_fx("GBTC")
-    print (a)
+    try:
+        # Tests a price using a provider and returns price data
+        provider = PROVIDER_LIST[request.args.get("provider")]
+        rtprovider = request.args.get("rtprovider")
+        ticker = request.args.get("ticker")
+        price_data = PriceData(ticker, provider)
+        data = {}
+
+        data['provider'] = {
+            'errors': provider.errors,
+            'base_url': provider.base_url,
+            'doc_link': provider.doc_link}
+
+        data['price_data'] = {
+            'ticker': ticker,
+            'last_update': price_data.last_update.strftime('%m/%d/%Y'),
+            'first_update': price_data.first_update.strftime('%m/%d/%Y'),
+            'last_close': float(price_data.last_close),
+            'errors': price_data.errors}
+
+        if rtprovider:
+            data['realtime'] = {
+                'price': float(price_data.realtime(PROVIDER_LIST[rtprovider]))
+            }
+
+    except Exception:
+        return json.dumps({"error": "Check API keys or connection"})
+
+    return(data)
+
 

@@ -1,0 +1,128 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<body class="bg-main">
+
+
+  <div class="content-section">
+    <legend class="mb-4">Pricing Services Status</legend>
+
+    <h6 class='border-bottom'>
+      The following services are reached to get historical and realtime prices for cryptocurrencies, currencies,
+      stocks and indices. <br>Use this page to test the access to different tickers.<br><br>
+      If there are any problems, check your connection and the <a href='/apikeys_management'>API keys</a>.
+    </h6></br>
+
+    <table class="table">
+      <thead class="thead-light">
+        <tr>
+          <th scope="col"></th>
+          <th scope="col" class='text-center'>Crypto</th>
+          <th scope="col" class='text-center'>Currencies<sup>1</sup></th>
+          <th scope="col" class='text-center'>Stocks</th>
+          <th scope="col" class='text-center'>Indices</th>
+        </tr>
+        <tr>
+          <th scope="col" class='text-right align-middle'>Tickers to test:</th>
+          <th scope="col" class='text-center' style='text-align: center;'>
+            <input id='crypto_ticker' type="text" class="form-control change_monitor" value="BTC"
+              style='text-align: center'>
+          </th>
+          <th scope="col" class='text-center'>
+            <input id='fx_ticker' type="text" class="form-control change_monitor" value="EUR"
+              style='text-align: center'>
+          </th>
+          <th scope="col" class='text-center'>
+            <input id='stock_ticker' type="text" class="form-control change_monitor" value="SQ"
+              style='text-align: center'>
+          </th>
+          <th scope="col" class='text-center'>
+            <input id='index_ticker' type="text" class="form-control change_monitor" value="SPX"
+              style='text-align: center'>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row" class='align-middle'>Alphavantage Historical</th>
+          <td class='text-center align-middle' id='aa_crypto_hist'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+          <td class='text-center align-middle' id='aa_fx_hist'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+          <td class='text-center align-middle' id='aa_stock_hist'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+          <td class='text-center align-middle' id='aa_index_hist'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+        </tr>
+        <tr>
+          <th scope="row" class='align-middle'>Alphavantage Realtime</th>
+          <td class='text-center align-middle' id='aa_crypto_rt'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+          <td class='text-center align-middle' id='aa_fx_rt'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img>
+          </td>
+          <td class='text-center align-middle' id='aa_stock_rt'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+          <td class='text-center align-middle' id='aa_index_rt'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+        </tr>
+        <tr>
+          <th scope="row" class='align-middle'>CryptoCompare Historical</th>
+          <td class='text-center align-middle' id='cc_crypto_hist'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+          <td class='text-center align-middle' id='cc_fx_hist'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+          <td class='text-center align-middle stripedBackground'></td>
+          <td class='text-center align-middle stripedBackground'></td>
+        </tr>
+        <tr>
+          <th scope="row" class='align-middle'>CryptoCompare Realtime</th>
+          <td class='text-center align-middle' id='cc_crypto_rt'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+          <td class='text-center align-middle' id='cc_fx_rt'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img>
+          </td>
+          <td class='text-center align-middle stripedBackground'></td>
+          <td class='text-center align-middle stripedBackground'></td>
+        </tr>
+        <tr>
+          <th scope="row" class='align-middle'>Financial Modeling Prep Historical</th>
+          <td class='text-center align-middle stripedBackground'></td>
+          <td class='text-center align-middle stripedBackground'></td>
+          <td class='text-center align-middle' id='fp_stock_hist'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+          <td class='text-center align-middle stripedBackground'></img></td>
+        </tr>
+        <tr>
+          <th scope="row" class='align-middle'>Financial Modeling Prep Realtime</th>
+          <td class='text-center align-middle stripedBackground'></td>
+          <td class='text-center align-middle stripedBackground'></img>
+          </td>
+          <td class='text-center align-middle' id='fp_stock_rt'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+          <td class='text-center align-middle stripedBackground'></img></td>
+        </tr>
+        <tr>
+          <th scope="row" class='align-middle'>Bitmex Historical</th>
+          <td class='text-center align-middle' id='bitmex_crypto_hist'><img src='static/images/loading_small.gif'
+              width="30" height="30"></img></td>
+          <td class='text-center align-middle' id='bitmex_fx_hist'><img src='static/images/loading_small.gif' width="30"
+              height="30"></img></td>
+          <td class='text-center align-middle stripedBackground'></td>
+          <td class='text-center align-middle stripedBackground'></td>
+        </tr>
+
+      </tbody>
+    </table>
+
+  </div>
+
+  <small><sup>1</sup> Currencies may show as USD per currency or currency per dollar depending on the provider. This
+    is normal.
+
+
+    <script src="/static/pricing_status.js"></script>
+
+</body>
+
+{% endblock content %}

@@ -66,6 +66,7 @@ class PriceProvider:
         self.base_url = base_url
         self.ticker_field = ticker_field
         self.field_dict = field_dict
+        self.doc_link = doc_link
         if self.field_dict is not None:
             self.url_args = "&" + urllib.parse.urlencode(field_dict)
         self.errors = []

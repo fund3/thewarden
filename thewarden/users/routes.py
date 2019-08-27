@@ -184,3 +184,10 @@ def apikeys_management():
         return render_template("apikeys_management.html",
                                title="API Keys Management",
                                form=form)
+
+
+# API Keys Management
+@users.route("/pricing_status", methods=["GET"])
+def pricing_status():
+    return render_template("pricing_status.html",
+                           title="Status of Pricing services")
