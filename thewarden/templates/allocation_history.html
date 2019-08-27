@@ -40,10 +40,28 @@
             </div>
         </div>
     </div>
+
+    <div class="container">
+        <div class='row'>
+            <div class="col-lg-12">
+                <div class="content-section small">
+                    <sup>1</sup> All returns in this page are in {{current_user.fx_rate_data()['name_plural']}}.
+                    <br>
+                    {%if current_user.fx_rate_data()['name'] != 'US Dollar'%}
+                    This means that the returns include the asset returns plus the currency return in the period.
+                    <br>For example, if Bitcoin in USD is up 5% and the {{current_user.fx_rate_data()['name']}} is up
+                    1%,
+                    the
+                    return will be 6.05% in {{current_user.fx_rate_data()['name_plural']}}.
+                    {%endif%}
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 </div>
+</br></br></br>
 
 
-
-<script src="/static/allocation_history.js"></script>
-
-{% endblock content %}
+<script src="/static/allocation_history.js"> </script> {% endblock content %}

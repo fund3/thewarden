@@ -291,7 +291,6 @@ class PriceData():
                 df_save = None
             return (df_save)
 
-
         # CryptoCompare Digital and FX use the same parser
         if provider.name == 'ccdigital' or provider.name == 'ccfx':
             try:

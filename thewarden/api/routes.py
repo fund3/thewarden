@@ -233,7 +233,7 @@ def portstats():
     meta["min_nav_date"] = data[data["NAV_fx"] == data["NAV_fx"].min()].index.strftime(
         "%B %d, %Y")[0]
     meta["end_portvalue"] = data["PORT_fx_pos"][-1].astype(float)
-    meta["end_portvalue_usd"] = data["PORT_usd_pos"][-1].astype(float)
+    meta["end_portvalue_usd"] = meta["end_portvalue"] / current_user.fx_rate_USD()
     meta["max_portvalue"] = data["PORT_fx_pos"].max().astype(float)
     meta["max_port_date"] = data[
         data["PORT_fx_pos"] == data["PORT_fx_pos"].max()

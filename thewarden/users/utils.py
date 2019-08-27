@@ -357,12 +357,14 @@ def positions_dynamic():
             print(f"Failed at cc error: {e}")
             try:
                 print(" Trying AA")
+                raise KeyError
                 single_price = price_data_rt_full(ticker, 'aa')
                 if single_price is None:
                     raise KeyError
-                price = single_price[0] * current_user.fx_rate_USD()
-                high = single_price[2] * current_user.fx_rate_USD()
-                low = single_price[3] * current_user.fx_rate_USD()
+                price = single_price[0]
+                high = single_price[2]
+                print(price)
+                low = single_price[3]
                 (_, last_update, _, _,
                     chg, mktcap, last_up_source,
                     volume, source, notes) = single_price
@@ -372,12 +374,13 @@ def positions_dynamic():
                 # Let's try a final time using Financial Modeling Prep API
                 try:
                     print("Trying fp")
-                    single_price = price_data_rt_full(ticker, 'fp') * current_user.fx_rate_USD()
+                    raise KeyError
+                    single_price = price_data_rt_full(ticker, 'fp')
                     if single_price is None:
                         raise KeyError
-                    price = single_price[0] * current_user.fx_rate_USD()
-                    high = single_price[2] * current_user.fx_rate_USD()
-                    low = single_price[3] * current_user.fx_rate_USD()
+                    price = single_price[0]
+                    high = single_price[2]
+                    low = single_price[3]
                     (_, last_update, _, _,
                         chg, mktcap, last_up_source,
                         volume, source, notes) = single_price
@@ -394,9 +397,10 @@ def positions_dynamic():
                         if price_class is None:
                             raise KeyError
                         price = float(price_class.df['close'].iloc[0]) * current_user.fx_rate_USD()
-                        high = price_class.df['high'].iloc[0] * current_user.fx_rate_USD()
-                        low = price_class.df['low'].iloc[0] * current_user.fx_rate_USD()
-                        volume = price_class.df['volume'].iloc[0] * current_user.fx_rate_USD()
+                        high = float(price_class.df['high'].iloc[0]) * current_user.fx_rate_USD()
+                        low = float(price_class.df['low'].iloc[0]) * current_user.fx_rate_USD()
+                        volume = current_user.fx() + "  " + "{0:,.0f}".format(float(price_class.df[
+                            'volume'].iloc[0]) * current_user.fx_rate_USD())
                         mktcap = chg = 0
                         source = last_up_source = 'Historical Data'
                         last_update = price_class.df.index[0]

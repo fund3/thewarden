@@ -18,7 +18,7 @@
 
 <div class="container-fluid">
     <div class="content-section large-table">
-        <p class="lead">Portfolio Monthly Returns</p>
+        <p class="lead">Portfolio Monthly Returns in {{current_user.fx_rate_data()['name_plural']}}<sup>1</sup></p>
         <table class="table table-condensed">
             <thead class="thead-light">
                 <tr class="table-active">
@@ -77,7 +77,7 @@
             </div>
         </div>
 
-        <h6>Benchmark Monthly Returns</h6>
+        <h6>Benchmark Monthly Returns in {{current_user.fx_rate_data()['name_plural']}}<sup>1</sup></h6>
         <div id="bench_table">
             <div class="spinner-border text-secondary" role="status">
                 <span class="sr-only">Loading...</span>
@@ -99,7 +99,7 @@
 
 <div class="container-fluid">
     <div class="content-section large-table">
-        <p class="lead">Portfolio Returns Statistics</p>
+        <p class="lead">Portfolio Returns Statistics in {{current_user.fx_rate_data()['name_plural']}}<sup>1</sup></p>
         <table class="table small table-condensed" style="width: 100%;">
             <thead class="thead-light">
                 <tr class="table-active">
@@ -165,6 +165,19 @@
     </div>
 </div>
 
+<div class='row'>
+    <div class="container-fluid">
+        <div class="content-section small">
+            <sup>1</sup> All returns in this page are in {{current_user.fx_rate_data()['name_plural']}}.
+            <br>
+            {%if current_user.fx_rate_data()['name'] != 'US Dollar'%}
+            This means that the returns include the asset returns plus the currency return in the period.
+            <br>For example, if Bitcoin in USD is up 5% and the {{current_user.fx_rate_data()['name']}} is up 1%, the
+            return will be 6.05% in {{current_user.fx_rate_data()['name_plural']}}.
+            {%endif%}
+        </div>
+    </div>
+</div>
 <script src="/static/hmap.js"></script>
 
 
