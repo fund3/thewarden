@@ -44,7 +44,6 @@ from thewarden.users.decorators import timing, memoized, MWT
 # Classes go here
 # _____________________________________________
 
-@timing
 class PriceProvider:
     # This class manages a list of all pricing providers
     def __init__(self,
@@ -111,7 +110,6 @@ class PriceProvider:
 # btc.price_parser(): do not use directly. This is used to parse
 #                     the requested data from the API provider
 # btc.realtime(provider): returns realtime price (float)
-@timing
 class PriceData():
     # All methods related to a ticker
     def __init__(self, ticker, provider):
@@ -174,7 +172,6 @@ class PriceData():
         # Refresh the class - reinitialize
         return (df)
 
-    @timing
     def df_fx(self, currency, fx_provider):
         try:
             # First get the df from this currency
@@ -195,7 +192,6 @@ class PriceData():
             self.errors.append(e)
             return (None)
 
-    @timing
     def price_ondate(self, date_input):
         try:
             dt = pd.to_datetime(date_input)
@@ -207,7 +203,6 @@ class PriceData():
             )
             return (None)
 
-    @timing
     def price_parser(self, data, provider):
         # Parse the pricing of a specific API provider so it is in a
         # standard pandas df format that can be used and merged.
@@ -331,7 +326,6 @@ class PriceData():
         # If no name is found, return None
         return None
 
-    @timing
     def realtime(self, rt_provider):
         # This is the parser for realtime prices.
         # Data should be parsed so only the price is returned

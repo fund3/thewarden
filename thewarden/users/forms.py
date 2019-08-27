@@ -41,17 +41,7 @@ class UpdateAccountForm(FlaskForm):
     email = StringField("Email", [DataRequired(), Email()])
     basefx = SelectField("Your selected base currency", [Optional()],
                          choices=fx_list())
-    alphavantage_apikey = StringField("AlphaVantage API Key")
-    sql_uri = StringField("SQL Database URI")
-    dojo_onion = StringField("Dojo Onion Address")
-    dojo_apikey = PasswordField("Dojo API Key",
-                                widget=PasswordInput(hide_value=False))
     submit = SubmitField("Update")
-
-    def validate_alphavantage_apikey(self, alphavantage_apikey):
-        if alphavantage_apikey.data == "":
-            raise ValidationError(
-                "Alphavantage key is required to get historical prices")
 
     def validate_email(self, email):
         if email.data != current_user.email:

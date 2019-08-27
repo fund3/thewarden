@@ -62,33 +62,7 @@
                     </div>
 
                 </div>
-                <div class='content-section'>
-                    <legend class="border-bottom mb-4">Setup Variables [advanced]</legend>
-                    <div class="form-group" disabled="true">
-                        {{ form.sql_uri.label(class="form-control-label") }}
-                        {% if form.sql_uri.errors %}
-                        {{ form.sql_uri(class="form-control form-control-lg is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.sql_uri.errors %}
-                            <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                        {% else %}
-                        {{ form.sql_uri(class="form-control form-control-lg") }}
 
-                        {% endif %}
-
-                        The SQL database location can be changed from the default location by setting an environment
-                        variable. <br>Replace <strong>[sqlite:///alpha.db]</strong> below with your location.<br><br>
-                        Linux / Mac:<br> <code>
-                        export SQLALCHEMY_DATABASE_URI=<strong>[sqlite:///alpha.db]</strong>
-                    </code><br>
-                        PC:<br> <code>
-                            set SQLALCHEMY_DATABASE_URI=<strong>[sqlite:///alpha.db]</strong>
-                        </code>
-                        <br><br>
-                    </div>
-                </div>
             </fieldset>
         </form>
     </div>

@@ -61,9 +61,10 @@ def logout():
 @login_required
 def account():
     form = UpdateAccountForm()
-    api_keys_json = api_keys_class.loader()
     if form.validate_on_submit():
         # If currency is changed, recalculate the NAV
+        print(form.basefx.data)
+        print(current_user.fx())
         if form.basefx.data != current_user.fx():
             current_user.image_file = form.basefx.data
             regenerate_nav()
@@ -72,11 +73,6 @@ def account():
                 f"NAV recalculated to use {form.basefx.data} as a base currency",
                 "success")
         current_user.email = form.email.data
-        api_keys_json['alphavantage'][
-            'api_key'] = form.alphavantage_apikey.data
-        api_keys_json['dojo']['api_key'] = form.dojo_apikey.data
-        api_keys_json['dojo']['onion'] = form.dojo_onion.data
-        api_keys_class.saver(api_keys_json)
         current_user.image_file = form.basefx.data
         db.session.commit()
         flash("Your account has been updated", "success")
@@ -92,12 +88,6 @@ def account():
             form.basefx.data = current_user.image_file
         else:
             form.basefx.data = "USD"
-        form.alphavantage_apikey.data = api_keys_json['alphavantage'][
-            'api_key']
-        form.sql_uri.data = Config.SQLALCHEMY_DATABASE_URI
-        form.sql_uri.render_kw = {"disabled": "disabled"}
-        form.dojo_onion.data = api_keys_json['dojo']['onion']
-        form.dojo_apikey.data = api_keys_json['dojo']['api_key']
 
     return render_template("account.html", title="Account", form=form)
 

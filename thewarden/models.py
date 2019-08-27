@@ -75,8 +75,8 @@ class User(db.Model, UserMixin):
         # returns 1 if there's an error
         from thewarden.pricing_engine.pricing import fx_rate
         try:
-            return float(fx_rate['fx_rate'])
-        except Exception:
+            return float(fx_rate()['fx_rate'])
+        except Exception as e:
             return (1)
 
     def __repr__(self):

@@ -140,6 +140,15 @@ def cost_calculation(ticker, html_table=None):
                                         html['trade_reference_id'] +\
                                         "'><i class='fas fa-edit'></i></a>"
 
+        html.index = pd.to_datetime(html.index).strftime('%Y-%m-%d')
+        # Include TOTAL row
+        html.loc['TOTAL'] = 0
+        # Need to add only some fields - strings can't be added for example
+        columns_sum = ['Q', 'trade_fees_fx', 'cash_value_fx',
+                       'adjusted_cv']
+        for field in columns_sum:
+            html.loc['TOTAL', field] = html[field].sum()
+
         # format numbers
         html['acum_Q'] = abs(html['acum_Q'])
         html['Q'] = abs(html['Q'])
@@ -149,6 +158,10 @@ def cost_calculation(ticker, html_table=None):
         html['trade_fees_fx'] = html['trade_fees_fx'].map('{:,.2f}'.format)
         html['cash_value_fx'] = html['cash_value_fx'].map('{:,.2f}'.format)
         html['adjusted_cv'] = html['adjusted_cv'].map('{:,.2f}'.format)
+        html.loc['TOTAL', 'trade_operation'] = ''
+        html.loc['TOTAL', 'acum_Q'] = ''
+        html.loc['TOTAL', 'trade_price_fx'] = ''
+        html.loc['TOTAL', 'trade_reference_id'] = ''
         html = html.rename(
                     columns={
                         'trade_operation': 'B/S',
@@ -179,7 +192,7 @@ def find_fx(row, fx=None):
     return price
 
 
-@MWT(timeout=3)
+@MWT(timeout=2)
 @timing
 def transactions_fx():
     # Gets the transaction table and fills with fx information
@@ -221,6 +234,15 @@ def is_currency(id):
     return False
 
 
+def list_tickers():
+    df = pd.read_sql_table('trades', db.engine)
+    df = df[(df.user_id == current_user.username)]
+    # remove the currencies from tickers
+    df['is_currency'] = df['trade_asset_ticker'].apply(is_currency)
+    df = df[df['is_currency'] == False]
+    return (df.trade_asset_ticker.unique().tolist())
+
+
 # ---------------- PANDAS HELPER FUNCTION --------------------------
 # This is a function to concatenate a function returning multiple columns into
 # a dataframe.
@@ -246,9 +268,7 @@ def df_unpack(df, column, fillna=None):
         del ret[column]
     return ret
 
-
 @MWT(timeout=1)
-@timing
 def positions():
     # Method to create a user's position table
     # Returns a df with the following information
@@ -264,7 +284,7 @@ def positions():
                                 "cash_value_fx",
                                 "trade_fees_fx"]].sum()
     # Now let's create our main dataframe with information for each ticker
-    list_of_tickers = df.trade_asset_ticker.unique().tolist()
+    list_of_tickers = list_tickers()
     main_df = pd.DataFrame({'trade_asset_ticker': list_of_tickers})
     # Fill with positions, cash_values and fees
     df_tmp = df.groupby(['trade_asset_ticker'])[
@@ -290,7 +310,6 @@ def single_price(ticker):
     return (price_data_rt(ticker), datetime.now())
 
 
-@MWT(timeout=1)
 def positions_dynamic():
     # This method is the realtime updater for the front page. It gets the
     # position information from positions above and returns a dataframe
@@ -300,10 +319,13 @@ def positions_dynamic():
     df = positions()
     # Drop all currencies from table
     df = df[df['is_currency'] == False]
+    # check if trade_asset_ticker is set as index. If so, move to column
+    # This happens on some memoized functions - need to understand why
+    # The below is a temporary fix
+    df = df.reset_index()
     if df is None:
         return None, None
-    list_of_tickers = df.trade_asset_ticker.unique().tolist()
-    tickers_string = ",".join(list_of_tickers)
+    tickers_string = ",".join(list_tickers())
     # Let's try to get as many prices as possible into the df with a
     # single request - first get all the prices in current currency and USD
     multi_price = multiple_price_grab(tickers_string, 'USD,' + current_user.fx())
@@ -313,44 +335,80 @@ def positions_dynamic():
 
     def find_data(ticker):
         notes = None
+        print(f"Trying to get price for {ticker}")
         try:
             # Parse the cryptocompare data
             price = multi_price["RAW"][ticker][current_user.fx()]["PRICE"]
-            price = float(price * current_user.fx_rate_USD())
+            price = float(price)
             high = float(multi_price["RAW"][ticker][
-                current_user.fx()]["HIGHDAY"] * current_user.fx_rate_USD())
+                current_user.fx()]["HIGHDAY"])
             low = float(multi_price["RAW"][ticker][
-                current_user.fx()]["LOWDAY"] * current_user.fx_rate_USD())
+                current_user.fx()]["LOWDAY"])
             chg = multi_price["RAW"][ticker][current_user.fx()]["CHANGEPCT24HOUR"]
             mktcap = multi_price["DISPLAY"][ticker][current_user.fx()]["MKTCAP"]
             volume = multi_price["DISPLAY"][ticker][current_user.fx()]["VOLUME24HOURTO"]
             last_up_source = multi_price["RAW"][ticker][current_user.fx()]["LASTUPDATE"]
             source = multi_price["DISPLAY"][ticker][current_user.fx()]["LASTMARKET"]
             last_update = datetime.now()
-        except KeyError:
+            print("OK from cryptocompare")
+        except KeyError as e:
             # Couldn't find price with CryptoCompare. Let's try a different source
             # and populate data in the same format [aa = alphavantage]
+            print(f"Failed at cc error: {e}")
             try:
+                print(" Trying AA")
                 single_price = price_data_rt_full(ticker, 'aa')
                 if single_price is None:
                     raise KeyError
-                (price, last_update, high, low,
+                price = single_price[0] * current_user.fx_rate_USD()
+                high = single_price[2] * current_user.fx_rate_USD()
+                low = single_price[3] * current_user.fx_rate_USD()
+                (_, last_update, _, _,
                     chg, mktcap, last_up_source,
                     volume, source, notes) = single_price
-            except Exception:
+                print("Success at AA")
+            except Exception as e:
+                print(f"Failed at cc error: {e}")
                 # Let's try a final time using Financial Modeling Prep API
                 try:
-                    single_price = price_data_rt_full(ticker, 'fp')
+                    print("Trying fp")
+                    single_price = price_data_rt_full(ticker, 'fp') * current_user.fx_rate_USD()
                     if single_price is None:
                         raise KeyError
-                    (price, last_update, high, low,
+                    price = single_price[0] * current_user.fx_rate_USD()
+                    high = single_price[2] * current_user.fx_rate_USD()
+                    low = single_price[3] * current_user.fx_rate_USD()
+                    (_, last_update, _, _,
                         chg, mktcap, last_up_source,
                         volume, source, notes) = single_price
+                    print("Success at fp")
                 except Exception as e:
-                    price = high = low = chg = mktcap = last_up_source = last_update = volume = 0
-                    source = '-'
-                    logging.error(f"There was an error getting the price for {ticker}." +
-                                f"Error: {e}")
+                    print(f"Failed at fp error: {e}")
+                    try:
+                        print("Going for Historical price")
+                        print(f"Historical price being grabbed for {ticker}")
+                        # Finally, if realtime price is unavailable, find the latest
+                        # saved value in historical prices
+                        # Create a price class
+                        price_class = price_data(ticker)
+                        if price_class is None:
+                            raise KeyError
+                        price = float(price_class.df['close'].iloc[0]) * current_user.fx_rate_USD()
+                        high = price_class.df['high'].iloc[0] * current_user.fx_rate_USD()
+                        low = price_class.df['low'].iloc[0] * current_user.fx_rate_USD()
+                        volume = price_class.df['volume'].iloc[0] * current_user.fx_rate_USD()
+                        mktcap = chg = 0
+                        source = last_up_source = 'Historical Data'
+                        last_update = price_class.df.index[0]
+                        print("Success at Historical")
+                        print(price)
+
+                    except Exception as e:
+                        price = high = low = chg = mktcap = last_up_source = last_update = volume = 0
+                        source = '-'
+                        print((e))
+                        logging.error(f"There was an error getting the price for {ticker}." +
+                                    f"Error: {e}")
         return price, last_update, high, low, chg, mktcap, last_up_source, volume, source, notes
     df = apply_and_concat(df, 'trade_asset_ticker',
                           find_data, ['price', 'last_update', '24h_high', '24h_low',
@@ -410,7 +468,7 @@ def positions_dynamic():
     df['last_update'] = df['last_update'].astype(str)
     # Create a pie chart data in HighCharts format excluding small pos
     pie_data = []
-    for ticker in list_of_tickers:
+    for ticker in list_tickers():
         if df.loc[ticker, 'small_pos'] == 'False':
             tmp_dict = {}
             tmp_dict['y'] = round(df.loc[ticker, 'allocation'] * 100, 2)

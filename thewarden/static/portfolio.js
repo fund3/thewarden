@@ -69,9 +69,7 @@ $(document).ready(function () {
             success: function (data) {
                 console.log(data)
                 // Parse data
-                var pop_html = `
-                <div class="row">
-                `
+
                 $('#accounting_table').html('<br> ' + data + '<br>');
             },
             error: console.log("AJAX Error")
@@ -327,7 +325,7 @@ $(document).ready(function () {
     // Refresh pricings
     window.setInterval(function () {
         realtime_table();
-    }, 2000);
+    }, 30000);
 
     window.setInterval(function () {
         getblockheight();
@@ -498,7 +496,17 @@ function realtime_table() {
                     $('#' + key + '_mktcap').html(value.mktcap);
                     $('#' + key + '_source').html(value.source);
                     update = new Date(value.last_update)
-                    update = update.toLocaleTimeString()
+                    if (update.getHours() == 0 && update.getMinutes() == 0 && update.getSeconds() == 0) {
+                        console.log(update)
+                        console.log(update.getDay())
+                        update = (update.getMonth() + 1) + '-' + update.getDate() + '-' + update.getFullYear()
+                    } else {
+                        if (isNaN(update.getHours())) {
+
+                        } else {
+                            update = update.getHours() + ':' + update.getMinutes() + ':' + update.getSeconds()
+                        }
+                    }
                     if (update == 'Invalid Date') {
                         update = '-'
                     }
@@ -510,6 +518,11 @@ function realtime_table() {
                     $('#tickerfifo_' + key).addClass('small_pos')
                     $('#tickerlifo_' + key).addClass('small_pos')
                     $('#tickerdata_' + key).addClass('small_pos')
+                    // Hide the calculators for small positions
+                    $('#' + key + '_be_calculator_FIFO').html(" ")
+                    $('#' + key + '_be_calculator_LIFO').html(" ")
+                    $('#' + key + '_pnl_calculator_FIFO').html(" ")
+                    $('#' + key + '_pnl_calculator_LIFO').html(" ")
                 }
 
             })
