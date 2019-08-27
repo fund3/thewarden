@@ -442,7 +442,7 @@ function realtime_table() {
             $('#chg2').html(formatNumber(pct_chg, 2, '+', '%', 'False', true)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
             $('#lstupd').html(data.positions.Total.last_up_source).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
             // Update BTC price on layout
-            $('#latest_btc_price').html(formatNumber(data.btc * data.user.fx_rate, 2, fx)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
+            $('#latest_btc_price').html(formatNumber(data.btc, 2, fx)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
 
             // Totals for FIFO and LIFO tables
             $('#F_total').html(formatNumber(data.positions.Total.position_fx, 0, fx, ''));

@@ -335,7 +335,6 @@ def positions_dynamic():
 
     def find_data(ticker):
         notes = None
-        print(f"Trying to get price for {ticker}")
         try:
             # Parse the cryptocompare data
             price = multi_price["RAW"][ticker][current_user.fx()]["PRICE"]
@@ -350,31 +349,22 @@ def positions_dynamic():
             last_up_source = multi_price["RAW"][ticker][current_user.fx()]["LASTUPDATE"]
             source = multi_price["DISPLAY"][ticker][current_user.fx()]["LASTMARKET"]
             last_update = datetime.now()
-            print("OK from cryptocompare")
-        except KeyError as e:
+        except KeyError:
             # Couldn't find price with CryptoCompare. Let's try a different source
             # and populate data in the same format [aa = alphavantage]
-            print(f"Failed at cc error: {e}")
             try:
-                print(" Trying AA")
-                raise KeyError
                 single_price = price_data_rt_full(ticker, 'aa')
                 if single_price is None:
                     raise KeyError
                 price = single_price[0]
                 high = single_price[2]
-                print(price)
                 low = single_price[3]
                 (_, last_update, _, _,
                     chg, mktcap, last_up_source,
                     volume, source, notes) = single_price
-                print("Success at AA")
-            except Exception as e:
-                print(f"Failed at cc error: {e}")
+            except Exception:
                 # Let's try a final time using Financial Modeling Prep API
                 try:
-                    print("Trying fp")
-                    raise KeyError
                     single_price = price_data_rt_full(ticker, 'fp')
                     if single_price is None:
                         raise KeyError
@@ -384,12 +374,8 @@ def positions_dynamic():
                     (_, last_update, _, _,
                         chg, mktcap, last_up_source,
                         volume, source, notes) = single_price
-                    print("Success at fp")
-                except Exception as e:
-                    print(f"Failed at fp error: {e}")
+                except Exception:
                     try:
-                        print("Going for Historical price")
-                        print(f"Historical price being grabbed for {ticker}")
                         # Finally, if realtime price is unavailable, find the latest
                         # saved value in historical prices
                         # Create a price class
@@ -404,15 +390,11 @@ def positions_dynamic():
                         mktcap = chg = 0
                         source = last_up_source = 'Historical Data'
                         last_update = price_class.df.index[0]
-                        print("Success at Historical")
-                        print(price)
-
                     except Exception as e:
                         price = high = low = chg = mktcap = last_up_source = last_update = volume = 0
                         source = '-'
-                        print((e))
                         logging.error(f"There was an error getting the price for {ticker}." +
-                                    f"Error: {e}")
+                                      f"Error: {e}")
         return price, last_update, high, low, chg, mktcap, last_up_source, volume, source, notes
     df = apply_and_concat(df, 'trade_asset_ticker',
                           find_data, ['price', 'last_update', '24h_high', '24h_low',

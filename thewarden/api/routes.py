@@ -1863,7 +1863,7 @@ def positions_json():
         'positions': dfdyn,
         'piechart': piedata,
         'user': current_user.fx_rate_data(),
-        'btc': price_data_rt("BTC")
+        'btc': price_data_rt("BTC") * current_user.fx_rate_USD()
     }
     return simplejson.dumps(json_dict, ignore_nan=True)
 
@@ -1883,12 +1883,12 @@ def accounting_json():
 # DELETE THIS --- Only to test prices
 @api.route("/test_price", methods=["GET"])
 def test_price():
-    from thewarden.pricing_engine.pricing import fx_price_ondate, PROVIDER_LIST, PriceData
-    provider = PROVIDER_LIST['fmp_stock']
-    a = PriceData('AAPL', provider)
-    print (a.errors)
-    print (a.realtime(PROVIDER_LIST['fp_realtime_stock']))
-    return (a.df.to_json())
-
-
+    from thewarden.pricing_engine.pricing import fx_price_ondate, PROVIDER_LIST, PriceData, price_data_fx
+    # provider = PROVIDER_LIST['fmp_stock']
+    # a = PriceData('SQ', provider)
+    # print (a.errors)
+    # print (a.realtime(PROVIDER_LIST['fp_realtime_stock']))
+    # return (a.df.to_json())
+    a = price_data_fx("GBTC")
+    print (a)
 

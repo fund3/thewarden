@@ -18,6 +18,7 @@
 - Dashboard now updates prices and positions in realtime
 - Fixed an issue where some modals where not showing correctly
 - Included details on how FIFO and LIFO unrealized cost is calculated
+- Fixed issues in fx calculations
 
 ## v.13 alpha (8/15/2019)
 

@@ -63,8 +63,6 @@ def account():
     form = UpdateAccountForm()
     if form.validate_on_submit():
         # If currency is changed, recalculate the NAV
-        print(form.basefx.data)
-        print(current_user.fx())
         if form.basefx.data != current_user.fx():
             current_user.image_file = form.basefx.data
             regenerate_nav()

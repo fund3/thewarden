@@ -45,7 +45,12 @@ def before_request():
 
 @main.route("/get_started")
 def get_started():
-    return render_template("welcome.html", title="Welcome")
+    from thewarden.pricing_engine.pricing import api_keys_class
+    api_keys_json = api_keys_class.loader()
+    aa_apikey = api_keys_json['alphavantage']['api_key']
+    return render_template("welcome.html",
+                           title="Welcome",
+                           aa_apikey=aa_apikey)
 
 
 @main.route("/")

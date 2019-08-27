@@ -401,7 +401,7 @@ REALTIME_PROVIDER_PRIORITY = ['cc_realtime', 'aa_realtime_digital', 'aa_realtime
                               'fp_realtime_stock']
 FX_RT_PROVIDER_PRIORITY = ['cc_realtime_full', 'aa_realtime_digital']
 HISTORICAL_PROVIDER_PRIORITY = ['cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx',
-                                'financialmodelingprep', 'bitmex']
+                                'fmp_stock', 'bitmex']
 FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 
 
@@ -603,8 +603,8 @@ def fx_rate(fx=None, base='USD'):
         rate['name_plural'] = fxsymbol(current_user.fx(), 'name_plural')
         rate['cross'] = "USD" + " / " + current_user.fx()
         try:
-            rate['fx_rate'] = (1 / float(price_data_rt(
-                                         current_user.fx(), FX_RT_PROVIDER_PRIORITY)))
+            rate['fx_rate'] = 1 / (float(price_data_rt(
+                                current_user.fx(), FX_RT_PROVIDER_PRIORITY)['PRICE']))
         except Exception:
             rate['fx_rate'] = 1
     except Exception as e:
