@@ -1,6 +1,6 @@
 # Release History
 
-## v.14 alpha (TBD)
+## v.14 alpha (8/28/2019)
 
 - Complete refactory of pricing feeds
 - Support for multiple pricing APIs (currently CryptoCompare, Alphavantage and Bitmex)
@@ -23,6 +23,7 @@
 - Remodelled the 'Welcome' page.
 - Remodelled the Front page to include login (cut extra step)
 - Improved documentation of many functions
+- Many bug fixes and improvements
 
 ## v.13 alpha (8/15/2019)
 
