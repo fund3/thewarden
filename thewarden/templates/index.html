@@ -67,6 +67,22 @@
                         align-items: center;
                     }
                 </style>
+
+                <!-- Error messages -->
+                <div class='row' style='padding-top: 30px; padding-left: 20px;'>
+
+                    <div class='col-sm-12 text-white'>
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                        {% for category, message in messages %}
+                        <div id="messagealert" class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                        {% endwith %}
+                    </div>/
+                </div>
                 <br><br><br><br>
 
                 <div class="row border-bottom">
@@ -200,9 +216,14 @@
                 </div>
 
 
+
             </main>
 
         </div>
+
+
+
+
         <!-- END MAIN CONTENT -->
 
         <!-- Footer -->

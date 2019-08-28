@@ -78,7 +78,7 @@ def home():
                 flash("Login failed. Please check e-mail and password",
                       "danger")
 
-    return render_template("index.html", title="Login", form=form)
+        return render_template("index.html", title="Login", form=form)
 
 
 @main.route("/about")
