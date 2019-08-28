@@ -1,6 +1,4 @@
 from flask_wtf import FlaskForm
-from flask_login import current_user
-from thewarden.models import listofcrypto
 from thewarden.users.utils import fx_list
 from wtforms import StringField, SubmitField, SelectField
 from wtforms.validators import DataRequired, ValidationError, Optional
@@ -42,6 +40,11 @@ class NewTrade(FlaskForm):
         acc = trade_account.data
         if acc == "":
             raise ValidationError("Trade Account cannot be empty")
+
+    def validate_trade_asset_ticker(self, trade_asset_ticker):
+        ticker = trade_asset_ticker.data
+        if ticker == "":
+            raise ValidationError("Ticker cannot be empty")
 
     def validate_trade_price(self, trade_price):
         try:
