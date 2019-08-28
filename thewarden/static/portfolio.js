@@ -325,7 +325,7 @@ $(document).ready(function () {
     // Refresh pricings
     window.setInterval(function () {
         realtime_table();
-    }, 30000);
+    }, 5000);
 
     window.setInterval(function () {
         getblockheight();

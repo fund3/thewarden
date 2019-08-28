@@ -66,7 +66,7 @@ $(document).ready(function () {
         dataType: 'json',
         success: function (data) {
 
-            if (data['onion_address'] != "empty") {
+            if (data['onion_address'] != null) {
                 $('#dojo_txt').html("<span style='color: green;'>Success</span>: Dojo Onion Address Found" +
                     "<div class='float-right text-success' role='status'>" +
                     "<i class='fas fa-check fa-2x'></i></div>");
