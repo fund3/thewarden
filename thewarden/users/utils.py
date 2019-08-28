@@ -496,7 +496,7 @@ def generatenav(user, force=False, filter=None):
     if force:
         usernamehash = hashlib.sha256(current_user.username.encode(
             'utf-8')).hexdigest()
-        filename = "thewarden/nav_data/"+usernamehash + ".nav"
+        filename = "thewarden/nav_data/" + usernamehash + current_user.fx() +  ".nav"
         # Since this function can be run as a thread, it's safer to delete
         # the current NAV file if it exists. This avoids other tasks reading
         # the local file which is outdated
@@ -509,7 +509,7 @@ def generatenav(user, force=False, filter=None):
     if not force:
         usernamehash = hashlib.sha256(current_user.username.encode(
             'utf-8')).hexdigest()
-        filename = "thewarden/nav_data/"+usernamehash + ".nav"
+        filename = "thewarden/nav_data/" + usernamehash + current_user.fx() + ".nav"
         try:
             # Check if NAV saved file is recent enough to be used
             # Local file has to have a saved time less than RENEW_NAV min old
@@ -563,14 +563,14 @@ def generatenav(user, force=False, filter=None):
                 save_nav = False
                 raise ValueError
 
-            prices = prices.rename(columns={'close_converted': id+'_price'})
-            prices = prices[id+'_price']
+            prices = prices.rename(columns={'close_converted': id + '_price'})
+            prices = prices[id + '_price']
             # Fill dailyNAV with prices for each ticker
             dailynav = pd.merge(dailynav, prices, on='date', how='left')
 
             # Replace NaN with prev value, if no prev value then zero
-            dailynav[id+'_price'].fillna(method='ffill', inplace=True)
-            dailynav[id+'_price'].fillna(0, inplace=True)
+            dailynav[id + '_price'].fillna(method='ffill', inplace=True)
+            dailynav[id + '_price'].fillna(0, inplace=True)
 
             # Now let's find trades for this ticker and include in dailynav
             tradedf = df[['trade_asset_ticker',
@@ -586,27 +586,27 @@ def generatenav(user, force=False, filter=None):
             tradedf.index.rename('date', inplace=True)
             # rename columns to include ticker name so it's differentiated
             # when merged with other ids
-            tradedf.rename(columns={'trade_quantity': id+'_quant',
-                                    'cum_quant': id+'_pos',
-                                    'cash_value_fx': id+'_cash_value_fx'},
+            tradedf.rename(columns={'trade_quantity': id + '_quant',
+                                    'cum_quant': id + '_pos',
+                                    'cash_value_fx': id + '_cash_value_fx'},
                            inplace=True)
             # merge
             dailynav = pd.merge(dailynav, tradedf, on='date', how='left')
             # for empty days just trade quantity = 0, same for CV
-            dailynav[id+'_quant'].fillna(0, inplace=True)
-            dailynav[id+'_cash_value_fx'].fillna(0, inplace=True)
+            dailynav[id + '_quant'].fillna(0, inplace=True)
+            dailynav[id + '_cash_value_fx'].fillna(0, inplace=True)
             # Now, for positions, fill with previous values, NOT zero,
             # unless there's no previous
-            dailynav[id+'_pos'].fillna(method='ffill', inplace=True)
-            dailynav[id+'_pos'].fillna(0, inplace=True)
+            dailynav[id + '_pos'].fillna(method='ffill', inplace=True)
+            dailynav[id + '_pos'].fillna(0, inplace=True)
             # Calculate USD and fx position and % of portfolio at date
             # Calculate USD position and % of portfolio at date
-            dailynav[id+'_fx_pos'] = dailynav[id+'_price'].astype(
-                float) * dailynav[id+'_pos'].astype(float)
+            dailynav[id + '_fx_pos'] = dailynav[id + '_price'].astype(
+                float) * dailynav[id + '_pos'].astype(float)
             # Before calculating NAV, clean the df for small
             # dust positions. Otherwise, a portfolio close to zero but with
             # 10 sats for example, would still have NAV changes
-            dailynav[id+'_fx_pos'].round(2)
+            dailynav[id + '_fx_pos'].round(2)
             logging.info(
                 f"Success: imported prices for id:{id}")
         except (FileNotFoundError, KeyError, ValueError) as e:
@@ -622,7 +622,7 @@ def generatenav(user, force=False, filter=None):
         # Include totals in new columns
         try:
             dailynav['PORT_fx_pos'] = dailynav['PORT_fx_pos'] +\
-                dailynav[id+'_fx_pos']
+                dailynav[id + '_fx_pos']
         except KeyError as e:
             logging.error(f"[GENERATENAV] Ticker {id} was not found " +
                            "on NAV Table - continuing but this is not good." +
@@ -632,7 +632,7 @@ def generatenav(user, force=False, filter=None):
                    f"NAV calculations will be off. Error: {e}", "danger")
             continue
         dailynav['PORT_cash_value_fx'] = dailynav['PORT_cash_value_fx'] +\
-            dailynav[id+'_cash_value_fx']
+            dailynav[id + '_cash_value_fx']
 
     # Now that we have the full portfolio value each day, calculate alloc %
     for id in tickers:
@@ -682,7 +682,7 @@ def generatenav(user, force=False, filter=None):
     if save_nav:
         usernamehash = hashlib.sha256(current_user.username.encode(
             'utf-8')).hexdigest()
-        filename = "thewarden/nav_data/"+usernamehash + ".nav"
+        filename = "thewarden/nav_data/" + usernamehash + current_user.fx() + ".nav"
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         dailynav.to_pickle(filename)
         logging.info(f"[generatenav] NAV saved to {filename}")
@@ -690,30 +690,18 @@ def generatenav(user, force=False, filter=None):
     return dailynav
 
 
+@timing
 def regenerate_nav():
     # re-generates the NAV on the background - delete First
     # the local NAV file so it's not used.
-    usernamehash = hashlib.sha256(
-        current_user.username.encode("utf-8")).hexdigest()
-    filename = "thewarden/nav_data/" + usernamehash + ".nav"
-    logging.info(f"[newtrade] {filename} marked for deletion.")
-    # Since this function can be run as a thread,
-    # it's safer to delete the current NAV file if it exists.
-    # This avoids other tasks reading the local file which
-    # is outdated
-    try:
-        os.remove(filename)
-        logging.info("[newtrade] Local NAV file deleted")
-    except OSError:
-        logging.info("[newtrade] Local NAV file not found" +
-                     " for removal - continuing")
-    # Delete all pricing history from AA
-    aa_files = glob.glob('thewarden/alphavantage_data/*')
+    print("Regenerating NAV. Please wait...")
+    # Delete all pricing history
+    aa_files = glob.glob('thewarden/pricing_engine/pricing_data/*.*')
     [os.remove(x) for x in aa_files]
-    nav_files = glob.glob('thewarden/dailydata/*.json')
+    nav_files = glob.glob('thewarden/nav_data/*.*')
     [os.remove(x) for x in nav_files]
 
-    generatenav(current_user.username, True)
+    generatenav(current_user.username, force=True)
     logging.info("Change to database - generated new NAV")
 
 

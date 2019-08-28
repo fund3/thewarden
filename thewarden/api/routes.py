@@ -1764,8 +1764,8 @@ def test_aakey():
             api_keys_json = api_keys_class.loader()
             api_keys_json['alphavantage']['api_key'] = api_key
             api_keys_class.saver(api_keys_json)
-            regenerate_nav()
-        except AttributeError as e:
+
+        except AttributeError:
             data["status"] = "failed"
             data["message"] = api_request
     return data

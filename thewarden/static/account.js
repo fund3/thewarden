@@ -2,7 +2,7 @@ $(document).ready(function () {
     $(function () {
         $("#account_form").submit(function () {
             $("#submit").attr("disabled", true);
-            $('#submit').prop('value', 'Recalculating. If base currency was changed this can take some time.');
+            $('#submit').prop('value', 'Recalculating. If base currency was changed this can take a few minutes. Just wait.');
         });
     });
 });

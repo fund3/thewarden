@@ -21,6 +21,8 @@
 - Included details on how FIFO and LIFO unrealized cost is calculated
 - Fixed issues in fx calculations
 - Remodelled the 'Welcome' page.
+- Remodelled the Front page to include login (cut extra step)
+- Improved documentation of many functions
 
 ## v.13 alpha (8/15/2019)
 

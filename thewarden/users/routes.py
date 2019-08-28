@@ -61,18 +61,14 @@ def logout():
 def account():
     form = UpdateAccountForm()
     if form.validate_on_submit():
-        # If currency is changed, recalculate the NAV
-        if form.basefx.data != current_user.fx():
-            current_user.image_file = form.basefx.data
-            regenerate_nav()
-            db.session.commit()
-            flash(
-                f"NAV recalculated to use {form.basefx.data} as a base currency",
-                "success")
-        current_user.email = form.email.data
+        # Recalculate the NAV
         current_user.image_file = form.basefx.data
+        current_user.email = form.email.data
         db.session.commit()
-        flash("Your account has been updated", "success")
+        regenerate_nav()
+        flash(
+            f"Account updated and NAV recalculated to use " +
+            f"{form.basefx.data} as a base currency", "success")
         return redirect(url_for("users.account"))
 
     elif request.method == "GET":

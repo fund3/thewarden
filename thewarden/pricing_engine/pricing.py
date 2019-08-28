@@ -71,7 +71,7 @@ class PriceProvider:
             self.url_args = "&" + urllib.parse.urlencode(field_dict)
         self.errors = []
 
-    @memoized
+    @MWT(timeout=1)
     def request_data(self, ticker):
         data = None
         if self.base_url is not None:
@@ -257,7 +257,6 @@ class PriceData():
         if provider.name == 'financialmodelingprep':
             try:
                 df = pd.DataFrame.from_records(data['historical'])
-                print(df)
                 df = df.rename(
                     columns={
                         'close': 'close',
@@ -268,7 +267,6 @@ class PriceData():
                     })
                 df.set_index('date', inplace=True)
                 df_save = df[['close', 'open', 'high', 'low', 'volume']]
-                print(df_save)
             except Exception as e:
                 self.errors.append(e)
                 df_save = None

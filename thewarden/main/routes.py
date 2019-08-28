@@ -42,7 +42,7 @@ def before_request():
             transactions = Trades.query.filter_by(
                 user_id=current_user.username)
             if transactions.count() == 0:
-                return render_template("empty.html")
+                return redirect(url_for("main.get_started"))
 
 
 @main.route("/get_started")
@@ -55,7 +55,7 @@ def get_started():
                            aa_apikey=aa_apikey)
 
 
-@main.route("/")
+@main.route("/", methods=["GET", "POST"])
 @main.route("/home", methods=["GET", "POST"])
 # Default page - if user logged in, redirect to portfolio
 def home():

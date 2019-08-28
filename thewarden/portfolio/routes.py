@@ -1,5 +1,5 @@
 import numpy as np
-from flask import render_template, Blueprint
+from flask import render_template, Blueprint, redirect, url_for
 from flask_login import current_user, login_required
 from thewarden.models import Trades
 from datetime import datetime
@@ -16,7 +16,7 @@ def before_request():
     if current_user.is_authenticated:
         transactions = Trades.query.filter_by(user_id=current_user.username)
         if transactions.count() == 0:
-            return render_template("empty.html")
+            return redirect(url_for("main.get_started"))
 
 
 @portfolio.route("/portfolio")
@@ -25,7 +25,7 @@ def before_request():
 def portfolio_main():
     transactions = Trades.query.filter_by(user_id=current_user.username)
     if transactions.count() == 0:
-        return render_template("empty.html")
+        return redirect(url_for("main.get_started"))
     # For now pass only static positions, will update prices and other
     # data through javascript after loaded. This improves load time
     # and refresh speed.
@@ -35,7 +35,7 @@ def portfolio_main():
     df = df[df['is_currency'] == 0].sort_index(ascending=True)
     df = df.to_dict(orient='index')
     if df is None:
-        return render_template("empty.html")
+        return redirect(url_for("main.get_started"))
     return render_template("portfolio.html",
                            title="Portfolio Dashboard",
                            portfolio_data=df)
