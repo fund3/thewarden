@@ -184,6 +184,7 @@ def to_epoch(in_date):
     return str(int((in_date - datetime(1970, 1, 1)).total_seconds()))
 
 
+@MWT(timeout=2)
 def find_fx(row, fx=None):
     # row.name is the date being passed
     # row['trade_currency'] is the base fx (the one where the trade was included)
@@ -234,6 +235,7 @@ def is_currency(id):
     return False
 
 
+@MWT(timeout=2)
 def list_tickers():
     df = pd.read_sql_table('trades', db.engine)
     df = df[(df.user_id == current_user.username)]
@@ -268,7 +270,8 @@ def df_unpack(df, column, fillna=None):
         del ret[column]
     return ret
 
-@MWT(timeout=1)
+
+@MWT(timeout=2)
 def positions():
     # Method to create a user's position table
     # Returns a df with the following information
@@ -310,6 +313,7 @@ def single_price(ticker):
     return (price_data_rt(ticker), datetime.now())
 
 
+@MWT(timeout=1)
 def positions_dynamic():
     # This method is the realtime updater for the front page. It gets the
     # position information from positions above and returns a dataframe
@@ -463,7 +467,7 @@ def positions_dynamic():
     return(df, pie_data)
 
 
-@MWT(timeout=3)
+@memoized
 def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     if text is None:
         return (0)
@@ -476,6 +480,7 @@ def cleancsv(text):  # Function to clean CSV fields - leave only digits and .
     return(str)
 
 
+@MWT(timeout=1)
 @timing
 def generatenav(user, force=False, filter=None):
     logging.info(f"[generatenav] Starting NAV Generator for user {user}")
@@ -727,7 +732,7 @@ def send_reset_email(user):
     mail.send(msg)
 
 
-@MWT(timeout=5)
+@MWT(timeout=1)
 def heatmap_generator():
     # If no Transactions for this user, return empty.html
     transactions = Trades.query.filter_by(user_id=current_user.username).order_by(
@@ -804,7 +809,7 @@ def fx_list():
     return (fx_list)
 
 
-@MWT(timeout=5)
+@memoized
 def fxsymbol(fx, output='symbol'):
     # Gets an FX 3 letter symbol and returns the HTML symbol
     # Sample outputs are:
@@ -833,7 +838,7 @@ def bitmex_gethistory(ticker):
     # Gets historical prices from bitmex
     # Saves to folder
     from bitmex import bitmex
-    testnet = False
+    testnet = True
     logging.info(f"[Bitmex] Trying Bitmex for {ticker}")
     bitmex_credentials = load_bitmex_json()
 
