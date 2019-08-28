@@ -8,7 +8,7 @@ from thewarden import db
 from thewarden.transactions.forms import NewTrade, EditTransaction
 from thewarden.models import Trades, AccountInfo
 from datetime import datetime
-from thewarden.users.utils import (cleancsv, bitmex_orders)
+from thewarden.users.utils import (cleancsv, bitmex_orders, regenerate_nav)
 
 transactions = Blueprint("transactions", __name__)
 
