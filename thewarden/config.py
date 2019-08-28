@@ -4,7 +4,6 @@ import os
 # Config class for Application Factory
 class Config:
     basedir = os.path.abspath(os.path.dirname(__file__))
-
     # WARDEN_STATUS = "developer" will use a local database
     # To use this alternative DB, set the sql environment
     # variable below to point to your local

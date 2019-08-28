@@ -8,7 +8,7 @@ import requests
 
 from flask import Flask, flash
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, login_required, current_user
+from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from flask_migrate import Migrate
 from logging.handlers import RotatingFileHandler
@@ -76,7 +76,7 @@ def test_tor():
         time_after = time()
         pre_proxy_ping = time_after - time_before
         pre_proxy = r.json()
-    except:
+    except Exception:
         pre_proxy = pre_proxy_ping = "Connection Error"
 
     # Activate TOR proxies
@@ -104,7 +104,7 @@ def test_tor():
             }
 
             return response
-    except:
+    except Exception:
         post_proxy_ping = post_proxy = "Failed checking TOR status"
 
     response = {

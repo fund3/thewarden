@@ -12,7 +12,8 @@ from thewarden.transactions.forms import NewTrade, EditTransaction
 from thewarden.models import Trades, AccountInfo
 from datetime import datetime
 from thewarden.users.utils import (cleancsv, generatenav, bitmex_orders,
-                                   load_bitmex_json, regenerate_nav, is_currency)
+                                   load_bitmex_json, regenerate_nav,
+                                   is_currency)
 
 transactions = Blueprint("transactions", __name__)
 
@@ -190,8 +191,9 @@ def edittransaction():
     reference_id = request.args.get("reference_id")
     id = request.args.get("id")
     if reference_id:
-        trade = Trades.query.filter_by(user_id=current_user.username).filter_by(
-                    trade_reference_id=reference_id)
+        trade = Trades.query.filter_by(
+            user_id=current_user.username).filter_by(
+                trade_reference_id=reference_id)
         if trade.count() == 0:
             abort(404)
         id = trade[0].id
@@ -281,8 +283,8 @@ def edittransaction():
             trade[0].trade_currency = form.trade_currency.data
             trade[0].trade_operation = form.trade_operation.data
             trade[0].trade_quantity = float(form.trade_quantity.data) * qop
-            trade[0].trade_price = form.trade_price.data
-            trade[0].trade_fees = form.trade_fees.data
+            trade[0].trade_price = float(cleancsv(form.trade_price.data))
+            trade[0].trade_fees = float(cleancsv(form.trade_fees.data))
             trade[0].trade_account = form.trade_account.data
             trade[0].trade_notes = form.trade_notes.data
             trade[0].cash_value = cv
@@ -296,9 +298,9 @@ def edittransaction():
                 match[0].trade_operation = acc
                 match[0].trade_date = form.trade_date.data
                 match[0].trade_quantity = (qop * (-1) *
-                                            ((float(form.trade_quantity.data) *
-                                            float(form.trade_price.data) +
-                                            float(form.trade_fees.data))))
+                                           ((float(form.trade_quantity.data) *
+                                             float(form.trade_price.data) +
+                                             float(form.trade_fees.data))))
                 match[0].cash_value = cv * (-1)
 
             if not cvfail:
@@ -335,8 +337,6 @@ def edittransaction():
         id=id,
         trade_type=trade_type,
     )
-
-
 
 
 @transactions.route("/deltrade", methods=["GET"])

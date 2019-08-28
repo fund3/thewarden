@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template
-
+from sqlalchemy import exc
 
 errors = Blueprint('errors', __name__)
 
@@ -14,6 +14,12 @@ def page_not_found(error):
 # abort(403) will call this function
 def page_not_found_403(error):
     return render_template('errors/403.html'), 403
+
+
+@errors.app_errorhandler(Exception)
+# abort(500) will call this function
+def internal_server_error(error):
+    return render_template('errors/500.html', error=error), Exception.code
 
 
 @errors.app_errorhandler(500)

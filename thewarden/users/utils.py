@@ -192,7 +192,7 @@ def find_fx(row, fx=None):
     return price
 
 
-@MWT(timeout=2)
+@MWT(timeout=3)
 @timing
 def transactions_fx():
     # Gets the transaction table and fills with fx information
