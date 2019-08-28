@@ -43,20 +43,6 @@ class NewTrade(FlaskForm):
         if acc == "":
             raise ValidationError("Trade Account cannot be empty")
 
-    def validate_trade_asset_ticker(self, trade_asset_ticker):
-        ticker = trade_asset_ticker.data
-        found = False
-        listcrypto = listofcrypto.query.all()
-        for item in listcrypto:
-            if ticker == item.symbol:
-                found = True
-        if ticker.upper() == "USD":
-            found = True
-        if not found:
-            raise ValidationError("Ticker not found")
-        if ticker == "":
-            raise ValidationError("Ticker cannot be empty")
-
     def validate_trade_price(self, trade_price):
         try:
             price = float(trade_price.data)

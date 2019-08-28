@@ -601,7 +601,8 @@ def price_data_rt_full(ticker, provider):
 
 
 # Gets Currency data for current user
-@MWT(timeout=5)
+# Setting a timeout to 120 as fx rates don't change so often
+@MWT(timeout=120)
 @timing
 def fx_rate(fx=None, base='USD'):
     from thewarden.users.utils import fxsymbol
