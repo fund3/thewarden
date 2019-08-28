@@ -183,7 +183,6 @@ def to_epoch(in_date):
     return str(int((in_date - datetime(1970, 1, 1)).total_seconds()))
 
 
-@MWT(timeout=1)
 def find_fx(row, fx=None):
     # row.name is the date being passed
     # row['trade_currency'] is the base fx (the one where the trade was included)
