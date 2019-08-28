@@ -1,0 +1,124 @@
+body {
+  background-color: #515151;
+  color: white;
+}
+.svg-wrapper {
+  width: 100%;
+  padding-top: 50px;
+  position: relative;
+}
+svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  max-height: 100%;
+}
+svg .text-w {
+  fill: lightgray;
+}
+svg text {
+  fill: black;
+}
+svg .sans {
+  font-family: "Raleway";
+  font-weight: 200;
+}
+svg .serif {
+  font-family: "Playfair Display SC";
+  font-weight: 700;
+}
+svg .bold {
+  font-weight: 900;
+}
+svg .upper {
+  text-transform: uppercase;
+}
+
+pre {
+  text-align: left;
+  background: rgb(75, 75, 75);
+  opacity: 0.7;
+  border: 1px solid #ddd;
+  border-left: 5px solid #f36d33;
+  font-family: monospace;
+  line-height: 2.5;
+  /* max-width: 100%; */
+  padding: 10px 10px;
+  word-wrap: break-word;
+}
+
+.alignleft {
+  float: left;
+  width: 33.33333%;
+  text-align: left;
+}
+.aligncenter {
+  float: left;
+  width: 33.33333%;
+  text-align: center;
+}
+.alignright {
+  float: left;
+  width: 33.33333%;
+  text-align: right;
+}
+​ svg {
+  display: block;
+  width: 100%;
+  max-height: 100%;
+  .text-w {
+    fill: lightgray;
+  }
+
+  text {
+    fill: black;
+  }
+  .sans {
+    font-family: "Raleway";
+    font-weight: 200;
+  }
+  .serif {
+    font-family: "Playfair Display SC";
+    font-weight: 700;
+  }
+  .bold {
+    font-weight: 900;
+  }
+  .upper {
+    text-transform: uppercase;
+  }
+}
+
+.wrapper {
+  margin: 30px auto;
+  width: 300px;
+  border: 10px solid #fff;
+  padding: 10px;
+}
+
+.light-wrapper {
+  text-align: left;
+  margin: 30px auto;
+  border: 1px solid #fff;
+  border-radius: 5px;
+  padding: 15px;
+  height: 550px;
+}
+
+/* .second-section {
+  background: #ffffff;
+  padding: 5px 10px;
+  border: 1px solid #dddddd;
+  border-radius: 3px;
+  margin-bottom: 20px;
+} */
+
+.second-section {
+  width: 100%;
+  padding: 50px 200px;
+  background: rgb(0, 0, 0);
+  opacity: 0.9;
+  margin: 0 -601.5rem;
+}

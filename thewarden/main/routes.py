@@ -13,12 +13,14 @@ from flask import (
     send_file,
     Blueprint,
 )
-from flask_login import current_user, login_required
+from flask_login import current_user, login_required, login_user
 from thewarden import db
-from thewarden.main.forms import ImportCSV, ContactForm
+from thewarden.main.forms import ImportCSV, ContactForm, User
+from thewarden.users.forms import LoginForm
 from thewarden.models import Trades, listofcrypto, AccountInfo, Contact
 from datetime import datetime
 import dateutil.parser as parser
+from werkzeug.security import check_password_hash
 from thewarden.users.utils import generatenav, cleancsv, regenerate_nav
 
 main = Blueprint("main", __name__)
@@ -54,13 +56,29 @@ def get_started():
 
 
 @main.route("/")
-@main.route("/home")
+@main.route("/home", methods=["GET", "POST"])
 # Default page - if user logged in, redirect to portfolio
 def home():
     if current_user.is_authenticated:
         return redirect(url_for("portfolio.portfolio_main"))
     else:
-        return render_template("index.html", title="Home Page")
+        form = LoginForm()
+        if form.validate_on_submit():
+            user = User.query.filter_by(email=form.email.data).first()
+            if user and check_password_hash(user.password, form.password.data):
+                login_user(user, remember=form.remember.data)
+                # The get method below is actually very helpful
+                # it returns None if empty. Better than using [] for a dictionary.
+                next_page = request.args.get("next")  # get the original page
+                if next_page:
+                    return redirect(next_page)
+                else:
+                    return redirect(url_for("main.home"))
+            else:
+                flash("Login failed. Please check e-mail and password",
+                      "danger")
+
+    return render_template("index.html", title="Login", form=form)
 
 
 @main.route("/about")

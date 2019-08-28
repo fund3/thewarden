@@ -1,13 +1,12 @@
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
 from flask_login import login_user, logout_user, current_user, login_required
-from thewarden import db, Config
+from thewarden import db
 from thewarden.users.forms import (RegistrationForm, LoginForm,
                                    UpdateAccountForm, RequestResetForm,
                                    ResetPasswordForm, ApiKeysForm)
 from werkzeug.security import check_password_hash, generate_password_hash
 from thewarden.models import User, Trades, AccountInfo
-from thewarden.users.utils import send_reset_email, fx_list, generatenav, regenerate_nav
-from thewarden.pricing_engine.pricing import api_keys_class
+from thewarden.users.utils import send_reset_email, fx_list, regenerate_nav
 
 users = Blueprint("users", __name__)
 

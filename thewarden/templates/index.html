@@ -1,134 +1,244 @@
-{% extends "layout.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<link rel="stylesheet" href="/static/front_page.css">
+<link rel="icon" href="/static/images/favicon-bitcoin.ico" class="invert">
 
-<style>
-    body {
-        background: url("static/images/background_gb.png") no-repeat;
-        background-size: cover;
-    }
+<head>
+    <!-- Style Sheets -->
+    <link
+        href='https://fonts.googleapis.com/css?family=Quicksand:300,400,700|Raleway:400,100,200,300,500,600,700,800,900|Playfair+Display+SC:400italic,700italic,400,700,900'
+        rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="/static/main.css">
 
-    .section-center__full {
-        height: 45vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-</style>
-<br>
-<div class='container-fluid'>
-    <div class='row'>
-        <div class='col-lg-8'>
-            <div class="jumbotron-fluid">
-                <h1 class="display-4 text-white">The WARden v.11α</h1>
-                <p class="lead text-white">Open Source portfolio tracking tool</p>
-                <hr style="border-top: 1px solid white;">
+    <link rel="stylesheet" type="text/css"
+        href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+        integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
 
-                <p class="lead text-white">
-                    <i class="fab fa-github"></i>&nbsp;Source code available at <a class='text-white'
-                        href='https://github.com/pxsocs/thewarden'>GitHub</a><br>
-                    Submit any questions, suggestions or requests at the <a class='text-white'
-                        href='https://github.com/pxsocs/thewarden'>repository</a>.
-                </p>
-            </div>
-        </div>
-        <div class='col-lg-4' style="display: table-cell; vertical-align: middle;">
-            <br>
+    <!-- End Style Sheets -->
 
-            <div>
-                <a class="btn btn-outline-light btn-lg btn-block" href={{ url_for('users.login')}} role="button">
-                    Login to your portfolio</a>
-            </div>
-            <div>
-                <span class="white-text">
-                    Not Registered yet? <a class="white-text" href={{ url_for('users.register')}}>Register Here</a>
-                </span>
-            </div>
-            <br><br>
-            <div>
-                <div class='text-left'>
-                    <!-- Beginning of tippin.me Button -->
-                    <div id="tippin-button" class="text-center" data-dest="alphaazeta"></div>
-                    <script src="https://tippin.me/buttons/tip.js" type="text/javascript"></script>
-                    <!-- End of tippin.me Button -->
-                    <span class='text-white'>
-                        <p>Tip this project with the lightning network</p>
-                    </span>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <title>The WARDen | Open Source Portfolio Tracker </title>
+</head>
+
+<body>
+    <!-- MAIN PAGE WRAPPER -->
+    <div id="wrapper">
+        <!-- JavaScript Loaders -->
+        <!-- JQuery -->
+        <script src="https://code.jquery.com/jquery-3.4.1.js"
+            integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
+        <!-- Popper -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous">
+            </script>
+        <!-- Bootstrap -->
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
+        <!-- JQuery UI -->
+        <!-- <link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/flick/jquery-ui.css"> -->
+        <!-- Now that JS is loaded, initialize the tooltips -->
+
+        <!-- END JavaScript Loaders -->
+
+
+        <header class="site-header">
+            <nav class="navbar navbar-expand-sm navbar-dark bg-steel fixed-top justify-content-end">
+
+            </nav>
+        </header>
+
+
+        <!-- Main Content -->
+        <div id="page-content-wrapper">
+            <main role=" main">
+                <style>
+                    body {
+                        background-color: rgb(37, 37, 37);
+                    }
+
+                    .section-center__full {
+                        height: 45vh;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                    }
+                </style>
+                <br><br><br><br>
+
+                <div class="row border-bottom">
+                    <div class="col-sm-2">
+                        <div class='container-fluid'>
+                            <div class='row text-center'>
+
+                                <div class='col-sm-12'>
+                                    <div class="wrapper">
+                                        <div class="svg-wrapper"><svg><text
+                                                    class="upper text-w sans">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</text></svg>
+                                        </div>
+                                        <div class="svg-wrapper"><svg><text
+                                                    class="upper sans bold text-w">WAR</text></svg>
+                                        </div>
+                                        <div class="svg-wrapper"><svg><text class="upper sans text-w">den</text></svg>
+                                        </div>
+                                        <div class="svg-wrapper"><svg><text class="upper serif text-w"></text></svg>
+                                        </div>
+                                        <div class="svg-wrapper"><svg><text class="upper sans text-w text-center">Open
+                                                    Source&nbsp</text></svg>
+                                        </div>
+                                        <div class="svg-wrapper"><svg><text
+                                                    class="upper sans bold text-w text-center">Portfolio</text></svg>
+                                        </div>
+                                        <div class="svg-wrapper"><svg><text
+                                                    class="upper sans text-w text-center">Tracking and
+                                                    Analysis</text></svg></div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-1">
+                    </div>
+                    <div class="col-sm-9">
+                        <div class='col-lg-4'
+                            style="display: table-cell; vertical-align: middle; text-align: left; color: white;">
+                            <br>
+
+                            <div>
+
+                                <form method="POST" action="">
+                                    {{ form.hidden_tag() }}
+                                    <fieldset class="form-group">
+                                        <legend class="border-bottom mb-4">Log In</legend>
+                                        <div class="form-group">
+                                            {{ form.email.label(class="form-control-label") }}
+                                            {% if form.email.errors %}
+                                            {{ form.email(class="form-control form-control-lg is-invalid") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.email.errors %}
+                                                <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                            {% else %}
+                                            {{ form.email(class="form-control form-control-lg") }}
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-group">
+                                            {{ form.password.label(class="form-control-label") }}
+                                            {% if form.password.errors %}
+                                            {{ form.password(class="form-control form-control-lg is-invalid") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.password.errors %}
+                                                <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                            {% else %}
+                                            {{ form.password(class="form-control form-control-lg") }}
+                                            {% endif %}
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.remember(class="form-check-input") }}
+                                            {{ form.remember.label(class="form-check-label") }}
+                                        </div>
+                                    </fieldset>
+                                    <div class="form-group">
+                                        {{ form.submit(class="btn btn-outline-info") }}
+                                        <small class="text-muted ml-2">
+                                            <a href="{{ url_for('users.reset_request') }}">Forgot Password?</a>
+                                        </small>
+                                    </div>
+
+                                </form>
+
+                            </div>
+                            <div>
+                                <span class="white-text">
+                                    Don't have a login yet? <a class="white-text"
+                                        href={{ url_for('users.register')}}>Click
+                                        Here</a>
+                                </span>
+                            </div>
+                            <br><br>
+
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-    </div>
 
 
-    <div class="row">
-        <br><br>
-    </div>
+                <div class='row' style='padding-top: 30px; padding-left: 20px;'>
 
+                    <div class='col-sm-5 text-white'>
+                        <p><strong style="font-size:  22px;" class="border-bottom"> Important. Read this.</strong></p>
+                        <p>This is an open source project.</p>
+                        <p>We believe Open Source is the future of development for bitcoin. There is no other
+                            way when transparency and privacy are critical. </p>
+                        <p>If you want to support a future where software is developed with these ideals and if you like
+                            the WARden, consider supporting it. All proceeds will be used to improve the app.</p>
+                        <p><strong>We suggest a one time payment of 1,000,000 sats</strong>. But it's completely up to
+                            you the amount and
+                            if
+                            you want to contribute.</p>
+                        <p>We are also working on white-labeling the app for institutions. Contact us through twitter
+                            for more info.</p>
 
-    <div class="row">
+                    </div>
+                    <div class='col-sm-6 text-white'>
+                        <p><strong style="font-size:  22px;" class="border-bottom">Contribute to this software</strong>
+                        </p>
+                        <p>Bitcoin public address</p>
+                        <p><code>bc1qt5f8chh9pa923lrdsl4nk7j6hp8wp8985d99lx</code></p><br>
+                        <p>Or through the lightning network</p>
+                        <!-- Beginning of tippin.me Button -->
+                        <div id="tippin-button" class="text-center" data-dest="alphaazeta"></div>
+                        <script src="https://tippin.me/buttons/tip.js" type="text/javascript"></script>
+                        <!-- End of tippin.me Button -->
 
-
-        <div class='col-lg-4 d-flex align-items-stretch'>
-            <div class="card bg-transparent text-white border-light">
-                <div class="card-header text-white" style="border-bottom: 1px solid white;">
-                    Privacy Focused&nbsp;&nbsp;<i class="fas fas fa-user-secret"></i>
+                    </div>
                 </div>
-                <div class=" card-body text-white">
-                    <h5 class="card-title text-white">Protected your privacy</h5>
-                    <p class="card-text  text-justify">Tor and Samourai Dojo can be used to enhance privacy.
+
+
+            </main>
+
+        </div>
+        <!-- END MAIN CONTENT -->
+
+        <!-- Footer -->
+        <footer class="site-footer bg-steel small fixed-bottom">
+            <div class="container text-right text-light align-middle">
+
+                <div class="row" style="vertical-align: bottom;">
+                    <div class="col-sm-6 text-left">
+                        <span class="text-white">
+                            <br>
+                            <i class="fab fa-github fa-2x" style="vertical-align: middle;"></i>
+                            &nbsp;&nbsp;<a style="text-decoration : none" href='https://github.com/pxsocs/thewarden'
+                                class='text-white'>
+                                Open Source code available at GitHub</a>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-6 text-right">
+                        <a style="text-decoration : none" href="https://twitter.com/alphaazeta"> <i
+                                class="text-white fab fa-twitter fa-xlg"></i>
+                            <span class="text-white">@AlphaaZeta&nbsp;</span></a><br>
+                        <i class="fab fa-bitcoin fa-xlg"></i> #StackingSats
+                        #NotYourKeysNotYourCoins
                         <br><br>
-                        <span class='text-white'>Price requests can be sent through the Tor network to reduce the chance
-                            of IP tracking. If a Samourai Dojo is installed you can use it to keep an eye on your
-                            addresses and
-                            verify and import transactions at the blockchain. All of that while using your own node.
-                        </span></p>
+                    </div>
                 </div>
+
             </div>
-        </div>
-
-
-        <div class='col-lg-4 d-flex align-items-stretch'>
-            <div class="card bg-transparent text-white border-light">
-                <div class="card-header text-white" style="border-bottom: 1px solid white;">
-                    Portfolio NAV tracking&nbsp;&nbsp;<i class="fas fa-chart-line"></i>
-                </div>
-                <div class="card-body text-white">
-                    <h5 class="card-title text-white">Better performance tracking</h5>
-                    <p class="card-text  text-justify text-white">NAV is particularly important when #stackingsats - it
-                        tracks
-                        performance relative
-                        to current capital allocated.<br><br> <span class='text-white'> A portfolio going from $100 to
-                            $200 may seem
-                            like it 2x
-                            but the performance really depends wether capital was invested or divested during
-                            this period. NAV adjusts for cash inflows and outflows.</span></p>
-                </div>
-            </div>
-        </div>
-
-
-        <div class='col-lg-4 d-flex align-items-stretch'>
-            <div class="card bg-transparent text-white border-light">
-                <div class="card-header text-white" style="border-bottom: 1px solid white;">
-                    Open Source Code&nbsp;&nbsp;<i class="fas fa-box-open"></i>
-                </div>
-                <div class="card-body text-white ">
-                    <h5 class="card-title text-white">Transparency & Privacy</h5>
-                    <p class="card-text  text-justify">The source code is full open source for review and
-                        modifications (personal use only).<br><br> <span class='text-white'> You are actually encouraged
-                            to
-                            run the code locally in your computer to reduce the risk of data mining of your
-                            information.</span></p>
-                </div>
-            </div>
-        </div>
-        <div class='col-lg-1'>
-        </div>
+        </footer>
     </div>
-</div>
-<br><br>
+    <!-- END OF WRAPPER -->
 
-<br><br><br><br><br>
+</body>
 
-{% endblock content %}
+<!-- app's own JavaScript -->
+<script src="/static/front_page.js"></script>
+
+</html>
