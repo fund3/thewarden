@@ -856,31 +856,21 @@
                     </div>
                 </div>
             </div>
-
-
-
         </div>
         <!-- END Settings Section -->
-
-
     </div>
-
-
 </div>
 
 <div class='row'>
     <div class="container-fluid">
-        <div class="content-section small">
-            <sup>1</sup> All returns in this page are in {{current_user.fx_rate_data()['name_plural']}}.
-            <br>
-            {%if current_user.fx_rate_data()['name'] != 'US Dollar'%}
-            This means that the returns include the asset returns plus the currency return in the period.
-            <br>For example, if Bitcoin in USD is up 5% and the {{current_user.fx_rate_data()['name']}} is up 1%, the
-            return will be 6.05% in {{current_user.fx_rate_data()['name_plural']}}.
-            {%endif%}
-        </div>
+        <sup>1</sup> All returns in this page are in {{current_user.fx_rate_data()['name_plural']}}.
+        <br>
+        {%if current_user.fx_rate_data()['name'] != 'US Dollar'%}
+        This means that the returns include the asset returns plus the currency return in the period.
+        <br>For example, if Bitcoin in USD is up 5% and the {{current_user.fx_rate_data()['name']}} is up 1%, the
+        return will be 6.05% in {{current_user.fx_rate_data()['name_plural']}}.
+        {%endif%}
     </div>
-
 </div>
 </br>
 
@@ -905,7 +895,7 @@
                 <p><strong>Below is a list of transactions being used to calculate your unrealized PnL</strong></p>
 
 
-                <div class='row' id='accounting_table'>
+                <div class='row' id='accounting_table' style='justify-content: center;'>
                     <img src='static/images/loading_small.gif' width="30" height="30"></img>
                 </div>
 

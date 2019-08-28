@@ -83,7 +83,7 @@ def cost_calculation(ticker, html_table=None):
     # Keep only the number of rows needed for open position
     fifo_df = fifo_df.drop_duplicates(subset="acum_Q", keep='first')
     fifo_df['Q'] = fifo_df['acum_Q'].diff()
-    fifo_df['Q'] = fifo_df['Q'].fillna(fifo_df['trade_quantity'])
+    fifo_df['Q'] = fifo_df['Q'].fillna(fifo_df['acum_Q'])
     # if fifo_df['acum_Q'].count() == 1:
     #     fifo_df['Q'] = fifo_df['acum_Q']
     # Adjust Cash Value only to account for needed position
@@ -106,7 +106,7 @@ def cost_calculation(ticker, html_table=None):
     # Keep only the number of rows needed for open position
     lifo_df = lifo_df.drop_duplicates(subset="acum_Q", keep='first')
     lifo_df['Q'] = lifo_df['acum_Q'].diff()
-    lifo_df['Q'] = lifo_df['Q'].fillna(lifo_df['trade_quantity'])
+    lifo_df['Q'] = lifo_df['Q'].fillna(lifo_df['acum_Q'])
     # if lifo_df['acum_Q'].count() == 1:
     #     lifo_df['Q'] = lifo_df['acum_Q']
     # Adjust Cash Value only to account for needed position
@@ -694,12 +694,19 @@ def generatenav(user, force=False, filter=None):
 def regenerate_nav():
     # re-generates the NAV on the background - delete First
     # the local NAV file so it's not used.
+    # Check if there any trades in the database. If not, skip.
+    transactions = Trades.query.filter_by(user_id=current_user.username)
+    if transactions.count() == 0:
+        return
     print("Regenerating NAV. Please wait...")
     # Delete all pricing history
     aa_files = glob.glob('thewarden/pricing_engine/pricing_data/*.*')
     [os.remove(x) for x in aa_files]
     nav_files = glob.glob('thewarden/nav_data/*.*')
     [os.remove(x) for x in nav_files]
+    # Clear cache
+    MWT()._caches = {}
+    MWT()._timeouts = {}
 
     generatenav(current_user.username, force=True)
     logging.info("Change to database - generated new NAV")
