@@ -16,8 +16,7 @@ from flask_mail import Message
 from thewarden import db, mail
 from thewarden import mhp as mrh
 from thewarden.models import Trades
-from thewarden.pricing_engine.pricing import (PriceData,
-                                              multiple_price_grab, price_data,
+from thewarden.pricing_engine.pricing import (multiple_price_grab, price_data,
                                               price_data_fx, price_data_rt,
                                               price_data_rt_full,
                                               fx_price_ondate)
@@ -838,9 +837,11 @@ def bitmex_gethistory(ticker):
     # Gets historical prices from bitmex
     # Saves to folder
     from bitmex import bitmex
-    testnet = True
+    testnet = False
     logging.info(f"[Bitmex] Trying Bitmex for {ticker}")
-    bitmex_credentials = load_bitmex_json()
+    from thewarden.pricing_engine.pricing import api_keys_class
+    api_keys_json = api_keys_class.loader()
+    bitmex_credentials = api_keys_json['bitmex']
 
     if ("api_key" in bitmex_credentials) and ("api_secret" in bitmex_credentials):
         try:
@@ -880,26 +881,6 @@ def bitmex_gethistory(ticker):
         return ('error')
 
 
-def save_bitmex_json(api_key, api_secret):
-    # receives api_key and api_secret then saves to a local json for later use
-    if (api_key is None) or (api_secret is None):
-        return ("missing arguments")
-    bitmex_data = {"api_key": api_key, "api_secret": api_secret}
-    with open('thewarden/api/bitmex.json', 'w') as fp:
-        json.dump(bitmex_data, fp)
-        return ("Credentials saved to bitmex.json")
-
-
-def load_bitmex_json():
-    # returns current stored keys if any
-    try:
-        with open('thewarden/api/bitmex.json', 'r') as fp:
-            data = json.load(fp)
-            return (data)
-    except (FileNotFoundError, KeyError):
-        return ({'status': 'error', 'message': 'API credentials not found'})
-
-
 def bitmex_orders(api_key, api_secret, testnet=True):
     # Returns a json with all Bitmex Order History
     # Takes arguments: ticker, testnet
@@ -911,8 +892,6 @@ def bitmex_orders(api_key, api_secret, testnet=True):
         return ("Connection Error. Check your connection.")
     try:
         resp = mex.Execution.Execution_getTradeHistory(count=500, start=0, reverse=True).result()
-        # resp = mex.User.User_getWalletHistory(count=50000).result()
-        # resp = mex.User.User_getWalletHistory(currency=ticker, count=5000).result()
     except Exception:
         resp = "Invalid Credential or Connection Error"
     return(resp)

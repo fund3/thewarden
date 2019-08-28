@@ -55,8 +55,8 @@ function update_test() {
 
     // Bimex Testing fields
     // Financial Modeling Prep API
-    test_price(crypto_ticker, 'bitmex', null, '#bitmex_crypto_hist')
-    test_price(fx_ticker, 'bitmex', null, '#bitmex_fx_hist')
+    test_price("XBTUSD", 'bitmex', null, '#bitmex_crypto_hist')
+
 
 }
 

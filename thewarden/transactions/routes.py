@@ -8,7 +8,7 @@ from thewarden import db
 from thewarden.transactions.forms import NewTrade, EditTransaction
 from thewarden.models import Trades, AccountInfo
 from datetime import datetime
-from thewarden.users.utils import (cleancsv, bitmex_orders, load_bitmex_json)
+from thewarden.users.utils import (cleancsv, bitmex_orders)
 
 transactions = Blueprint("transactions", __name__)
 
@@ -447,7 +447,9 @@ def bitmex_transactions():
     transactions["error"] = ""
     meta["success"] = False
     meta["n_txs"] = 0
-    bitmex_credentials = load_bitmex_json()
+    from thewarden.pricing_engine.pricing import api_keys_class
+    api_keys_json = api_keys_class.loader()
+    bitmex_credentials = api_keys_json['bitmex']
     if ("api_key" in bitmex_credentials) and (
             "api_secret" in bitmex_credentials):
         data = bitmex_orders(bitmex_credentials['api_key'],

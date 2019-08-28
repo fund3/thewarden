@@ -419,15 +419,15 @@ def bitmex_gethistory(ticker, provider):
     if ("api_key" in bitmex_credentials) and (
             "api_secret" in bitmex_credentials):
         try:
-            mex = bitmex(test=bitmex_credentials.testnet,
-                         api_key=bitmex_credentials['api_key'],
-                         api_secret=bitmex_credentials['api_secret'])
+            mex = bitmex(api_key=bitmex_credentials['api_key'],
+                         api_secret=bitmex_credentials['api_secret'],
+                         test=bitmex_credentials['testnet'])
             # Need to paginate results here to get all the history
             # Bitmex API end point limits 750 results per call
             start_bin = 0
             resp = (mex.Trade.Trade_getBucketed(symbol=ticker,
                                                 binSize="1d",
-                                                count=750,
+                                                count=500,
                                                 start=start_bin).result())[0]
             df = pd.DataFrame(resp)
             last_update = df['timestamp'].iloc[-1]
@@ -435,9 +435,9 @@ def bitmex_gethistory(ticker, provider):
             # If last_update is older than 3 days ago, keep building.
             while last_update < (datetime.now(timezone.utc) -
                                  timedelta(days=3)):
-                start_bin += 750
+                start_bin += 500
                 resp = (mex.Trade.Trade_getBucketed(
-                    symbol=ticker, binSize="1d", count=750,
+                    symbol=ticker, binSize="1d", count=500,
                     start=start_bin).result())[0]
                 df = df.append(resp)
                 last_update = df['timestamp'].iloc[-1]
@@ -447,7 +447,7 @@ def bitmex_gethistory(ticker, provider):
                     break
             return (df)
         except Exception as e:
-            return ("error: {e}")
+            return (f"error: {e}")
     else:
         return ('error: no credentials found for Bitmex')
 
