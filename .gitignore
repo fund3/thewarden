@@ -12,6 +12,7 @@ bitmex.json
 .pd_cache/
 *.pkl
 *.price
+api_keys.conf
 
 # Packages #
 ############
