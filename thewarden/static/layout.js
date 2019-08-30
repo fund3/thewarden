@@ -5,6 +5,30 @@ $(document).ready(function () {
         BTC_price();
     }, 30000);
 
+    $(function () {
+        $("#searchbox").autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: "/search?" + $('#searchbox').val(),
+                    dataType: "json",
+                    data: {
+                        term: request.term
+                    },
+
+                    success: function (data) {
+                        response($.map(data, function (item) {
+                            return {
+                                label: (item),
+                                value: (item)
+                            }
+                        }));
+                    }
+
+                });
+            },
+            minLength: 1
+        });
+    });
 
 
     $("#menu-toggle").click(function (e) {
@@ -102,3 +126,6 @@ function BTC_price() {
     });
 };
 
+function search_engine(field) {
+    console.log(field)
+}

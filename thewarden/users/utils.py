@@ -350,7 +350,7 @@ def positions_dynamic():
             last_up_source = multi_price["RAW"][ticker][current_user.fx()]["LASTUPDATE"]
             source = multi_price["DISPLAY"][ticker][current_user.fx()]["LASTMARKET"]
             last_update = datetime.now()
-        except KeyError:
+        except (KeyError, TypeError):
             # Couldn't find price with CryptoCompare. Let's try a different source
             # and populate data in the same format [aa = alphavantage]
             try:

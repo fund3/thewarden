@@ -495,6 +495,17 @@ def GBTC_premium(price):
     return fairvalue, premium
 
 
+# Returns full realtime price for a ticker using the provider list
+# Price is returned in USD
+def price_grabber_rt_full(ticker, priority_list=['cc','aa','fp']):
+    for provider in priority_list:
+        price_data = price_data_rt_full(ticker, provider)
+        if price_data is not None:
+            return {'provider': provider,
+                    'data': price_data}
+    return None
+
+
 @MWT(timeout=30)
 def price_data_rt_full(ticker, provider):
     # Function to get a complete data set for realtime prices
@@ -796,3 +807,16 @@ PROVIDER_LIST = {
         doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'
     ),
 }
+
+
+# -------------------------------------
+# Search Engine
+# -------------------------------------
+# This is the main method for the search box
+# Should return html ready data to be displayed at the front page
+def search_engine(field):
+    # Try first with Ticker as a price lookup
+    results = price_grabber_rt_full(field)
+    if results is not None:
+        return results
+    return None

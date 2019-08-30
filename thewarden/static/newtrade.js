@@ -6,8 +6,8 @@ $(document).ready(function () {
 
 $(function () {
   $('#submit_button').click(function () {
-    $('#submit_button').prop('disabled', true)
     $('#submit_button').prop('value', 'Please wait. Including transaction and generating new NAV. This can take a while. Wait...');
+    // Changed
   });
 });
 

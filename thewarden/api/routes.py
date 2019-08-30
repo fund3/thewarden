@@ -40,7 +40,8 @@ from thewarden.node.utils import (
 from thewarden.users.decorators import MWT
 from thewarden.pricing_engine.pricing import (price_data_fx,
                                               api_keys_class, price_data_rt,
-                                              PriceData, PROVIDER_LIST)
+                                              PriceData, PROVIDER_LIST,
+                                              search_engine)
 
 api = Blueprint("api", __name__)
 
@@ -1193,17 +1194,16 @@ def drawdown_json():
         data = data.rename(columns={'NAV_fx': 'close'})
     else:
         # Get price of ticker passed as argument
-        message = {}
         data = price_data_fx(ticker)
         # If notification is an error, skip this ticker
         if data is None:
             messages = data.errors
             return jsonify(messages)
-        data = data.rename(columns={'close_converted': ticker+'_price'})
-        data = data[[ticker+'_price']]
+        data = data.rename(columns={'close_converted': ticker + '_price'})
+        data = data[[ticker + '_price']]
         data = data.astype(float)
         data.sort_index(ascending=True, inplace=True)
-        data = data.rename(columns={ticker+'_price': 'close'})
+        data = data.rename(columns={ticker + '_price': 'close'})
     # Trim the df only to start_date to end_date:
     mask = (data.index >= start_date) & (data.index <= end_date)
     data = data.loc[mask]
@@ -1912,4 +1912,9 @@ def test_price():
 
     return(data)
 
+
+@api.route("/search", methods=["GET"])
+def search():
+    ticker = request.args.get("ticker")
+    return (search_engine(ticker))
 

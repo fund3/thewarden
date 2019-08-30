@@ -31,6 +31,7 @@
     <div id="wrapper">
         <!-- JavaScript Loaders -->
         <!-- JQuery -->
+
         <script src="https://code.jquery.com/jquery-3.4.1.js"
             integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous"></script>
         <!-- Popper -->
@@ -80,6 +81,12 @@
                 </div>
                 <div class="col-3 text-right small">
                     {% if current_user.is_authenticated %}
+                    <!-- Search form -->
+                    <!-- <form class="form-inline md-form form-sm">
+                        <input id="searchbox" class="form-control form-control-sm mr-3 w-75" type="text"
+                            placeholder="Search" aria-label="Search">
+                        <i class="fas fa-search text-white fa-lg" aria-hidden="true"></i>
+                    </form> -->
                     {% else %}
                     <a class="nav-item text-white" href="{{ url_for('users.login') }}">Login</a>&nbsp;&nbsp;&nbsp;&nbsp;
                     <a class="nav-item text-white" href="{{ url_for('users.register') }}">Register</a>
@@ -335,6 +342,7 @@
     <!-- Main Content -->
     <div id="page-content-wrapper">
         <main role=" main">
+
             <div style='padding-top: 30px;'>
                 {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
