@@ -3,6 +3,8 @@ import os
 import json
 from datetime import datetime
 import urllib.parse
+import webbrowser
+import platform
 from time import time
 import requests
 
@@ -161,6 +163,24 @@ def create_app(config_class=Config):
                 db.session.commit()
                 flash("No currency found for portfolio. Defaulted to USD.",
                       "warning")
+            # Try to open the WARden URL - only when not in development mode
+            # In development mode this is disabled otherwise a page reloads
+            # on every code change and save if Flask is running.
+            if Config.WARDEN_STATUS != 'developer':
+                try:
+                    os_platform = platform.system()
+                    url = "http://127.0.0.1:5000/"
+                    if os_platform == 'Darwin':
+                        chrome_path = "open -a /Applications/Google\ Chrome.app %s"
+                    elif os_platform == 'Windows':
+                        chrome_path = 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s'
+                    elif os_platform == 'Linux':
+                        chrome_path = '/usr/bin/google-chrome %s'
+
+                    webbrowser.get(chrome_path).open(url)
+
+                except Exception:
+                    pass
 
     # Jinja2 filter to format time to a nice string
     @app.template_filter()
