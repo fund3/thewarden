@@ -3,6 +3,7 @@
 ## v.15 alpha (TBD)
 
 - Moved all JavaScript and CSS dependencies locally (Bootstrap, jQuery, Popper and others)
+- Fixed reduntant js and css files
 
 ## v.14 alpha (8/28/2019)
 

@@ -5,14 +5,13 @@
 <head>
     <!-- Style Sheets -->
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="static/dependencies/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="static/dependencies/bootstrap/css/bootstrap-theme.min.css">
-    <link rel="stylesheet" href="static/dependencies/font-awesome/css/all.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='dependencies/bootstrap/css/bootstrap.min.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='dependencies/font-awesome/css/all.css')}}">
     <!-- JQuery UI -->
-    <link rel="stylesheet" href="static/dependencies/jquery/themes/flicker.css">
-    <link rel="stylesheet" href="static/main.css">
+    <link rel="stylesheet" href="{{url_for('static', filename='dependencies/jquery/themes/flicker.css')}}">
+    <link rel="stylesheet" href="{{url_for('static', filename='main.css')}}">
     {% if current_user.is_authenticated %}
-    <link rel="stylesheet" type="text/css" href="static/layout.css">
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='layout.css')}}">
     {%endif%}
     <!-- End Style Sheets -->
 
@@ -30,19 +29,16 @@
 <body>
     <!-- JavaScript Loaders -->
     <!-- JQuery -->
-    <script src="static/dependencies/jquery/jquery-3.4.1.js"></script>
+    <script src="{{url_for('static', filename='dependencies/jquery/jquery-3.4.1.js')}}"></script>
     <!-- Popper -->
-    <script src="static/dependencies/popper/popper.js">
+    <script src="{{url_for('static', filename='dependencies/popper/popper.js')}}">
     </script>
-    <script src="static/dependencies/popper/tooltip.js">
+    <script src="{{url_for('static', filename='dependencies/popper/tooltip.js')}}">
     </script>
     <!-- Bootstrap -->
-    <script src="static/dependencies/bootstrap/js/bootstrap.js"></script>
-    <script src="static/dependencies/jquery-ui/jquery-ui.js"></script>
-
-
+    <script src="{{url_for('static', filename='dependencies/bootstrap/js/bootstrap.js')}}"></script>
+    <script src="{{url_for('static', filename='dependencies/jquery-ui/jquery-ui.js')}}"></script>
     <!-- END JavaScript Loaders -->
-
 
 
     <!-- MAIN PAGE WRAPPER -->
