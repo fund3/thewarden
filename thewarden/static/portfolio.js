@@ -346,8 +346,7 @@ $(document).ready(function () {
             var min_nav_txt = data.min_nav.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "<span class='small'> on "
             min_nav_txt = min_nav_txt + data.min_port_date + "</span>"
             $('#min_nav').html(min_nav_txt);
-            $('#end_portvalue_usd').html("$ " + data.end_portvalue_usd.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }));
-            $('#end_portvalue').html(data.end_portvalue.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }));
+
             var max_pv_txt = data.max_portvalue.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 0, minimumFractionDigits: 0 }) + "<span class='small'> on "
             max_pv_txt = max_pv_txt + data.max_port_date + "</span>"
             $('#max_portvalue').html(max_pv_txt);
@@ -435,6 +434,8 @@ function realtime_table() {
             var fx = data.user.symbol
             // Parse the json
             $('#pvalue').html(formatNumber(data.positions.Total.position_fx, 0, fx)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
+            $('#end_portvalue').html(formatNumber(data.positions.Total.position_fx, 0)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });
+
             posbtc = data.positions.Total.position_fx / data.btc
             $('#pvaluebtc').html(formatNumber(posbtc, 2, "&#8383 ")).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;
             $('#chg1').html(formatNumber(data.positions.Total.change_fx, 0, fx)).fadeTo(100, 0.3, function () { $(this).fadeTo(500, 1.0); });;

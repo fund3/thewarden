@@ -176,9 +176,7 @@ def create_app(config_class=Config):
                         chrome_path = 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s'
                     elif os_platform == 'Linux':
                         chrome_path = '/usr/bin/google-chrome %s'
-
                     webbrowser.get(chrome_path).open(url)
-
                 except Exception:
                     pass
 
