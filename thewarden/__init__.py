@@ -8,7 +8,7 @@ import platform
 from time import time
 import requests
 
-from flask import Flask, flash
+from flask import Flask, flash, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
@@ -169,7 +169,7 @@ def create_app(config_class=Config):
             if Config.WARDEN_STATUS != 'developer':
                 try:
                     os_platform = platform.system()
-                    url = "http://127.0.0.1:5000/"
+                    url = "http://" + request.host
                     if os_platform == 'Darwin':
                         chrome_path = "open -a /Applications/Google\ Chrome.app %s"
                     elif os_platform == 'Windows':
