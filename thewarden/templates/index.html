@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+<link rel="stylesheet" href="static/dependencies/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="static/dependencies/bootstrap/css/bootstrap-theme.min.css">
 <link rel="stylesheet" href="/static/front_page.css">
-<link rel="icon" href="/static/images/favicon-bitcoin.ico" class="invert">
+<link rel="stylesheet" type="text/css" href="static/layout_loggedoff.css">
+<link
+    href='https://fonts.googleapis.com/css?family=Quicksand:300,400,700|Raleway:400,100,200,300,500,600,700,800,900|Playfair+Display+SC:400italic,700italic,400,700,900'
+    rel='stylesheet' type='text/css'>
 
 <head>
 
@@ -52,12 +57,12 @@
                         {% endfor %}
                         {% endif %}
                         {% endwith %}
-                    </div>/
+                    </div>
                 </div>
-                <br><br><br><br>
+
 
                 <div class="row border-bottom">
-                    <div class="col-sm-2">
+                    <div class="col-sm-4" style='min-width: 300px;'>
                         <div class='container-fluid'>
                             <div class='row text-center'>
 
@@ -88,9 +93,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-1">
-                    </div>
-                    <div class="col-sm-9">
+
+                    <div class="col-sm-8">
                         <div class='col-lg-4'
                             style="display: table-cell; vertical-align: middle; text-align: left; color: white;">
                             <br>
@@ -156,11 +160,12 @@
                 </div>
 
 
-                <div class='row' style='padding-top: 30px; padding-left: 20px;'>
+                <div class='row' style='padding-top: 30px; padding-left: 20px; font-size:  14px;'>
 
                     <div class='col-sm-5 text-white'>
-                        <p><strong style="font-size:  22px;" class="border-bottom"> Important. Read this.</strong></p>
-                        <p>This is an Open Source project.</p>
+                        <p><strong style="font-size:  20px;" class="border-bottom">This is an Open Source
+                                project.</strong></p>
+
                         <p>We believe Open Source is the future of development for bitcoin. There is no other
                             way when transparency and privacy are critical. </p>
                         <p>If you want to support a future where software is built with these ideals and if you like
@@ -197,33 +202,7 @@
 
         <!-- END MAIN CONTENT -->
 
-        <!-- Footer -->
-        <footer class="site-footer bg-steel small fixed-bottom">
-            <div class="container text-right text-light align-middle">
 
-                <div class="row" style="vertical-align: bottom;">
-                    <div class="col-sm-6 text-left">
-                        <span class="text-white">
-                            <br>
-                            <i class="fab fa-github fa-2x" style="vertical-align: middle;"></i>
-                            &nbsp;&nbsp;<a style="text-decoration : none" href='https://github.com/pxsocs/thewarden'
-                                class='text-white'>
-                                Open Source code available at GitHub</a>
-                        </span>
-                    </div>
-
-                    <div class="col-sm-6 text-right">
-                        <a style="text-decoration : none" target='new_page' href="https://twitter.com/alphaazeta"> <i
-                                class="text-white fab fa-twitter fa-xlg"></i>
-                            <span class="text-white">@AlphaaZeta&nbsp;</span></a><br>
-                        <i class="fab fa-bitcoin fa-xlg"></i> #StackingSats
-                        #NotYourKeysNotYourCoins
-                        <br><br>
-                    </div>
-                </div>
-
-            </div>
-        </footer>
     </div>
     <!-- END OF WRAPPER -->
 

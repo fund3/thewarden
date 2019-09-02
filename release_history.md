@@ -2,6 +2,8 @@
 
 ## v.15 alpha (TBD)
 
+- Moved all JavaScript and CSS dependencies locally (Bootstrap, jQuery, Popper and others)
+
 ## v.14 alpha (8/28/2019)
 
 - Complete refactory of pricing feeds
