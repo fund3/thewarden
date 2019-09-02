@@ -166,8 +166,9 @@ def create_app(config_class=Config):
             # Try to open the WARden URL - only when not in development mode
             # In development mode this is disabled otherwise a page reloads
             # on every code change and save if Flask is running.
-            if Config.WARDEN_STATUS != 'developer':
+            if os.environ.get("WARDEN_STATUS") != 'developer':
                 try:
+                    print("Launching browser...")
                     os_platform = platform.system()
                     url = "http://" + request.host
                     if os_platform == 'Darwin':
@@ -177,8 +178,9 @@ def create_app(config_class=Config):
                     elif os_platform == 'Linux':
                         chrome_path = '/usr/bin/google-chrome %s'
                     webbrowser.get(chrome_path).open(url)
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(e)
+                    # pass
 
     # Jinja2 filter to format time to a nice string
     @app.template_filter()

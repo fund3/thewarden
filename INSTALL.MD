@@ -35,7 +35,7 @@ $pip install -r requirements.txt
 To start the application just execute:
 
 ```console
-$python run.py
+$python warden.py
 ```
 
 Finally, open a browser window and navigate to:
@@ -159,7 +159,7 @@ $pip3 install -r requirements.txt
 To start the application just execute:
 
 ```console
-$python3 run.py
+$python3 warden.py
 ```
 
 Finally, open a browser window and navigate to:
@@ -188,7 +188,7 @@ c:\[dir]\> pip3 install -r requirements.txt
 To start the application just execute:
 
 ```console
-py run.py
+py warden.py
 ```
 
 Finally, open a browser window and navigate to:
@@ -319,7 +319,7 @@ The list of required packages is stored on a file named `requirements.txt`. To i
 To start the application just execute:
 
 ```console
-(cb_env) c:\git_clones\thewarden> py run.py
+(cb_env) c:\git_clones\thewarden> py warden.py
 ```
 
 Finally, open a browser window and navigate to:

@@ -13,6 +13,9 @@ bitmex.json
 *.pkl
 *.price
 api_keys.conf
+*.spec
+build/
+dist/
 
 # Packages #
 ############

@@ -373,12 +373,22 @@ class ApiKeys():
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
 
     def loader(self):
-        try:
-            with open(self.filename, 'r') as fp:
-                data = json.load(fp)
-                return (data)
-        except (FileNotFoundError, KeyError) as e:
-            return ""
+        if os.path.exists(self.filename):
+            try:
+                with open(self.filename, 'r') as fp:
+                    data = json.load(fp)
+                    return (data)
+            except (FileNotFoundError, KeyError) as e:
+                print(e)
+                return ""
+        else:
+            # File not found, let's construct a new one
+            empty_api = {
+                "alphavantage": {"api_key": "RAJSHDKCO"},
+                "bitmex": {"api_key": None, "api_secret": None},
+                "dojo": {"onion": None, "api_key": None, "token": "error"}
+            }
+            return (empty_api)
 
     def saver(self, api_dict):
         try:
@@ -391,6 +401,7 @@ class ApiKeys():
 # Class instance with api keys loader and saver
 api_keys_class = ApiKeys()
 api_keys = api_keys_class.loader()
+
 
 # Generic Requests will try each of these before failing
 REALTIME_PROVIDER_PRIORITY = [

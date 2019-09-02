@@ -2,7 +2,6 @@ from flask_wtf import FlaskForm
 from flask_login import current_user
 from thewarden.models import User
 from thewarden.users.utils import fx_list
-from wtforms.widgets import PasswordInput
 from wtforms import (StringField, PasswordField, SubmitField, BooleanField,
                      ValidationError, SelectField)
 from wtforms.validators import (DataRequired, Length, Email, EqualTo, Optional)
