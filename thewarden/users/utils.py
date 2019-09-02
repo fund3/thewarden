@@ -45,7 +45,7 @@ except KeyError:
                   " Defaulting to 5.")
 
 
-@MWT(timeout=10)
+@MWT(timeout=20)
 @timing
 def cost_calculation(ticker, html_table=None):
     # This function calculates the cost basis assuming 3 different methods

@@ -13,7 +13,19 @@ import requests
 from datetime import datetime, timedelta, timezone
 from flask_login import current_user
 from thewarden.node.utils import tor_request
-from thewarden.users.decorators import timing, memoized, MWT
+from thewarden.users.decorators import timing, MWT
+
+# Generic Requests will try each of these before failing
+REALTIME_PROVIDER_PRIORITY = [
+    'cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock',
+    'fp_realtime_stock'
+]
+FX_RT_PROVIDER_PRIORITY = ['cc_realtime_full', 'aa_realtime_digital']
+HISTORICAL_PROVIDER_PRIORITY = [
+    'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock',
+    'bitmex'
+]
+FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 
 # How to include new API providers (historical prices):
 # Step 1:
@@ -145,6 +157,9 @@ class PriceData():
     @timing
     def update_history(self, force=False):
         # Check first if file exists and if fresh
+        # The line below skips history for providers that have realtime in name
+        if 'realtime' in self.provider.name:
+            return None
         if not force:
             try:
                 # Check if saved file is recent enough to be used
@@ -401,19 +416,6 @@ class ApiKeys():
 # Class instance with api keys loader and saver
 api_keys_class = ApiKeys()
 api_keys = api_keys_class.loader()
-
-
-# Generic Requests will try each of these before failing
-REALTIME_PROVIDER_PRIORITY = [
-    'cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock',
-    'fp_realtime_stock'
-]
-FX_RT_PROVIDER_PRIORITY = ['cc_realtime_full', 'aa_realtime_digital']
-HISTORICAL_PROVIDER_PRIORITY = [
-    'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock',
-    'bitmex'
-]
-FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 
 # _____________________________________________
 #            Helper functions go here
