@@ -1,9 +1,11 @@
 # When creating packages, the import app below gets from
 # __init__.py file`
 import os
+
 from flask_migrate import Migrate
+
 from thewarden import create_app, db
-from thewarden.models import listofcrypto, User, Trades, AccountInfo, Contact
+from thewarden.models import AccountInfo, Contact, Trades, User, listofcrypto
 
 # CLS + Welcome
 print("\033[1;32;40m")

@@ -5,6 +5,8 @@
 - Moved all JavaScript and CSS dependencies locally (Bootstrap, jQuery, Popper and others)
 - Fixed reduntant js and css files
 - Browser auto-launches at startup now
+- Changed all file references to relative paths so app can be deployed
+- Updated install instructions
 
 ## v.14 alpha (8/28/2019)
 

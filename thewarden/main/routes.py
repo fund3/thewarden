@@ -1,27 +1,23 @@
+import csv
+import hashlib
+import logging
 import os
 import secrets
-import csv
-import logging
 import threading
-import hashlib
-from flask import (
-    render_template,
-    url_for,
-    flash,
-    redirect,
-    request,
-    send_file,
-    Blueprint,
-)
-from flask_login import current_user, login_required, login_user
-from thewarden import db
-from thewarden.main.forms import ImportCSV, ContactForm, User
-from thewarden.users.forms import LoginForm
-from thewarden.models import Trades, listofcrypto, AccountInfo, Contact
 from datetime import datetime
+
 import dateutil.parser as parser
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   send_file, url_for)
+from flask_login import current_user, login_required, login_user
 from werkzeug.security import check_password_hash
-from thewarden.users.utils import generatenav, cleancsv, regenerate_nav
+
+from thewarden import db
+from thewarden.main.forms import ContactForm, ImportCSV, User
+from thewarden.models import AccountInfo, Contact, Trades, listofcrypto
+from thewarden.users.forms import LoginForm
+from thewarden.users.utils import (cleancsv, current_path, generatenav,
+                                   regenerate_nav)
 
 main = Blueprint("main", __name__)
 
@@ -123,8 +119,9 @@ def exportcsv():
     if transactions.count() == 0:
         return render_template("empty.html")
 
-    filename = ("./thewarden/dailydata/" + current_user.username + "_" +
+    filename = ("thewarden/dailydata/" + current_user.username + "_" +
                 datetime.now().strftime("%Y%m%d") + ".csv")
+    filename = os.path.join(current_path(), filename)
     os.makedirs(os.path.dirname(filename), exist_ok=True)
 
     with open(filename, "w") as f:
@@ -158,9 +155,6 @@ def exportcsv():
                 "trade_reference_id": item.trade_reference_id,
             })
 
-    filename = ("./dailydata/" + current_user.username + "_" +
-                datetime.now().strftime("%Y%m%d") + ".csv")
-
     return send_file(filename, as_attachment=True)
 
 
@@ -176,15 +170,15 @@ def importcsv():
         if form.validate_on_submit():
             if form.submit.data:
                 if form.csvfile.data:
-                    test_file = "./thewarden/dailydata/test.csv"
-                    os.makedirs(os.path.dirname(test_file), exist_ok=True)
-                    form.csvfile.data.save("./thewarden/dailydata/" +
-                                           form.csvfile.data.filename)
-                    csv_reader = open(
-                        "./thewarden/dailydata/" + form.csvfile.data.filename,
-                        "r",
-                        encoding="utf-8",
-                    )
+                    test_file = "thewarden/dailydata/test.csv"
+                    filename = os.path.join(current_path(), test_file)
+                    os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+                    filename = "thewarden/dailydata/" + form.csvfile.data.filename
+                    filename = os.path.join(current_path(), filename)
+                    form.csvfile.data.save(filename)
+
+                    csv_reader = open(filename, "r", encoding="utf-8")
                     csv_reader = csv.DictReader(csv_reader)
                     csvfile = form.csvfile.data
 
@@ -194,8 +188,7 @@ def importcsv():
                     form=form,
                     csv=csv_reader,
                     csvfile=csvfile,
-                    filename="./thewarden/dailydata/" +
-                    form.csvfile.data.filename,
+                    filename=filename,
                 )
     if request.method == "GET":
         filename = request.args.get("f")
@@ -386,6 +379,7 @@ def importcsv():
             usernamehash = hashlib.sha256(
                 current_user.username.encode("utf-8")).hexdigest()
             filename = "thewarden/nav_data/" + usernamehash + ".nav"
+            filename = os.path.join(current_path(), filename)
             logging.info(f"[newtrade] {filename} marked for deletion.")
             # Since this function can be run as a thread,
             # it's safer to delete the current NAV file if it exists.

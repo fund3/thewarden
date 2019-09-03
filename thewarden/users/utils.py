@@ -5,6 +5,7 @@ import hashlib
 import json
 import logging
 import os
+import sys
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
@@ -16,10 +17,10 @@ from flask_mail import Message
 from thewarden import db, mail
 from thewarden import mhp as mrh
 from thewarden.models import Trades
-from thewarden.pricing_engine.pricing import (multiple_price_grab, price_data,
+from thewarden.pricing_engine.pricing import (fx_price_ondate,
+                                              multiple_price_grab, price_data,
                                               price_data_fx, price_data_rt,
-                                              price_data_rt_full,
-                                              fx_price_ondate)
+                                              price_data_rt_full)
 from thewarden.users.decorators import MWT, memoized, timing
 
 # ---------------------------------------------------------
@@ -43,6 +44,27 @@ except KeyError:
     PORTFOLIO_MIN_SIZE_NAV = 5
     logging.error("Could not find PORTFOLIO_MIN_SIZE_NAV at config.ini." +
                   " Defaulting to 5.")
+
+
+# The following function is used when deploying the application
+# In this case, the path changes and the below makes sure the
+# correct path is used.
+# Returns the base path of the application that can be later used with:
+# file_path = os.path.join(current_path, file_path)
+@memoized
+def current_path():
+    # determine if application is a script file or frozen exe
+    if getattr(sys, 'frozen', False):
+        application_path = os.path.dirname(sys.executable)
+    elif __file__:
+        application_path = os.path.dirname(__file__)
+    # The application_path above would return the location of:
+    # /thewarden/thewarden/users
+    # which is were the utils.py file for this function is located
+    # Make sure we go 2 levels up for the base application folder
+    application_path = os.path.dirname(application_path)
+    application_path = os.path.dirname(application_path)
+    return(application_path)
 
 
 @MWT(timeout=20)
@@ -499,6 +521,7 @@ def generatenav(user, force=False, filter=None):
         usernamehash = hashlib.sha256(current_user.username.encode(
             'utf-8')).hexdigest()
         filename = "thewarden/nav_data/" + usernamehash + current_user.fx() +  ".nav"
+        filename = os.path.join(current_path(), filename)
         # Since this function can be run as a thread, it's safer to delete
         # the current NAV file if it exists. This avoids other tasks reading
         # the local file which is outdated
@@ -512,6 +535,7 @@ def generatenav(user, force=False, filter=None):
         usernamehash = hashlib.sha256(current_user.username.encode(
             'utf-8')).hexdigest()
         filename = "thewarden/nav_data/" + usernamehash + current_user.fx() + ".nav"
+        filename = os.path.join(current_path(), filename)
         try:
             # Check if NAV saved file is recent enough to be used
             # Local file has to have a saved time less than RENEW_NAV min old
@@ -685,6 +709,7 @@ def generatenav(user, force=False, filter=None):
         usernamehash = hashlib.sha256(current_user.username.encode(
             'utf-8')).hexdigest()
         filename = "thewarden/nav_data/" + usernamehash + current_user.fx() + ".nav"
+        filename = os.path.join(current_path(), filename)
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         dailynav.to_pickle(filename)
         logging.info(f"[generatenav] NAV saved to {filename}")
@@ -702,9 +727,11 @@ def regenerate_nav():
         return
     print("Regenerating NAV. Please wait...")
     # Delete all pricing history
-    aa_files = glob.glob('thewarden/pricing_engine/pricing_data/*.*')
+    filename = os.path.join(current_path(), 'thewarden/pricing_engine/pricing_data/*.*')
+    aa_files = glob.glob(filename)
     [os.remove(x) for x in aa_files]
-    nav_files = glob.glob('thewarden/nav_data/*.*')
+    filename = os.path.join(current_path(), 'thewarden/nav_data/*.*')
+    nav_files = glob.glob(filename)
     [os.remove(x) for x in nav_files]
     # Clear cache
     MWT()._caches = {}
@@ -797,7 +824,10 @@ def heatmap_generator():
 
 @memoized
 def fx_list():
-    with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
+    filename = os.path.join(
+                current_path(),
+                'thewarden/static/csv_files/physical_currency_list.csv')
+    with open(filename, newline='') as csvfile:
         reader = csv.reader(csvfile)
         fiat_dict = {rows[0]: (rows[1]) for rows in reader}
     # Convert dict to list
@@ -818,7 +848,10 @@ def fxsymbol(fx, output='symbol'):
     # "rounding": 0,
     # "code": "EUR",
     # "name_plural": "euros"
-    with open('thewarden/static/json_files/currency.json') as fx_json:
+    filename = os.path.join(
+        current_path(),
+        'thewarden/static/json_files/currency.json')
+    with open(filename) as fx_json:
         fx_list = json.load(fx_json)
     try:
         out = fx_list[fx][output]

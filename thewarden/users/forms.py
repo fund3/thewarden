@@ -1,10 +1,11 @@
-from flask_wtf import FlaskForm
 from flask_login import current_user
+from flask_wtf import FlaskForm
+from wtforms import (BooleanField, PasswordField, SelectField, StringField,
+                     SubmitField, ValidationError)
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional
+
 from thewarden.models import User
 from thewarden.users.utils import fx_list
-from wtforms import (StringField, PasswordField, SubmitField, BooleanField,
-                     ValidationError, SelectField)
-from wtforms.validators import (DataRequired, Length, Email, EqualTo, Optional)
 
 
 class RegistrationForm(FlaskForm):

@@ -5,15 +5,18 @@
 # associate with the standardized field names for the dataframe
 # Standardized field names:
 # open, high, low, close, volume
-import os
 import json
+import os
+import sys
 import urllib.parse
+from datetime import datetime, timedelta, timezone
+
 import pandas as pd
 import requests
-from datetime import datetime, timedelta, timezone
 from flask_login import current_user
+
 from thewarden.node.utils import tor_request
-from thewarden.users.decorators import timing, MWT
+from thewarden.users.decorators import MWT, timing
 
 # Generic Requests will try each of these before failing
 REALTIME_PROVIDER_PRIORITY = [
@@ -55,6 +58,19 @@ FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 # Classes go here
 # _____________________________________________
 
+def current_path():
+    # determine if application is a script file or frozen exe
+    if getattr(sys, 'frozen', False):
+        application_path = os.path.dirname(sys.executable)
+    elif __file__:
+        application_path = os.path.dirname(__file__)
+    # The application_path above would return the location of:
+    # /thewarden/thewarden/users
+    # which is were the utils.py file for this function is located
+    # Make sure we go 2 levels up for the base application folder
+    application_path = os.path.dirname(application_path)
+    application_path = os.path.dirname(application_path)
+    return(application_path)
 
 class PriceProvider:
     # This class manages a list of all pricing providers
@@ -132,6 +148,7 @@ class PriceData():
         self.provider = provider
         self.filename = ("thewarden/pricing_engine/pricing_data/" +
                          self.ticker + "_" + provider.name + ".price")
+        self.filename = os.path.join(current_path(), self.filename)
         self.errors = []
         # makesure file path exists
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
@@ -386,6 +403,7 @@ class ApiKeys():
     def __init__(self):
         self.filename = 'thewarden/pricing_engine/api_keys.conf'
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
+        self.filename = os.path.join(current_path(), self.filename)
 
     def loader(self):
         if os.path.exists(self.filename):

@@ -1,47 +1,37 @@
+import csv
 import json
 import logging
 import math
+import os
 import secrets
-import requests
-import csv
 from datetime import datetime, timedelta
 
-import simplejson
 import numpy as np
 import pandas as pd
-from dateutil import parser
+import requests
+import simplejson
 from bitmex import bitmex
+from dateutil import parser
 from dateutil.relativedelta import relativedelta
-from flask import Blueprint, jsonify, render_template, request, flash
+from flask import Blueprint, flash, jsonify, render_template, request
 from flask_login import current_user, login_required
 
-from thewarden import db, test_tor
+from thewarden import db
 from thewarden import mhp as mrh
-from thewarden.models import (
-    Trades, listofcrypto, BitcoinAddresses, AccountInfo)
-from thewarden.users.utils import (
-    generatenav,
-    heatmap_generator,
-    regenerate_nav,
-    transactions_fx,
-    fxsymbol,
-    positions_dynamic,
-    cost_calculation
-)
-from thewarden.node.utils import (
-    dojo_auth,
-    oxt_get_address,
-    dojo_multiaddr,
-    dojo_get_settings,
-    dojo_get_txs,
-    dojo_get_hd,
-    tor_request,
-)
+from thewarden import test_tor
+from thewarden.models import (AccountInfo, BitcoinAddresses, Trades,
+                              listofcrypto)
+from thewarden.node.utils import (dojo_auth, dojo_get_hd, dojo_get_settings,
+                                  dojo_get_txs, dojo_multiaddr,
+                                  oxt_get_address, tor_request)
+from thewarden.pricing_engine.pricing import (PROVIDER_LIST, PriceData,
+                                              api_keys_class, price_data_fx,
+                                              price_data_rt, search_engine)
 from thewarden.users.decorators import MWT
-from thewarden.pricing_engine.pricing import (price_data_fx,
-                                              api_keys_class, price_data_rt,
-                                              PriceData, PROVIDER_LIST,
-                                              search_engine)
+from thewarden.users.utils import (cost_calculation, current_path, fxsymbol,
+                                   generatenav, heatmap_generator,
+                                   positions_dynamic, regenerate_nav,
+                                   transactions_fx)
 
 api = Blueprint("api", __name__)
 
@@ -153,6 +143,7 @@ def histvol():
 
     if ticker:
         filename = "thewarden/historical_data/" + ticker + ".json"
+        filename = os.path.join(current_path(), filename)
 
         try:
             with open(filename) as data_file:
@@ -1789,7 +1780,9 @@ def dojo_autoconfig():
 # Searches the list both inside the key as well as value of dict
 def fx_list():
     fx_dict = {}
-    with open('thewarden/static/csv_files/physical_currency_list.csv', newline='') as csvfile:
+    filename = 'thewarden/static/csv_files/physical_currency_list.csv'
+    filename = os.path.join(current_path(), filename)
+    with open(filename, newline='') as csvfile:
         reader = csv.reader(csvfile)
         fx_dict = {rows[0]: rows[1] for rows in reader}
     q = request.args.get("term")
@@ -1917,4 +1910,3 @@ def test_price():
 def search():
     ticker = request.args.get("ticker")
     return (search_engine(ticker))
-

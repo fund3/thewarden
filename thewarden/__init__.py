@@ -1,20 +1,21 @@
+import json
 import logging
 import os
-import json
-from datetime import datetime
+import platform
 import urllib.parse
 import webbrowser
-import platform
+from datetime import datetime
+from logging.handlers import RotatingFileHandler
 from time import time
-import requests
 
+import requests
 from flask import Flask, flash, request
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from flask_migrate import Migrate
-from logging.handlers import RotatingFileHandler
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
+
 from thewarden.config import Config
 
 naming_convention = {
@@ -225,7 +226,10 @@ def create_app(config_class=Config):
         # "code": "EUR",
         # "name_plural": "euros"
         try:
-            with open('thewarden/static/json_files/currency.json') as fx_json:
+            from thewarden.users.utils import current_path
+            filename = os.path.join(
+                current_path(), 'thewarden/static/json_files/currency.json')
+            with open(filename) as fx_json:
                 fx_list = json.load(fx_json, encoding='utf-8')
             out = fx_list[fx][output]
         except Exception:
