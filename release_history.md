@@ -1,12 +1,13 @@
 # Release History
 
-## v.15 alpha (TBD)
+## v.15 alpha (09/04/2019)
 
 - Moved all JavaScript and CSS dependencies locally (Bootstrap, jQuery, Popper and others)
 - Fixed reduntant js and css files
 - Browser auto-launches at startup now
 - Changed all file references to relative paths so app can be deployed
 - Updated install instructions
+- Built version now available for easy installation (Mac only for now)
 
 ## v.14 alpha (8/28/2019)
 
