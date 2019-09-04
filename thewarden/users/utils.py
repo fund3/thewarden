@@ -55,15 +55,15 @@ except KeyError:
 def current_path():
     # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
-        application_path = os.path.dirname(sys.executable)
+        application_path = sys._MEIPASS
     elif __file__:
-        application_path = os.path.dirname(__file__)
+        application_path = os.path.dirname(os.path.abspath(__file__))
+        application_path = os.path.dirname(application_path)
+        application_path = os.path.dirname(application_path)
     # The application_path above would return the location of:
     # /thewarden/thewarden/users
     # which is were the utils.py file for this function is located
     # Make sure we go 2 levels up for the base application folder
-    application_path = os.path.dirname(application_path)
-    application_path = os.path.dirname(application_path)
     return(application_path)
 
 
@@ -824,9 +824,8 @@ def heatmap_generator():
 
 @memoized
 def fx_list():
-    filename = os.path.join(
-                current_path(),
-                'thewarden/static/csv_files/physical_currency_list.csv')
+    filename = os.path.join(current_path(),
+        'thewarden/static/csv_files/physical_currency_list.csv')
     with open(filename, newline='') as csvfile:
         reader = csv.reader(csvfile)
         fiat_dict = {rows[0]: (rows[1]) for rows in reader}
