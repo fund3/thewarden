@@ -413,13 +413,12 @@ class ApiKeys():
                 with open(self.filename, 'r') as fp:
                     data = json.load(fp)
                     return (data)
-            except (FileNotFoundError, KeyError) as e:
-                print(e)
-                return ""
+            except (FileNotFoundError, KeyError):
+                pass
         else:
             # File not found, let's construct a new one
             empty_api = {
-                "alphavantage": {"api_key": "RAJSHDKCO"},
+                "alphavantage": {"api_key": "AA_TEMP_APIKEY"},
                 "bitmex": {"api_key": None, "api_secret": None},
                 "dojo": {"onion": None, "api_key": None, "token": "error"}
             }
