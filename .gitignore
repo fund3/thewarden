@@ -6,6 +6,7 @@ __pycache__/
 .vscode/
 *.so
 ToDos.txt
+api_keys.conf
 alpha.db
 *.db
 bitmex.json
