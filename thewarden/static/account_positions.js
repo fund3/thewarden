@@ -123,7 +123,7 @@ function make_adjustments_ajax(arguments) {
             // // Wait a few seconds so message can be read by user
             setTimeout(function () {
                 location.reload()
-            }, 4500);
+            }, 1000);
         },
     });
 };

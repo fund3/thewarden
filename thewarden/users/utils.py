@@ -158,8 +158,8 @@ def cost_calculation(ticker, html_table=None):
         fx = current_user.fx_rate_data()['symbol']
         # Include a link to edit this transaction
         html["trade_reference_id"] = "<a href='/edittransaction?reference_id=" +\
-                                        html['trade_reference_id'] +\
-                                        "'><i class='fas fa-edit'></i></a>"
+                                     html['trade_reference_id'] +\
+                                     "'><i class='fas fa-edit'></i></a>"
 
         html.index = pd.to_datetime(html.index).strftime('%Y-%m-%d')
         # Include TOTAL row
@@ -184,15 +184,15 @@ def cost_calculation(ticker, html_table=None):
         html.loc['TOTAL', 'trade_price_fx'] = ''
         html.loc['TOTAL', 'trade_reference_id'] = ''
         html = html.rename(
-                    columns={
-                        'trade_operation': 'B/S',
-                        'acum_Q': 'Q (acum)',
-                        'trade_price_fx': 'Price (' + fx + ')',
-                        'trade_fees_fx': 'Fees (' + fx + ')',
-                        'cash_value_fx': 'Cash Flow (' + fx + ')',
-                        'adjusted_cv': 'Adj CF (' + fx + ')',
-                        'trade_reference_id': ' '
-                    })
+            columns={
+                'trade_operation': 'B/S',
+                'acum_Q': 'Q (acum)',
+                'trade_price_fx': 'Price (' + fx + ')',
+                'trade_fees_fx': 'Fees (' + fx + ')',
+                'cash_value_fx': 'Cash Flow (' + fx + ')',
+                'adjusted_cv': 'Adj CF (' + fx + ')',
+                'trade_reference_id': ' '
+            })
 
         cost_matrix = html.to_html(
             classes='table table-condensed table-striped small-text text-right',
@@ -302,9 +302,9 @@ def positions():
     # Get all transactions & group by ticker name and operation
     df = transactions_fx()
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
-                               ["trade_quantity",
-                                "cash_value_fx",
-                                "trade_fees_fx"]].sum()
+                                ["trade_quantity",
+                                 "cash_value_fx",
+                                 "trade_fees_fx"]].sum()
     # Now let's create our main dataframe with information for each ticker
     list_of_tickers = list_tickers()
     main_df = pd.DataFrame({'trade_asset_ticker': list_of_tickers})
@@ -637,8 +637,6 @@ def generatenav(user, force=False, filter=None):
                 f"Success: imported prices for id:{id}")
         except (FileNotFoundError, KeyError, ValueError) as e:
             logging.error(f"{id}: Error: {e}")
-            flash(f"Ticker {id} generated an error. " +
-                  f"NAV calculations will be off. Error: {e}", "danger")
     # Another loop to sum the portfolio values - maybe there is a way to
     # include this on the loop above. But this is not a huge time drag unless
     # there are too many tickers in a portfolio

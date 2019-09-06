@@ -60,7 +60,7 @@ FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 
 
 def current_path():
-   # determine if application is a script file or frozen exe
+    # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
         application_path = sys._MEIPASS
     elif __file__:
@@ -530,7 +530,7 @@ def GBTC_premium(price):
 
 # Returns full realtime price for a ticker using the provider list
 # Price is returned in USD
-def price_grabber_rt_full(ticker, priority_list=['cc','aa','fp']):
+def price_grabber_rt_full(ticker, priority_list=['cc', 'aa', 'fp']):
     for provider in priority_list:
         price_data = price_data_rt_full(ticker, provider)
         if price_data is not None:
@@ -742,8 +742,7 @@ PROVIDER_LIST = {
     'fmp_stock':
     PriceProvider(
         name='financialmodelingprep',
-        base_url=
-        'https://financialmodelingprep.com/api/v3/historical-price-full',
+        base_url='https://financialmodelingprep.com/api/v3/historical-price-full',
         ticker_field='',
         field_dict={
             'from': '2001-01-01',
@@ -771,8 +770,7 @@ PROVIDER_LIST = {
             'tsym': 'USD',
             'allData': 'true'
         },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
     'cc_fx':
     PriceProvider(
@@ -783,8 +781,7 @@ PROVIDER_LIST = {
             'fsym': 'USD',
             'allData': 'true'
         },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
     'bitmex':
     PriceProvider(name='bitmex',
@@ -808,8 +805,7 @@ PROVIDER_LIST = {
         base_url='https://min-api.cryptocompare.com/data/pricemultifull',
         ticker_field='fsyms',
         field_dict={'tsyms': 'USD'},
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
     ),
     'aa_realtime_digital':
     PriceProvider(name='aarealtime',
@@ -833,8 +829,7 @@ PROVIDER_LIST = {
     'fp_realtime_stock':
     PriceProvider(
         name='fprealtimestock',
-        base_url=
-        'https://financialmodelingprep.com/api/v3/stock/real-time-price',
+        base_url='https://financialmodelingprep.com/api/v3/stock/real-time-price',
         ticker_field='',
         field_dict='',
         doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'
