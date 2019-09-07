@@ -1369,7 +1369,7 @@ def test_tor_api():
 # Test for DOJO and makes some tests
 def test_dojo():
     logging.info("[API] Testing Dojo")
-    auto = dojo_auth(True)
+    auto = dojo_auth()
     try:
         api_keys_json = api_keys_class.loader()
         onion = api_keys_json['dojo']['onion']

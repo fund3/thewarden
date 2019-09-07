@@ -60,14 +60,12 @@ def tor_request(url, tor_only=False, method="get"):
 
 
 @MWT(10)
-def dojo_get_settings(force=False):
+def dojo_get_settings():
     # Get and test settings. If not working get a new at
     logging.info("Getting Dojo settings")
     # check if dojo_settings are already stored
     from thewarden.pricing_engine.pricing import api_keys_class
     api_keys_json = api_keys_class.loader()
-    onion_address = api_keys_json['dojo']['onion']
-    api_key = api_keys_json['dojo']['api_key']
     at = dojo_auth()
     try:
         logging.info("Trying to get token")
@@ -88,8 +86,8 @@ def dojo_get_settings(force=False):
     return (api_keys_json['dojo'])
 
 
-@memoized
-def dojo_auth(force=False):
+@MWT(timeout=20)
+def dojo_auth():
     # Receives authentication token back from Dojo
     # https://github.com/Samourai-Wallet/samourai-dojo/blob/develop/doc/POST_auth_login.md
     # POST /v2/auth/login
@@ -298,7 +296,7 @@ def dojo_get_txs(addr, at):
         if "error" in auth_response:
             # If Token error, force a new token
             if auth_response["error"] == "Invalid JSON Web Token":
-                at = dojo_auth(True)
+                at = dojo_auth()
         return auth_response
 
 
