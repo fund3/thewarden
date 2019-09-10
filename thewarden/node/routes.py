@@ -326,7 +326,7 @@ def bitcoin_transactions(address):
             # the [0] here is needed since we're using multiaddr but only returning the 1st (and only) address
             if balance["addresses"][0]["n_tx"] > 0:
                 meta["n_txs"] = balance["addresses"][0]["n_tx"]
-        except (KeyError, IndexError):
+        except Exception:
             logging.info("No txs found for this address")
             transactions["error"] += "Could not retrieve any transactions."
             meta["n_txs"] = 0

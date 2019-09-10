@@ -226,7 +226,7 @@
                             </td>
                             <td class="align-middle text-center balance_sum" id="balance"
                                 data-balance="{{address.last_balance}}">
-                                {{address.last_balance | jformat(2, 100000000)}}
+                                {{address.last_balance | jformat(4, 100000000)}}
                             </td>
                             <td class=" text-left" id='check'>
                                 {% if (address.last_check == None)%}
