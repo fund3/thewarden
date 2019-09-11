@@ -691,6 +691,15 @@ def multiple_price_grab(tickers, fx):
     return (data)
 
 
+def get_price_ondate(ticker, date):
+    try:
+        price_class = price_data(ticker)
+        price_ondate = price_class.price_ondate(date)
+        return (price_ondate)
+    except Exception:
+        return (0)
+
+
 def fx_price_ondate(base, cross, date):
     # Gets price conversion on date between 2 currencies
     # on a specific date

@@ -26,7 +26,8 @@ from thewarden.node.utils import (dojo_auth, dojo_get_hd, dojo_get_settings,
                                   oxt_get_address, tor_request)
 from thewarden.pricing_engine.pricing import (PROVIDER_LIST, PriceData,
                                               api_keys_class, price_data_fx,
-                                              price_data_rt, search_engine)
+                                              price_data_rt, search_engine,
+                                              get_price_ondate)
 from thewarden.users.decorators import MWT
 from thewarden.users.utils import (cost_calculation, current_path, fxsymbol,
                                    generatenav, heatmap_generator,
@@ -1441,7 +1442,6 @@ def get_address():
         else:
             dojo = dojo_get_txs(address, at)
         method = "Dojo"
-
         # Store current check into previous fields to detect changes
         ad = {}
         ad["previous_check"] = address_data.previous_check = address_data.last_check
@@ -1463,8 +1463,14 @@ def get_address():
                     logging.error("Error when passing Dojo data as json")
 
             else:
-                dojo_balance = s_to_f(dojo["balance"])
-        except (KeyError, TypeError):
+                try:
+                    dojo_balance = s_to_f(dojo["balance"])
+                except Exception:
+                    # If a single transaction is found, some times Dojo returns
+                    # a different format. Try to find in this alternative format.
+                    dojo_balance = s_to_f(dojo['txs'][0]['result'])
+        except (KeyError, TypeError) as e:
+            print(e)
             if address_data.check_method == "3":
                 address_data.check_method = "2"
                 try_again = True  # Bump next steps and try with OXT
@@ -1478,7 +1484,6 @@ def get_address():
             else:
                 change = False
             db.session.commit()
-            regenerate_nav()
             success = True
             return jsonify(
                 {
@@ -1496,7 +1501,6 @@ def get_address():
         if "message" in oxt:
             if oxt["message"] == "Nothing found for this address. Please try later.":
                 return "error"
-
         if "status" in oxt:
             return "error"
         # Store current check into previous fields to detect changes
@@ -1515,7 +1519,6 @@ def get_address():
         else:
             change = False
         db.session.commit()
-        regenerate_nav()
         success = True
 
         return jsonify(
@@ -1541,8 +1544,12 @@ def getprice_ondate():
             return 0
         ticker = ticker.upper()
         get_date = datetime.strptime(date_input, "%Y-%m-%d")
-
-        return price_ondate(ticker, get_date)
+        # Create price object
+        try:
+            price = str(get_price_ondate(ticker, get_date).close)
+        except Exception:
+            price = "Not Found"
+        return price
 
 
 @api.route("/import_transaction", methods=["POST"])

@@ -335,9 +335,14 @@ def bitcoin_transactions(address):
         if "n_txs" in meta:
             meta["check_method"] = "Dojo"
             transactions = dojo_get_txs(address, at)
+            # Some times dojo returns the transactions header as 'txs' - copying
+            # so it can be found:
+            if 'txs' in transactions:
+                transactions['transactions'] = transactions['txs'][0]
             if ("balance" in meta) and (meta["balance"] >= 0):
                 meta["success"] = True
                 logging.info("Success: Address data gathered")
+            print(transactions)
 
     # OK, this address is not in Database, so do nothing
     else:
