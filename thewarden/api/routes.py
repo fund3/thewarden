@@ -1470,7 +1470,6 @@ def get_address():
                     # a different format. Try to find in this alternative format.
                     dojo_balance = s_to_f(dojo['txs'][0]['result'])
         except (KeyError, TypeError) as e:
-            print(e)
             if address_data.check_method == "3":
                 address_data.check_method = "2"
                 try_again = True  # Bump next steps and try with OXT

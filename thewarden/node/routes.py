@@ -326,7 +326,7 @@ def bitcoin_transactions(address):
                 derivation = bitcoin_address.xpub_derivation
                 if not derivation:
                     derivation = "pubkey"
-            balance = dojo_multiaddr(address, derivation, at).json()
+            balance = dojo_multiaddr(address, "pubkey", at).json()
         except AttributeError:
             logging.warn("Did not receive a json back from multi_add")
 
@@ -371,7 +371,6 @@ def bitcoin_transactions(address):
             if ("balance" in meta) and (meta["balance"] >= 0):
                 meta["success"] = True
                 logging.info("Success: Address data gathered")
-            print(transactions)
 
     # OK, this address is not in Database, so do nothing
     else:
