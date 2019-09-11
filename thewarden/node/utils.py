@@ -2,11 +2,9 @@ import logging
 
 import pandas as pd
 import requests
-from flask import Markup, current_app, flash
-from flask_login import current_user
+from flask import Markup, flash
 
-from thewarden.models import User
-from thewarden.users.decorators import MWT, memoized
+from thewarden.users.decorators import MWT, memoized, timing
 
 
 @MWT(1)
@@ -173,6 +171,7 @@ def dojo_get_address(addr, at):
     return auth_response
 
 
+@timing
 @MWT(20)
 def dojo_multiaddr(addr, type, at):
     # Request details about a collection of HD accounts and/or loose addresses and/or public keys.
