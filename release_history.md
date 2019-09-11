@@ -1,5 +1,10 @@
 # Release History
 
+## v.16 alpha
+
+    - Fixed issues when importing Dojo addresses
+    - Included option to force rescan of all Dojo addresses
+
 ## v.15 alpha (09/04/2019)
 
 - Moved all JavaScript and CSS dependencies locally (Bootstrap, jQuery, Popper and others)

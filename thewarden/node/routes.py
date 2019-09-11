@@ -93,11 +93,11 @@ def dojo_setup():
 @node.route("/rescan_all", methods=['GET'])
 @login_required
 def rescan_all():
-    print("Starting a rescan of all addresses in database...")
+    logging.info("Starting a rescan of all addresses in database...")
     bitcoin_addresses = BitcoinAddresses.query.filter_by(
         user_id=current_user.username)
-    print("Found a total of " + str(bitcoin_addresses.count()) +
-          " addresses to rescan")
+    logging.info("Found a total of " + str(bitcoin_addresses.count()) +
+                 " addresses to rescan")
     # Get token
     at = dojo_get_settings()["token"]
     address_string = ""
@@ -106,7 +106,6 @@ def rescan_all():
         address_string += address.address_hash + "|"
     address_string = address_string[:-1]
     reg = dojo_multiaddr(address_string, "active", at)
-    print(reg.json())
     if "error" in reg.json():
         flash(
             f"Something went wrong while rescanning addresses." +
@@ -114,11 +113,10 @@ def rescan_all():
             "danger",
         )
     else:
-        print("Success")
-    flash(
-        "Address rescan finished for a total of " +
-        str(bitcoin_addresses.count()) + " addresses", "success")
-    return ("done")
+        flash(
+            "Address rescan finished for a total of " +
+            str(bitcoin_addresses.count()) + " addresses", "success")
+    return (json.dumps("OK"))
 
 
 @node.route("/bitcoin_address", methods=["GET", "POST"])
