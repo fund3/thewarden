@@ -4,6 +4,9 @@
 
     - Fixed issues when importing Dojo addresses
     - Included option to force rescan of all Dojo addresses
+    - Included balance of Bitcoin Addresses being monitored on front page
+    - Implemented auto check of balances to detect changes
+    - Fixed an issue where NAV was being calculated more often than needed
 
 ## v.15 alpha (09/04/2019)
 

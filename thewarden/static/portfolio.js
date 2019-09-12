@@ -550,7 +550,6 @@ function getBitcoinAddresses() {
         dataType: 'json',
         timeout: 5000,
         success: function (data) {
-            console.log(data)
             if (data.count == 0) {
                 $('#bitcoin_addresses_section').hide()
             } else {
@@ -576,10 +575,14 @@ function checkBitcoinBalance() {
             console.log("Done checking all balances with the Dojo");
             console.log(data_back.changes)
             console.log(data_back.changes.length)
-            if (data_back.changes.length > 0) {
-                $('#bitcoin_check').html("<a id='change' class='btn btn-sm btn-outline-warning btn-block' href='/bitcoin_monitor' role='button'>Changes detected since last check. New balance: " + data_back.total_balance + "</a>");
+            if (data_back.errors == true) {
+                $('#bitcoin_check').html("<a id='change' class='btn btn-sm btn-outline-secondary btn-block' href='/bitcoin_monitor' role='button'><i class='fas fa-exclamation-triangle'></i>&nbsp; Error checking balances</a>");
             } else {
-                $('#bitcoin_check').html("<a id='button_nochange' class='btn btn-sm btn-outline-success btn-block' href='/bitcoin_monitor' role='button'>No activity since last check</a>");
+                if (data_back.changes.length > 0) {
+                    $('#bitcoin_check').html("<a id='change' class='btn btn-sm btn-warning btn-block' href='/bitcoin_monitor' role='button'><i class='fas fa-exclamation-triangle'></i>&nbsp; Changes detected since last check. New balance: " + data_back.total_balance + "</a>");
+                } else {
+                    $('#bitcoin_check').html("<a id='button_nochange' class='btn btn-sm btn-outline-success btn-block' href='/bitcoin_monitor' role='button'>No activity since last check &nbsp;<i class='fas fa-check'></i></a>");
+                }
             }
             console.log(data_back)
         }

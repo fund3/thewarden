@@ -1919,6 +1919,7 @@ def search():
     return (search_engine(ticker))
 
 
+# Returns data for the front page - and monitors bitcoin addresses for changes
 @api.route("/frontpage_btc", methods=["GET", "POST"])
 def frontpage_btc():
     try:
@@ -1952,31 +1953,40 @@ def frontpage_btc():
         # Start to check addresses to compare with total
         total_balance = 0
         changes = []
+        errors = False
         for address in address_data:
             # Check Balance for this hash
             at = dojo_get_settings()["token"]
             dojo = dojo_get_txs(address.address_hash, at)
             try:
-                dojo_balance = float(dojo["balance"])
+                dojo_balance = (dojo["balance"])
+                if dojo_balance == "":
+                    dojo_balance = 0
             except Exception:
                 # If a single transaction is found, some times Dojo returns
                 # a different format. Try to find in this alternative format.
                 try:
                     dojo_balance = float(dojo['txs'][0]['result'])
                 except Exception:
+                    errors = True
                     dojo_balance = 0
+                    break
             if dojo_balance != address.last_balance:
                 changes += [{
                     "address": address.address_hash,
                     "balance": dojo_balance,
                     "balance_before": address.last_balance
                 }]
-            total_balance += dojo_balance / 100000000
+            try:
+                total_balance += float(dojo_balance) / 100000000
+            except Exception:
+                pass
 
         return json.dumps(
             {
                 "changes": changes,
-                "total_balance": str(round(total_balance,4))
+                "total_balance": str(round(total_balance, 4)),
+                "errors": errors
             }
         )
 

@@ -8,6 +8,7 @@ from thewarden.users.decorators import MWT, memoized, timing
 
 
 @MWT(1)
+@timing
 # Requests within 30sec of each other will return the same result
 # This is an optimization variable, too short and the app will run
 # slow, too high and the data refresh will suffer.
@@ -58,6 +59,7 @@ def tor_request(url, tor_only=False, method="get"):
 
 
 @MWT(10)
+@timing
 def dojo_get_settings():
     # Get and test settings. If not working get a new at
     logging.info("Getting Dojo settings")
@@ -85,6 +87,7 @@ def dojo_get_settings():
 
 
 @MWT(timeout=20)
+@timing
 def dojo_auth():
     # Receives authentication token back from Dojo
     # https://github.com/Samourai-Wallet/samourai-dojo/blob/develop/doc/POST_auth_login.md
@@ -149,6 +152,7 @@ def dojo_auth():
 
 
 @MWT(20)
+@timing
 def dojo_get_address(addr, at):
     # Request details about a collection of HD accounts and/or loose addresses and/or public keys.
     # Takes arguments:
@@ -171,8 +175,8 @@ def dojo_get_address(addr, at):
     return auth_response
 
 
-@timing
 @MWT(20)
+@timing
 def dojo_multiaddr(addr, type, at):
     # Request details about a collection of HD accounts and/or loose addresses and/or public keys.
     # Takes arguments:
@@ -213,6 +217,7 @@ def dojo_multiaddr(addr, type, at):
 
 
 @memoized
+@timing
 def dojo_add_hd(xpub, type, at):
     # Notify the server of the new HD account for tracking.
     # https://github.com/Samourai-Wallet/samourai-dojo/blob/master/doc/POST_xpub.md
@@ -232,6 +237,7 @@ def dojo_add_hd(xpub, type, at):
 
 
 @MWT(20)
+@timing
 def dojo_get_hd(xpub, at):
     # Request details about an HD account. If account does not exist, it must be created.
     # https://github.com/Samourai-Wallet/samourai-dojo/blob/master/doc/GET_xpub.md
@@ -251,6 +257,7 @@ def dojo_get_hd(xpub, at):
 
 
 @MWT(20)
+@timing
 def dojo_get_txs(addr, at):
     # Request transactions of an active address and return a dataframe + metadata
     onion_address = dojo_get_settings()["onion"]
@@ -300,6 +307,7 @@ def dojo_get_txs(addr, at):
 
 
 @MWT(20)
+@timing
 def oxt_get_address(addr):
     # Requests via TOR address details from OXT
     url = "https://api.oxt.me/addresses/"
@@ -317,6 +325,7 @@ def oxt_get_address(addr):
 
 
 @MWT(10)
+@timing
 def dojo_status(token_test=None):
     logging.info("Getting Current Dojo Status")
     settings = dojo_get_settings()

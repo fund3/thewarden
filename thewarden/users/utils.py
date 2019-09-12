@@ -36,7 +36,7 @@ config.read('config.ini')
 try:
     RENEW_NAV = config['MAIN']['RENEW_NAV']
 except KeyError:
-    RENEW_NAV = 10
+    RENEW_NAV = 3600
     logging.error("Could not find RENEW_NAV at config.ini. Defaulting to 60.")
 try:
     PORTFOLIO_MIN_SIZE_NAV = config['MAIN']['PORTFOLIO_MIN_SIZE_NAV']
