@@ -9,4 +9,4 @@ community_bridge: # Replace with a single Community Bridge project-name e.g., cl
 liberapay: # Replace with a single Liberapay username
 issuehunt: # Replace with a single IssueHunt username
 otechie: # Replace with a single Otechie username
-custom: ['https://www.thewarden.io', 'https://tippin.me/@alphaazeta']
+custom: ['https://www.thewarden.io', 'https://tippin.me/@alphaazeta', 'bitcoin:bc1qt5f8chh9pa923lrdsl4nk7j6hp8wp8985d99lx']
