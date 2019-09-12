@@ -15,6 +15,7 @@ from dateutil import parser
 from dateutil.relativedelta import relativedelta
 from flask import Blueprint, flash, jsonify, render_template, request
 from flask_login import current_user, login_required
+from sqlalchemy.sql import func
 
 from thewarden import db
 from thewarden import mhp as mrh
@@ -32,7 +33,7 @@ from thewarden.users.decorators import MWT
 from thewarden.users.utils import (cost_calculation, current_path, fxsymbol,
                                    generatenav, heatmap_generator,
                                    positions_dynamic, regenerate_nav,
-                                   transactions_fx)
+                                   transactions_fx, time_ago)
 
 api = Blueprint("api", __name__)
 
@@ -1469,7 +1470,7 @@ def get_address():
                     # If a single transaction is found, some times Dojo returns
                     # a different format. Try to find in this alternative format.
                     dojo_balance = s_to_f(dojo['txs'][0]['result'])
-        except (KeyError, TypeError) as e:
+        except (KeyError, TypeError):
             if address_data.check_method == "3":
                 address_data.check_method = "2"
                 try_again = True  # Bump next steps and try with OXT
@@ -1916,3 +1917,74 @@ def test_price():
 def search():
     ticker = request.args.get("ticker")
     return (search_engine(ticker))
+
+
+@api.route("/frontpage_btc", methods=["GET", "POST"])
+def frontpage_btc():
+    try:
+        # First get the data from database
+        address_data = (
+            BitcoinAddresses.query.filter_by(user_id=current_user.username)
+        )
+        if address_data.count() == 0:
+            return ({
+                "count": 0,
+                "balance": 0,
+                "last_update": "N/A"
+            })
+        total = BitcoinAddresses.query.with_entities(
+            func.sum(BitcoinAddresses.last_balance).label("mySum")).filter_by(
+            user_id=current_user.username).first()
+        try:
+            # Sats to Bitcoins convertion
+            total = total.mySum / 100000000
+        except Exception:
+            total = "-"
+        data = {
+            "count": address_data.count(),
+            "last_update": time_ago(
+                address_data.order_by('last_check').limit(1)[0].last_check),
+            "balance": total
+        }
+        if request.method == "GET":
+            return json.dumps(data)
+
+        # Start to check addresses to compare with total
+        total_balance = 0
+        changes = []
+        for address in address_data:
+            # Check Balance for this hash
+            at = dojo_get_settings()["token"]
+            dojo = dojo_get_txs(address.address_hash, at)
+            try:
+                dojo_balance = float(dojo["balance"])
+            except Exception:
+                # If a single transaction is found, some times Dojo returns
+                # a different format. Try to find in this alternative format.
+                try:
+                    dojo_balance = float(dojo['txs'][0]['result'])
+                except Exception:
+                    dojo_balance = 0
+            if dojo_balance != address.last_balance:
+                changes += [{
+                    "address": address.address_hash,
+                    "balance": dojo_balance,
+                    "balance_before": address.last_balance
+                }]
+            total_balance += dojo_balance / 100000000
+
+        return json.dumps(
+            {
+                "changes": changes,
+                "total_balance": str(round(total_balance,4))
+            }
+        )
+
+    except Exception as e:
+        error_message = {
+            "error": str(e)
+        }
+        if request.method == "GET":
+            return (json.dumps(error_message))
+
+

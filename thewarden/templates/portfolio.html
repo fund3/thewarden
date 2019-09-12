@@ -809,6 +809,49 @@
 
         <!-- END Portfolio Statistics section -->
 
+        <!-- START Bitcoin Address Summary -->
+
+        <div class="content-section" id="bitcoin_addresses_section">
+
+            <span class="lead">Bitcoin Monitor</span>
+            <span class="float-right">
+                <a href="/bitcoin_monitor" style="text-decoration: none; color:gray;">
+                    <i class="fas fa-external-link-square-alt fa-lg"></i>
+                </a>
+            </span>
+            </br>
+
+            <table id="btctable" class="table table-sm small-text">
+                <tbody>
+                    <tr>
+                        <td>Addresses Monitored</td>
+                        <td id='total_addresses' class="text-right"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
+                    </tr>
+                    <tr>
+                        <td>Total Balance of addresses</td>
+                        <td id='bitcoin_balance' class="text-right"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
+                    </tr>
+
+                    <tr>
+                        <td>Last Check</td>
+                        <td id='bitcoin_last_check' class="text-right"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
+                    </tr>
+                </tbody>
+            </table>
+            <span id='bitcoin_check'>
+
+            </span>
+
+
+        </div>
+
+
+
+        <!-- END Bitcoin Address Summary -->
+
         <div>
             <!-- Asset Allocation Chart -->
             <div id="piechart" style="height: 250px">

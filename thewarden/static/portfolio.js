@@ -27,10 +27,13 @@ $(document).ready(function () {
 
     });
 
+    $('#button_nochange').on('click', checkBitcoinBalance())
+
     // set run_once to true so some functions at ajax are only executed once
     run_once = true;
     realtime_table();
     getblockheight();
+    getBitcoinAddresses();
 
     // Popover management
     // Default popover enabler from Bootstrap
@@ -498,8 +501,6 @@ function realtime_table() {
                     $('#' + key + '_source').html(value.source);
                     update = new Date(value.last_update)
                     if (update.getHours() == 0 && update.getMinutes() == 0 && update.getSeconds() == 0) {
-                        console.log(update)
-                        console.log(update.getDay())
                         update = (update.getMonth() + 1) + '-' + update.getDate() + '-' + update.getFullYear()
                     } else {
                         if (isNaN(update.getHours())) {
@@ -542,7 +543,48 @@ function realtime_table() {
 
 };
 
+function getBitcoinAddresses() {
+    $.ajax({
+        type: 'GET',
+        url: '/frontpage_btc',
+        dataType: 'json',
+        timeout: 5000,
+        success: function (data) {
+            console.log(data)
+            if (data.count == 0) {
+                $('#bitcoin_addresses_section').hide()
+            } else {
+                $('#total_addresses').html(data.count);
+                $('#bitcoin_balance').html(data.balance.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 4, minimumFractionDigits: 4 }));
+                $('#bitcoin_last_check').html(data.last_update);
+            }
+        },
+        error: function () {
+            $('#total_addresses').html("---");
+            console.log("Error: failed to get Bitcoin Addresses data")
+        }
+    });
+}
 
+function checkBitcoinBalance() {
+    $.ajax({
+        type: "POST",
+        contentType: 'application/json',
+        dataType: "json",
+        url: "/frontpage_btc",
+        success: function (data_back) {
+            console.log("Done checking all balances with the Dojo");
+            console.log(data_back.changes)
+            console.log(data_back.changes.length)
+            if (data_back.changes.length > 0) {
+                $('#bitcoin_check').html("<a id='change' class='btn btn-sm btn-outline-warning btn-block' href='/bitcoin_monitor' role='button'>Changes detected since last check. New balance: " + data_back.total_balance + "</a>");
+            } else {
+                $('#bitcoin_check').html("<a id='button_nochange' class='btn btn-sm btn-outline-success btn-block' href='/bitcoin_monitor' role='button'>No activity since last check</a>");
+            }
+            console.log(data_back)
+        }
+    })
+}
 
 function getblockheight() {
     // GET latest Bitcoin Block Height
