@@ -553,11 +553,19 @@ a {
   background: #353535;
   border: 1px solid #dddddd;
   border-radius: 5px;
-  padding: 20px;
+  padding: 15px;
   margin-left: 20px;
   color: lightgreen;
+  text-decoration: none !important;
+  height: 100%;
+  width: 100%;
+}
+
+.statusbox a {
+  padding: 15px;
 }
 
 .rightfloater {
+  margin-left: auto;
   float: right;
 }

@@ -44,26 +44,26 @@ $(document).ready(function () {
         success: function (data) {
             console.log("[Check Tor] ajax request: OK");
             if (data.status) {
-                html_tor = "<a style='text-decoration : none' href='/tor_setup'>" +
+                html_tor = "" +
                     "<span class=' nav-item' style='color: rgb(139, 195, 113);'>" +
                     "<i class='fas fa-lg fa-user-shield'></i></span>" +
-                    "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Tor running" +
-                    "</span ></a> "
+                    "<span class=''>&nbsp;&nbsp;&nbsp;&nbsp;Tor running" +
+                    "</span > "
             } else {
-                html_tor = "<a style='text-decoration : none' href='/tor_setup'>" +
+                html_tor = "" +
                     "<span class=' nav-item' style='color: rgb(255, 217, 0);'>" +
                     "<i class='fas fa-lg fa-user-shield'></i></span>" +
                     "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled" +
-                    "</span ></a> "
+                    "</span > "
             }
             $('#tor_span').html(html_tor);
         },
         error: function (xhr, status, error) {
-            html_tor = "<a style='text-decoration : none' href='/tor_setup'>" +
+            html_tor = "" +
                 "<span class=' nav-item' style='color: rgb(255, 217, 0);'>" +
                 "<i class='fas fa-lg fa-user-shield'></i></span>" +
                 "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled" +
-                "</span ></a> "
+                "</span > "
             $('#tor_span').html(html_tor);
         }
     });

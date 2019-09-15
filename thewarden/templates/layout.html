@@ -54,17 +54,16 @@
             <div class="rightfloater">
 
 
-                <span class="statusbox">
-                    <a class="nav-item text-white" style="text-decoration : none"
-                        href="{{ url_for('node.tor_setup') }}">
-                        <span id="tor_span">
-                            <span class=" nav-item" style="color: rgb(179, 179, 179);">
-                                <i class="fas fa-lg fa-user-shield"></i>
-                            </span>
-                            <span class="text-white text-right">&nbsp;&nbsp;&nbsp;&nbsp;Checking Tor
-                            </span>
-                    </a>
-                </span>
+
+                <a class="statusbox" href="{{ url_for('node.tor_setup') }}">
+                    <span id="tor_span">
+
+                        <i class="text-white fas fa-lg fa-user-shield"></i>
+                        <span class="text-white text-right">&nbsp;&nbsp;&nbsp;&nbsp;Checking Tor
+                        </span>
+                    </span>
+                </a>
+
 
 
 
