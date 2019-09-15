@@ -67,7 +67,7 @@ def current_path():
     return(application_path)
 
 
-@MWT(timeout=20)
+@MWT(timeout=60)
 @timing
 def cost_calculation(ticker, html_table=None):
     # This function calculates the cost basis assuming 3 different methods
@@ -214,6 +214,7 @@ def find_fx(row, fx=None):
 
 
 @timing
+@MWT(timeout=30)
 def transactions_fx():
     # Gets the transaction table and fills with fx information
     # Note that it uses the currency exchange for the date of transaction

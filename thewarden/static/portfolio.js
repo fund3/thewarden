@@ -34,6 +34,7 @@ $(document).ready(function () {
     realtime_table();
     getblockheight();
     getBitcoinAddresses();
+    checkDojo();
 
     // Popover management
     // Default popover enabler from Bootstrap
@@ -554,7 +555,7 @@ function getBitcoinAddresses() {
                 $('#bitcoin_addresses_section').hide()
             } else {
                 $('#total_addresses').html(data.count);
-                $('#bitcoin_balance').html(data.balance.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 4, minimumFractionDigits: 4 }));
+                $('#bitcoin_balance').html("&#8383 " + data.balance.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 4, minimumFractionDigits: 4 }));
                 $('#bitcoin_last_check').html(data.last_update);
             }
         },
@@ -687,7 +688,7 @@ function navChart(data) {
             enabled: false
         },
         rangeSelector: {
-            selected: 5
+            selected: 1
         },
         chart: {
             zoomType: 'xy',
@@ -755,3 +756,32 @@ function navChart(data) {
     });
 
 };
+
+
+
+function checkDojo() {
+    $.ajax({
+        type: "GET",
+        dataType: 'json',
+        url: "/test_dojo",
+        success: function (data) {
+            html_dojo = "-"
+            if ('authorizations' in data.dojo_auth) {
+                html_dojo = "<a style='text-decoration: none' href='/dojo_setup'>" +
+                    "<span class='text-success'> " +
+                    "&nbsp;&nbsp;&nbsp;&nbsp;Dojo running </span></a>"
+
+            } else {
+                html_dojo = "<a style='text-decoration: none' href='/dojo_setup'>" +
+                    "<span class='text-warning'>" +
+                    "&nbsp;&nbsp;&nbsp;&nbsp;Node Unavailable </span> </a>"
+            }
+            $('#node_status').html(html_dojo);
+        },
+        error: function (xhr, status, error) {
+            html_dojo = "<a style='text-decoration: none' href='/dojo_setup'>" +
+                "<span class='text-warning'>" +
+                "&nbsp;&nbsp;&nbsp;&nbsp;Node Unavailable  </span></a>"
+        }
+    });
+}

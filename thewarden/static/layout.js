@@ -69,37 +69,7 @@ $(document).ready(function () {
     });
 
 
-    $.ajax({
-        type: "GET",
-        dataType: 'json',
-        url: "/test_dojo",
-        success: function (data) {
-            console.log("[Check Dojo] ajax request: OK");
-            if ('authorizations' in data.dojo_auth) {
-                html_dojo = "<a style='text-decoration : none' href='/dojo_setup'>" +
-                    "<span class='nav-item' style='color: rgb(139, 195, 113);'>" +
-                    "<i class='fas fa-lg fa-user-ninja'></i></span>" +
-                    "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Dojo running" +
-                    "</span ></a> "
-            } else {
-                html_dojo = "<a style='text-decoration : none' href='/dojo_setup'>" +
-                    "<span class=' nav-item' style='color: rgb(255, 217, 0);'>" +
-                    "<i class='fas fa-lg fa-user-ninja'></i></span>" +
-                    "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Dojo Unavailable" +
-                    "</span ></a> "
-            }
-            $('#dojo_span').html(html_dojo);
-        },
-        error: function (xhr, status, error) {
-            html_dojo = "<a style='text-decoration : none' href='/dojo_setup'>" +
-                "<span class='nav-item' style='color: rgb(255, 217, 0);'>" +
-                "<i class='fas fa-lg fa-user-ninja'></i></span>" +
-                "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Dojo Unavailable" +
-                "</span ></a> "
 
-            $('#dojo_span').html(html_dojo);
-        }
-    });
 });
 
 

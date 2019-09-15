@@ -695,13 +695,27 @@
         </div>
         <!-- END Market Data Section -->
         <!-- START charts -->
-        <div>
-            <!-- NAV Chart -->
-            <div id="navchart" style="height: 350px; margin: 0 auto">
-                <span class="loadanim">&nbsp;Loading NAV Chart</span>
+        <div class="row">
+            <div class='col-sm-8'>
+                <div>
+                    <!-- NAV Chart -->
+                    <div id="navchart" style="height: 350px; margin: 0 auto">
+                        <span class="loadanim">&nbsp;Loading NAV Chart</span>
+                    </div>
+                </div>
             </div>
+            <div class='col-sm-4'>
+                <div>
+                    <!-- Asset Allocation Chart -->
+                    <div id="piechart" style="height: 350px">
+                        <span class="loadanim">&nbsp;Loading Allocation Chart</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
         <!-- END Charts -->
+
         </br>
         </br>
     </div>
@@ -824,6 +838,13 @@
             <table id="btctable" class="table table-sm small-text">
                 <tbody>
                     <tr>
+                        <td>Node Status</td>
+                        <td class="text-right">
+                            <span id='node_status'> <img src='static/images/loading_small.gif' width="30"
+                                    height="30"></img> </span>
+                        </td>
+                    </tr>
+                    <tr>
                         <td>Addresses Monitored</td>
                         <td id='total_addresses' class="text-right"> <img src='static/images/loading_small.gif'
                                 width="30" height="30"></img> </td>
@@ -852,12 +873,7 @@
 
         <!-- END Bitcoin Address Summary -->
 
-        <div>
-            <!-- Asset Allocation Chart -->
-            <div id="piechart" style="height: 250px">
-                <span class="loadanim">&nbsp;Loading Allocation Chart</span>
-            </div>
-        </div>
+
 
         <!-- START setting section -->
         <div class="content-section">
