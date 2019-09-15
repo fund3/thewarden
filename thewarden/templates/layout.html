@@ -43,80 +43,91 @@
 
 
     <header>
+        <nav class="navbar navbar-dark bg-steel navbar-expand-lg navbar-font justify-content-end">
 
-        <nav class="navbar navbar-dark bg-steel justify-content-between">
-
-            <a class="navbar-brand" href="/">
-                <img src="{{url_for('static', filename='images/square_logo.png')}}" width="70" height="70" alt="Home">
+            <a class="navbar-brand" href="/"> <img src="{{url_for('static', filename='images/logo_flat.png')}}"
+                    width="180" height="40" alt="Home">
             </a>
 
 
 
-            <a class="nav-item text-white" style="text-decoration : none" href="{{ url_for('node.tor_setup') }}">
-                <span id="tor_span">
-                    <span class=" nav-item" style="color: rgb(179, 179, 179);">
-                        <i class="fas fa-lg fa-user-shield"></i>
+            <div class="rightfloater">
+
+
+                <span class="statusbox">
+                    <a class="nav-item text-white" style="text-decoration : none"
+                        href="{{ url_for('node.tor_setup') }}">
+                        <span id="tor_span">
+                            <span class=" nav-item" style="color: rgb(179, 179, 179);">
+                                <i class="fas fa-lg fa-user-shield"></i>
+                            </span>
+                            <span class="text-white text-right">&nbsp;&nbsp;&nbsp;&nbsp;Checking Tor
+                            </span>
+                    </a>
+                </span>
+
+
+
+                {% if current_user.is_authenticated %}
+
+                <!-- FX Rate and BTC price-->
+
+                {%if (current_user.fx() != 'USD')%}
+                <span class="statusbox">
+                    <span class="nav-item text-white" style="color:lightgreen;">
+                        FX Cross
+                        <span id="fx_cross">
+                            <span class="loadanim small">loading</span>
+                        </span>
+                    </span><br>
+                    <span class="nav-item text-white" style="color:lightgreen;">
+                        FX Rate
+                        <span id="fx_rate">
+                            <span class="loadanim small">loading</span>
+                        </span>
                     </span>
-                    <span class="text-white text-right">&nbsp;&nbsp;&nbsp;&nbsp;Checking Tor
+                </span>
+
+                <span class="statusbox">
+                    <span class="nav-item text-white" style="color:lightgreen;">
+                        BTC {{current_user.fx() | fxsymbol}}
+                        <span id="btc_fx">
+                            <span class="loadanim small">loading</span>
+                        </span>
                     </span>
-            </a>
-
-
-
-
-            {% if current_user.is_authenticated %}
-
-            <!-- FX Rate and BTC price-->
-
-            {%if (current_user.fx() != 'USD')%}
-            <span class="nav-item text-white" style="color:lightgreen;">
-                FX Cross
-                <span id="fx_cross" style="float:right;">
-                    <span class="loadanim small">loading</span>
                 </span>
-            </span><br>
-            <span class="nav-item text-white" style="color:lightgreen;">
-                FX Rate
-                <span id="fx_rate" style="float:right;">
-                    <span class="loadanim small">loading</span>
+                {%endif%}
+                <span class="statusbox">
+                    <span class="nav-item text-white" style="color:lightgreen;">
+                        BTC {{current_user.fx() | fxsymbol}}
+                        <span id="btc_usd">
+                            <span class="loadanim small">loading</span>
+                        </span>
+                    </span>
                 </span>
-            </span>
 
-            <span class="nav-item text-white" style="color:lightgreen;">
-                BTC {{current_user.fx() | fxsymbol}}
-                <span id="btc_fx" style="float:right;">
-                    <span class="loadanim small">loading</span>
+                <span class="statusbox">
+                    <a class="nav-item text-white" style="text-decoration: none; color:lightgreen;"
+                        href="{{ url_for('users.account') }}">
+                        <i class="fas fa-exchange-alt fa-lg"></i>
+                        <strong>
+                            All prices in {{current_user.fx_rate_data()['name_plural']}}
+                        </strong>
+                    </a>
                 </span>
-            </span>
-            {%endif%}
-            <span class="nav-item text-white" style="color:lightgreen;">
-                BTC {{current_user.fx() | fxsymbol}}
-                <span id="btc_usd" style="float:right;">
-                    <span class="loadanim small">loading</span>
-                </span>
-            </span>
 
 
-            <a class="nav-item text-white" style="text-decoration: none; color:lightgreen;"
-                href="{{ url_for('users.account') }}">
-                <i class="fas fa-exchange-alt fa-lg"></i>
-                <strong>
-                    All prices in {{current_user.fx_rate_data()['name_plural']}}
-                </strong>
-            </a>
-
-
-            <!-- Search form -->
-            <!-- <form class="form-inline md-form form-sm">
+                <!-- Search form -->
+                <!-- <form class="form-inline md-form form-sm">
                         <input id="searchbox" class="form-control form-control-sm mr-3 w-75" type="text"
                             placeholder="Search" aria-label="Search">
                         <i class="fas fa-search text-white fa-lg" aria-hidden="true"></i>
                     </form> -->
-            {% else %}
-            <a class="nav-item text-white" href="{{ url_for('users.login') }}">Login</a>&nbsp;&nbsp;&nbsp;&nbsp;
-            <a class="nav-item text-white" href="{{ url_for('users.register') }}">Register</a>
-            {% endif %}
-
+                {% else %}
+                <a class="nav-item text-white" href="{{ url_for('users.login') }}">Login</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                <a class="nav-item text-white" href="{{ url_for('users.register') }}">Register</a>
+                {% endif %}
+            </div>
         </nav>
     </header>
 
@@ -126,13 +137,6 @@
         {% if current_user.is_authenticated %}
         <div id="sidebar-wrapper">
             <ul class="sidebar-nav small">
-
-                <li>
-                    <strong><a href="/" class="text-white">
-                            <i class="fas fa-home fa-2x"></i> &nbsp;&nbsp;&nbsp; Home
-                        </a></strong>
-                </li>
-
 
 
 
@@ -146,6 +150,8 @@
                 </li>
                 <div class="collapse show" id="collapse_transactions"">
                     <div class=" list-group bg-transparent text-white">
+                    <a class="sidebar-subitem" href="/"><i class="fas fa-table fa-lg"></i>&nbsp;&nbsp;Dashboard</a>
+
                     <a class="sidebar-subitem" href="{{ url_for('transactions.list_transactions') }}"><i
                             class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List Transactions</a>
                     <a class="sidebar-subitem" href="{{ url_for('transactions.newtrade') }}"><i

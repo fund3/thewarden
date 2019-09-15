@@ -20,7 +20,7 @@ h6 {
 }
 
 .bg-steel {
-  background-color: #515151;
+  background-color: #252525;
 }
 
 .bg-lightyellow {
@@ -547,4 +547,17 @@ a {
     rgb(250, 250, 250) 10px,
     rgb(250, 250, 250) 20px
   );
+}
+
+.statusbox {
+  background: #353535;
+  border: 1px solid #dddddd;
+  border-radius: 5px;
+  padding: 20px;
+  margin-left: 20px;
+  color: lightgreen;
+}
+
+.rightfloater {
+  float: right;
 }
