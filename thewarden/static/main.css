@@ -550,7 +550,6 @@ a {
 }
 
 .statusbox {
-  z-index: 0;
   background: #404040;
   border: 1px solid #dddddd;
   border-radius: 5px;
@@ -558,10 +557,18 @@ a {
   margin-left: 20px;
   color: lightgreen;
   text-decoration: none !important;
+  float: right;
+}
+
+.statusbox:hover {
+  background: #404040;
+  color: lightgreen;
 }
 
 .rightfloater {
+  display: flex;
   margin-left: auto;
   float: right;
   height: 100%;
+  text-align: right;
 }

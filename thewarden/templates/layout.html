@@ -53,12 +53,8 @@
 
             <div class="rightfloater">
 
-
-
-
                 <a class="statusbox" href="{{ url_for('node.tor_setup') }}">
                     <span id="tor_span">
-
                         <i class="text-white fas fa-lg fa-user-shield"></i>
                         <span class="text-white text-right">&nbsp;&nbsp;&nbsp;&nbsp;Checking Tor
                         </span>
@@ -66,55 +62,45 @@
                 </a>
 
 
-
-
                 {% if current_user.is_authenticated %}
 
                 <!-- FX Rate and BTC price-->
 
                 {%if (current_user.fx() != 'USD')%}
-                <span class="statusbox">
-                    <span class="nav-item text-white" style="color:lightgreen;">
-                        FX Cross
-                        <span id="fx_cross">
-                            <span class="loadanim small">loading</span>
-                        </span>
-                    </span><br>
-                    <span class="nav-item text-white" style="color:lightgreen;">
-                        FX Rate
-                        <span id="fx_rate">
-                            <span class="loadanim small">loading</span>
-                        </span>
+                <span class="statusbox text-white">
+                    FX Rate
+                    <span id="fx_rate">
+                        <span class="loadanim small">loading</span>
                     </span>
+                    <span id="fx_cross">
+                    </span>
+
                 </span>
 
-                <span class="statusbox">
-                    <span class="nav-item text-white" style="color:lightgreen;">
-                        BTC {{current_user.fx() | fxsymbol}}
-                        <span id="btc_fx">
-                            <span class="loadanim small">loading</span>
-                        </span>
+                <span class="statusbox text-white">
+                    BTC {{current_user.fx() | fxsymbol}}
+                    <span id="btc_fx">
+                        <span class="loadanim small">loading</span>
                     </span>
                 </span>
                 {%endif%}
-                <span class="statusbox">
-                    <span class="nav-item text-white" style="color:lightgreen;">
-                        BTC {{current_user.fx() | fxsymbol}}
-                        <span id="btc_usd">
-                            <span class="loadanim small">loading</span>
-                        </span>
+
+                <span class="statusbox text-white">
+                    BTC $
+                    <span id="btc_usd">
+                        <span class="loadanim small">loading</span>
                     </span>
+
                 </span>
 
-                <span class="statusbox">
-                    <a class="nav-item text-white" style="text-decoration: none; color:lightgreen;"
-                        href="{{ url_for('users.account') }}">
-                        <i class="fas fa-exchange-alt fa-lg"></i>
-                        <strong>
-                            All prices in {{current_user.fx_rate_data()['name_plural']}}
-                        </strong>
-                    </a>
-                </span>
+
+                <a class="statusbox text-white" href="{{ url_for('users.account') }}">
+                    <strong>
+                        All prices in {{current_user.fx_rate_data()['name_plural']}}&nbsp;
+                    </strong>
+                    <i class="fas fa-exchange-alt fa-lg"></i>
+                </a>
+
 
 
                 <!-- Search form -->
