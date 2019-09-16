@@ -7,6 +7,8 @@
     - Included balance of Bitcoin Addresses being monitored on front page
     - Implemented auto check of balances to detect changes
     - Fixed an issue where NAV was being calculated more often than needed
+    - Redesign of layout
+    - Redesign of Dashboard
 
 ## v.15 alpha (09/04/2019)
 
