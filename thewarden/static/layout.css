@@ -154,8 +154,8 @@
     height: 100%;
     overflow-y: scroll;
     padding: 40px;
-    padding-top: 10px;
-    padding-bottom: 100px;
+    padding-top: 0px;
+    padding-bottom: 150px;
     position: fixed;
     top: 70px;
     right: 0px;
