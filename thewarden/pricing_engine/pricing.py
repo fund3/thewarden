@@ -59,6 +59,7 @@ FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 # _____________________________________________
 
 
+@MWT(timeout=60)
 def current_path():
     # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
@@ -101,7 +102,7 @@ class PriceProvider:
             self.url_args = "&" + urllib.parse.urlencode(field_dict)
         self.errors = []
 
-    @MWT(timeout=1)
+    @MWT(timeout=5)
     def request_data(self, ticker):
         data = None
         if self.base_url is not None:
@@ -174,6 +175,7 @@ class PriceData():
             self.last_update = self.first_update = self.last_close = None
 
     @timing
+    @MWT(timeout=30)
     def update_history(self, force=False):
         # Check first if file exists and if fresh
         # The line below skips history for providers that have realtime in name
@@ -206,6 +208,7 @@ class PriceData():
         # Refresh the class - reinitialize
         return (df)
 
+    @MWT(timeout=10)
     def df_fx(self, currency, fx_provider):
         try:
             # First get the df from this currency
@@ -228,6 +231,7 @@ class PriceData():
             self.errors.append(e)
             return (None)
 
+    @MWT(timeout=120)
     def price_ondate(self, date_input):
         try:
             dt = pd.to_datetime(date_input)
@@ -399,6 +403,7 @@ class PriceData():
 
 
 @timing
+@MWT(timeout=10)
 class ApiKeys():
     # returns current stored keys in the api_keys.conf file
     # makesure file path exists
@@ -509,6 +514,7 @@ def price_data_fx(ticker):
 
 # Returns realtime price for a ticker using the provider list
 # Price is returned in USD
+@MWT(timeout=2)
 def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY):
     for provider in priority_list:
         price_data = PriceData(ticker, PROVIDER_LIST[provider])
@@ -644,8 +650,8 @@ def price_data_rt_full(ticker, provider):
 
 
 # Gets Currency data for current user
-# Setting a timeout to 120 as fx rates don't change so often
-@MWT(timeout=120)
+# Setting a timeout to 10 as fx rates don't change so often
+@MWT(timeout=30)
 @timing
 def fx_rate(fx=None, base='USD'):
     from thewarden.users.utils import fxsymbol
@@ -670,6 +676,7 @@ def fx_rate(fx=None, base='USD'):
     return (rate)
 
 
+@MWT(timeout=30)
 @timing
 # For Tables that need multiple prices at the same time, it's quicker to get
 # a single price request
@@ -691,6 +698,7 @@ def multiple_price_grab(tickers, fx):
     return (data)
 
 
+@MWT(timeout=20)
 def get_price_ondate(ticker, date):
     try:
         price_class = price_data(ticker)
@@ -700,6 +708,7 @@ def get_price_ondate(ticker, date):
         return (0)
 
 
+@MWT(timeout=20)
 def fx_price_ondate(base, cross, date):
     # Gets price conversion on date between 2 currencies
     # on a specific date

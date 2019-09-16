@@ -721,23 +721,26 @@ def regenerate_nav():
     # re-generates the NAV on the background - delete First
     # the local NAV file so it's not used.
     # Check if there any trades in the database. If not, skip.
-    transactions = Trades.query.filter_by(user_id=current_user.username)
-    if transactions.count() == 0:
+    try:
+        if not current_user.is_authenticated:
+            return
+        print("Regenerating NAV. Please wait...")
+        # Delete all pricing history
+        filename = os.path.join(current_path(), 'thewarden/pricing_engine/pricing_data/*.*')
+        aa_files = glob.glob(filename)
+        [os.remove(x) for x in aa_files]
+        filename = os.path.join(current_path(), 'thewarden/nav_data/*.*')
+        nav_files = glob.glob(filename)
+        [os.remove(x) for x in nav_files]
+        # Clear cache
+        MWT()._caches = {}
+        MWT()._timeouts = {}
+        generatenav(current_user.username, force=True)
+        logging.info("Change to database - generated new NAV")
+    except Exception as e:
+        print("Error regenerating NAV")
+        print(e)
         return
-    print("Regenerating NAV. Please wait...")
-    # Delete all pricing history
-    filename = os.path.join(current_path(), 'thewarden/pricing_engine/pricing_data/*.*')
-    aa_files = glob.glob(filename)
-    [os.remove(x) for x in aa_files]
-    filename = os.path.join(current_path(), 'thewarden/nav_data/*.*')
-    nav_files = glob.glob(filename)
-    [os.remove(x) for x in nav_files]
-    # Clear cache
-    MWT()._caches = {}
-    MWT()._timeouts = {}
-
-    generatenav(current_user.username, force=True)
-    logging.info("Change to database - generated new NAV")
 
 
 def send_reset_email(user):
