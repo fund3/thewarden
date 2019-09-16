@@ -154,9 +154,10 @@
     height: 100%;
     overflow-y: scroll;
     padding: 40px;
+    padding-top: 10px;
     padding-bottom: 100px;
     position: fixed;
-    top: 90px;
+    top: 70px;
     right: 0px;
     left: 250px;
     -moz-transition: all 0.25s linear;
