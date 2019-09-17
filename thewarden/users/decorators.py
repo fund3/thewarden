@@ -61,7 +61,7 @@ def timing(method):
             ts = time.time()
             result = method(*args, **kw)
             te = time.time()
-            print('Function', method.__name__, 'time:',
+            print('\033[92mFunction', method.__name__, '\033[95mtime:',
                   round((te - ts) * 1000, 1), 'ms')
             return result
         else:
@@ -131,14 +131,32 @@ class MWT(object):
         def func(*args, **kwargs):
             kw = sorted(kwargs.items())
             key = (args, tuple(kw))
+            if Config.WARDEN_STATUS == "developer":
+                print("\033[92mMemoization (MWT, timeout=" +
+                      str(self.timeout) + "): \033[95m" + (f.__name__) +
+                      "\033[94m(" + str(key) + ")")
             try:
                 # Using memoized function only if still on time
                 v = self.cache[key]
                 if (time.time() - v[1]) > self.timeout:
+                    if Config.WARDEN_STATUS == "developer":
+                        print("             \033[93mTimed out")
                     raise KeyError
-            except KeyError:
+                else:
+                    if Config.WARDEN_STATUS == "developer":
+                        print("             \033[92mUsing Cached result")
+            except (KeyError, TypeError):
                 # Need to recalculate
-                v = self.cache[key] = f(*args, **kwargs), time.time()
+                try:
+                    v = self.cache[key] = f(*args, **kwargs), time.time()
+                    if Config.WARDEN_STATUS == "developer":
+                        print("             \033[92mRecalc and Stored OK")
+                except TypeError:  # Some args passed as list return TypeError, skip
+                    if Config.WARDEN_STATUS == "developer":
+                        print(
+                            "             \033[91mType Error - could not store"
+                        )
+                    return (f(*args, **kwargs))
             return v[0]
 
         func.func_name = f.__name__

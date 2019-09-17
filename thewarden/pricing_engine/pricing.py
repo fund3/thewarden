@@ -23,12 +23,12 @@ REALTIME_PROVIDER_PRIORITY = [
     'cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock',
     'fp_realtime_stock'
 ]
-FX_RT_PROVIDER_PRIORITY = ['cc_realtime_full', 'aa_realtime_digital']
+FX_RT_PROVIDER_PRIORITY = ['aa_realtime_digital', 'cc_realtime']
 HISTORICAL_PROVIDER_PRIORITY = [
     'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock',
     'bitmex'
 ]
-FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
+FX_PROVIDER_PRIORITY = ['aa_fx', 'cc_fx']
 
 # How to include new API providers (historical prices):
 # Step 1:
@@ -544,7 +544,7 @@ def price_grabber_rt_full(ticker, priority_list=['cc', 'aa', 'fp']):
     return None
 
 
-@MWT(timeout=30)
+@MWT(timeout=10)
 def price_data_rt_full(ticker, provider):
     # Function to get a complete data set for realtime prices
     # Loop through the providers to get the following info:
@@ -651,11 +651,11 @@ def price_data_rt_full(ticker, provider):
 
 # Gets Currency data for current user
 # Setting a timeout to 10 as fx rates don't change so often
-@MWT(timeout=30)
 @timing
-def fx_rate(fx=None, base='USD'):
+def fx_rate():
     from thewarden.users.utils import fxsymbol
     # This grabs the realtime current currency conversion against USD
+    print(price_data_rt(current_user.fx(), FX_RT_PROVIDER_PRIORITY))
     try:
         # get fx rate
         rate = {}

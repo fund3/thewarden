@@ -716,6 +716,16 @@ def generatenav(user, force=False, filter=None):
     return dailynav
 
 
+def clear_memory():
+    for name in dir():
+        if not name.startswith('_'):
+            del globals()[name]
+
+    for name in dir():
+        if not name.startswith('_'):
+            del locals()[name]
+
+
 @timing
 def regenerate_nav():
     # re-generates the NAV on the background - delete First
@@ -732,7 +742,8 @@ def regenerate_nav():
         filename = os.path.join(current_path(), 'thewarden/nav_data/*.*')
         nav_files = glob.glob(filename)
         [os.remove(x) for x in nav_files]
-        # Clear cache
+        # Clear memory, cache
+        clear_memory()
         MWT()._caches = {}
         MWT()._timeouts = {}
         generatenav(current_user.username, force=True)
