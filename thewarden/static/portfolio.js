@@ -374,16 +374,20 @@ $(document).ready(function () {
             $('#stats_dates_txt').html(stats_dates_txt);
 
             // Data for the Current Week section
-            weekly_html = "<table class='table-responsive'>"
+            weekly_html = "<table class='table-responsive'><tr></tr></table>"
+            $('#weekly_map').html(weekly_html);
+
             for (i = 1; i <= 7; i++) {
 
-                weekly_html += "<tr><td>" + data['daily'][i]['date'] + "<td></tr>" +
-                    "<tr><td class='heatmap changebox' data-html='true' data-toggle='tooltip' data-placement='top'>" +
-                    formatNumber(data['daily'][i]['perc_chg'] * 100, 2, '', '%', 'False', true) + "</td></tr>"
+                $('#weekly_map').append("<td style='height:120px; border: 2px solid #bebebe; border-radius: 10px; border-spacing: 5px;'><p style='font-size: 14px'>" +
+                    data['daily'][i]['date'] + "</p>" +
+                    "<p class='heatmap changebox' data-html='true' data-toggle='tooltip' data-placement='top'>" +
+                    formatNumber(data['daily'][i]['perc_chg'] * 100, 2, '', '%', 'False', true) + "</p><p style='font-size: 14px'> " +
+                    formatNumber(data['daily'][i]['port'], 0, data['fx']) + " </p></td>")
 
             };
-            weekly_html += "</table>"
-            $('#weekly_map').html(weekly_html);
+
+
             heat_color('.heatmap');
             red_green();
         }

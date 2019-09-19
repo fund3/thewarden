@@ -273,10 +273,11 @@ def portstats():
         meta["return_1yr"] = "-"
 
     # Create data for summa"age
+    meta["fx"] = current_user.fx_rate_data()['symbol']
     meta["daily"] = {}
     for days in range(1, 8):
         meta["daily"][days] = {}
-        meta["daily"][days]["date"] = data.index[days * -1].date().strftime("%A (%m/%d)")
+        meta["daily"][days]["date"] = data.index[days * -1].date().strftime("%A <br> %m/%d")
         meta["daily"][days]["nav"] = data["NAV_fx"][days * -1]
         meta["daily"][days]["nav_prev"] = data["NAV_fx"][(days + 1) * -1]
         meta["daily"][days]["perc_chg"] = (
