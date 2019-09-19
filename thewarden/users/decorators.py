@@ -100,7 +100,8 @@ class memoized(object):
     # Clears the cache - called when there are changes that may affect the result
     # of the function
     def clear(self):
-        print(f"cleared Cache for {self.func}")
+        if Config.WARDEN_STATUS == "developer":
+            print(f"cleared Cache for {self.func}")
         self.cache = {}
 
 

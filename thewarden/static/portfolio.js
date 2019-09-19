@@ -362,6 +362,17 @@ $(document).ready(function () {
             $('#return_SI').html((data.return_SI * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "%");
             var stats_dates_txt = data.start_date + " to " + data.end_date
             $('#stats_dates_txt').html(stats_dates_txt);
+
+            // Data for the Current Week section
+            weekly_html = ""
+            for (i = 1; i <= 7; i++) {
+                weekly_html += "<span><span class='changebox' data-html='true' data-toggle='tooltip' data-placement='top'" +
+                    "title='<p>" + data['daily'][i]['date'] + "</p>'>" +
+                    formatNumber(data['daily'][i]['perc_chg'] * 100, 2, '', '%', 'False', true) + "</span>" +
+                    "<span style='font-size: 10px!important;'>" + data['daily'][i]['date'] + "</span></span>"
+            };
+            $('#weekly_map').html(weekly_html);
+
             red_green();
         }
     });

@@ -550,6 +550,7 @@ a {
 }
 
 .statusbox {
+  z-index: 0;
   background: #404040;
   border: 1px solid #dddddd;
   border-radius: 5px;
@@ -557,18 +558,28 @@ a {
   margin-left: 20px;
   color: lightgreen;
   text-decoration: none !important;
-  float: right;
-}
-
-.statusbox:hover {
-  background: #404040;
-  color: lightgreen;
 }
 
 .rightfloater {
-  display: flex;
   margin-left: auto;
   float: right;
   height: 100%;
-  text-align: right;
+}
+
+.changebox {
+  font-size: 10px;
+  background: #ffffff;
+  border: 1px solid #bebebe;
+  border-radius: 5px;
+  padding: 20px;
+  margin-right: 2px;
+  color: black;
+}
+
+.grid-container {
+  display: grid;
+}
+
+.grid-container--fill {
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
 }

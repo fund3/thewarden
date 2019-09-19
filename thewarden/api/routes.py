@@ -272,6 +272,21 @@ def portstats():
     except IndexError:
         meta["return_1yr"] = "-"
 
+    # Create data for summa"age
+    meta["daily"] = {}
+    for days in range(1, 8):
+        meta["daily"][days] = {}
+        meta["daily"][days]["date"] = data.index[days * -1].date().strftime("%A (%m/%d)")
+        meta["daily"][days]["nav"] = data["NAV_fx"][days * -1]
+        meta["daily"][days]["nav_prev"] = data["NAV_fx"][(days + 1) * -1]
+        meta["daily"][days]["perc_chg"] = (
+            meta["daily"][days]["nav"] / meta["daily"][days]["nav_prev"]) - 1
+        meta["daily"][days]["port"] = data["PORT_fx_pos"][days * -1]
+        meta["daily"][days]["port_prev"] = data["PORT_fx_pos"][(days + 1) * -1]
+        meta["daily"][days]["port_chg"] = (
+            meta["daily"][days]["port"] - meta["daily"][days]["port_prev"])
+
+
     # create chart data for a small NAV chart
     return simplejson.dumps(meta, ignore_nan=True)
 

@@ -717,7 +717,21 @@
         <!-- END Charts -->
 
         </br>
-        </br>
+
+        <!-- Start Returns Heatmap + Details -->
+        <div class="row">
+            <div class='col-sm-12'>
+                <div class="content-section">
+                    <div class="lead">Current Week</div>
+                    <div class="text-center grid-container grid-container--fill" id="weekly_map">
+
+                        <img src='static/images/loading_small.gif' width="30" height="30"></img>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 
@@ -925,7 +939,8 @@
                     <br>
                     {%if current_user.fx_rate_data()['name'] != 'US Dollar'%}
                     This means that the returns include the asset returns plus the currency return in the period.
-                    <br>For example, if Bitcoin in USD is up 5% and the {{current_user.fx_rate_data()['name']}} is up
+                    <br>For example, if Bitcoin in USD is up 5% and the {{current_user.fx_rate_data()['name']}} is
+                    up
                     1%, the
                     return will be 6.05% in {{current_user.fx_rate_data()['name_plural']}}.
                     {%endif%}
@@ -966,7 +981,8 @@
 
                 <div>
                     <h5 class='border-bottom'>Calculation of unrealized PnL</h5>
-                    <p>The <strong>Unrealized Breakeven price</strong> is calculated as a weighted average of all the
+                    <p>The <strong>Unrealized Breakeven price</strong> is calculated as a weighted average of all
+                        the
                         transactions above.
                     </p>
                     <p>These transactions are the ones associated with your current open position. The

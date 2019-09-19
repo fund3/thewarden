@@ -6,6 +6,10 @@ $(document).ready(function () {
     }, 30000);
 
     $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+
+    $(function () {
         $("#searchbox").autocomplete({
             source: function (request, response) {
                 $.ajax({
