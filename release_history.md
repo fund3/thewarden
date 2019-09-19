@@ -9,6 +9,8 @@
     - Fixed an issue where NAV was being calculated more often than needed
     - Redesign of layout
     - Redesign of Dashboard
+    - Included last 7 days overview
+    - Fixed issues with CSS tables not responsive on dashboard
 
 ## v.15 alpha (09/04/2019)
 

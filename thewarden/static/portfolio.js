@@ -374,16 +374,22 @@ $(document).ready(function () {
             $('#stats_dates_txt').html(stats_dates_txt);
 
             // Data for the Current Week section
-            weekly_html = "<table class='table-responsive'><tr></tr></table>"
+            weekly_html = "<table class='table-responsive' style='border-collapse: separate; border-spacing: 5px;'><tr></tr></table>"
             $('#weekly_map').html(weekly_html);
 
             for (i = 1; i <= 7; i++) {
 
-                $('#weekly_map').append("<td style='height:120px; border: 2px solid #bebebe; border-radius: 10px; border-spacing: 5px;'><p style='font-size: 14px'>" +
+                if (data['daily'][i]['port_chg'], 0, data['fx'] >= 0) {
+                    add_class = 'green';
+                } else {
+                    add_class = 'red';
+                }
+                $('#weekly_map tr').append("<td style='height:120px; border: 2px solid #bebebe; border-radius: 10px; border-spacing: 5px;'><p style='font-size: 14px'>" +
                     data['daily'][i]['date'] + "</p>" +
                     "<p class='heatmap changebox' data-html='true' data-toggle='tooltip' data-placement='top'>" +
-                    formatNumber(data['daily'][i]['perc_chg'] * 100, 2, '', '%', 'False', true) + "</p><p style='font-size: 14px'> " +
-                    formatNumber(data['daily'][i]['port'], 0, data['fx']) + " </p></td>")
+                    formatNumber(data['daily'][i]['perc_chg'] * 100, 2, '', '%', 'False', true) + "</p><strong style='font-size: 16px'> " +
+                    formatNumber(data['daily'][i]['port'], 0, data['fx']) + "</strong></br><span style='font-size: 14px; color: " + add_class + "'> " +
+                    formatNumber(data['daily'][i]['port_chg'], 0, data['fx'], '', 'False', true) + "</span></td>")
 
             };
 
@@ -411,12 +417,12 @@ $(document).ready(function () {
 // Runs the class to change pos numbers to green and neg to red
 function red_green() {
     // re-apply redgreen filter (otherwise it's all assumed positive since fields were empty before ajax)
-    $("td.redgreen").removeClass('red_negpos');
-    $("td.redgreen").addClass('green_negpos');
-    $("td.redgreen:contains('-')").removeClass('green_negpos');
-    $("td.redgreen:contains('-')").addClass('red_negpos');
+    $(".redgreen").removeClass('red_negpos');
+    $(".redgreen").addClass('green_negpos');
+    $(".redgreen:contains('-')").removeClass('green_negpos');
+    $(".redgreen:contains('-')").addClass('red_negpos');
     // Hide NaN
-    $("td.redgreen:contains('NaN%')").addClass('text-white');
+    $(".redgreen:contains('NaN%')").addClass('text-white');
 }
 
 //  HELPER FUNCTION
