@@ -27,6 +27,16 @@ $(document).ready(function () {
 
     });
 
+    // Function to get the max value in an Array
+    Array.max = function (array) {
+        return Math.max.apply(Math, array);
+    };
+
+    // Function to get the min value in an Array
+    Array.min = function (array) {
+        return Math.min.apply(Math, array);
+    };
+
     $('#button_nochange').on('click', checkBitcoinBalance())
 
     // set run_once to true so some functions at ajax are only executed once
@@ -364,15 +374,17 @@ $(document).ready(function () {
             $('#stats_dates_txt').html(stats_dates_txt);
 
             // Data for the Current Week section
-            weekly_html = ""
+            weekly_html = "<table class='table-responsive'>"
             for (i = 1; i <= 7; i++) {
-                weekly_html += "<span><span class='changebox' data-html='true' data-toggle='tooltip' data-placement='top'" +
-                    "title='<p>" + data['daily'][i]['date'] + "</p>'>" +
-                    formatNumber(data['daily'][i]['perc_chg'] * 100, 2, '', '%', 'False', true) + "</span>" +
-                    "<span style='font-size: 10px!important;'>" + data['daily'][i]['date'] + "</span></span>"
-            };
-            $('#weekly_map').html(weekly_html);
 
+                weekly_html += "<tr><td>" + data['daily'][i]['date'] + "<td></tr>" +
+                    "<tr><td class='heatmap changebox' data-html='true' data-toggle='tooltip' data-placement='top'>" +
+                    formatNumber(data['daily'][i]['perc_chg'] * 100, 2, '', '%', 'False', true) + "</td></tr>"
+
+            };
+            weekly_html += "</table>"
+            $('#weekly_map').html(weekly_html);
+            heat_color('.heatmap');
             red_green();
         }
     });
@@ -425,9 +437,9 @@ function formatNumber(amount, decimalCount = 2, prepend = '', postpend = '', sma
 
         if (up_down == true) {
             if (amount > 0) {
-                postpend = postpend + '&nbsp;<img src="static/images/btc_up.png" width="10" height="10"></img>'
+                postpend = postpend + '&nbsp;<i class="fas fa-angle-up"></i>'
             } else if (amount < 0) {
-                postpend = postpend + '&nbsp;<img src="static/images/btc_down.png" width="10" height="10"></img>'
+                postpend = postpend + '&nbsp;<i class="fas fa-angle-down"></i>'
             }
         }
         return (string + postpend)
@@ -793,6 +805,70 @@ function checkDojo() {
             html_dojo = "<a style='text-decoration: none' href='/dojo_setup'>" +
                 "<span class='text-warning'>" +
                 "&nbsp;&nbsp;&nbsp;&nbsp;Node Unavailable  </span></a>"
+        }
+    });
+}
+
+
+
+function heat_color(object) {
+    // Get all data values from our table cells making sure to ignore the first column of text
+    // Use the parseInt function to convert the text string to a number
+    var counts_positive = $(object).map(function () {
+        if (parseFloat($(this).text()) > 0) {
+            return parseFloat($(this).text());
+        };
+    }).get();
+
+    var counts_negative = $(object).map(function () {
+        if (parseFloat($(this).text()) < 0) {
+            return parseFloat($(this).text());
+        };
+    }).get();
+
+    console.log(counts_positive)
+    console.log(counts_negative)
+
+    // run max value function and store in variable
+    var max = Array.max(counts_positive);
+    var min = Array.min(counts_negative) * (-1);
+
+    n = 100; // Declare the number of groups
+
+    // Define the ending colour, which is white
+    xr = 255; // Red value
+    xg = 255; // Green value
+    xb = 255; // Blue value
+
+    // Define the starting colour for positives
+    yr = 0; // Red value 243
+    yg = 135; // Green value 32
+    yb = 50; // Blue value 117
+
+    // Define the starting colour for negatives
+    nr = 213; // Red value 243
+    ng = 75; // Green value 32
+    nb = 34; // Blue value 117
+
+    // Loop through each data point and calculate its % value
+    $(object).each(function () {
+        if (parseFloat($(this).text()) > 0) {
+            var val = parseFloat($(this).text());
+            var pos = parseFloat((Math.round((val / max) * 100)).toFixed(0));
+            red = parseInt((xr + ((pos * (yr - xr)) / (n - 1))).toFixed(0));
+            green = parseInt((xg + ((pos * (yg - xg)) / (n - 1))).toFixed(0));
+            blue = parseInt((xb + ((pos * (yb - xb)) / (n - 1))).toFixed(0));
+            clr = 'rgb(' + red + ',' + green + ',' + blue + ')';
+            $(this).css({ backgroundColor: clr });
+        }
+        else {
+            var val = parseFloat($(this).text()) * (-1);
+            var pos = parseFloat((Math.round((val / min) * 100)).toFixed(0));
+            red = parseInt((xr + ((pos * (nr - xr)) / (n - 1))).toFixed(0));
+            green = parseInt((xg + ((pos * (ng - xg)) / (n - 1))).toFixed(0));
+            blue = parseInt((xb + ((pos * (nb - xb)) / (n - 1))).toFixed(0));
+            clr = 'rgb(' + red + ',' + green + ',' + blue + ')';
+            $(this).css({ backgroundColor: clr });
         }
     });
 }
