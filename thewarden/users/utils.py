@@ -333,7 +333,7 @@ def single_price(ticker):
     return (price_data_rt(ticker), datetime.now())
 
 
-@MWT(timeout=1)
+@MWT(timeout=2)
 def positions_dynamic():
     # This method is the realtime updater for the front page. It gets the
     # position information from positions above and returns a dataframe

@@ -379,7 +379,7 @@ $(document).ready(function () {
 
             for (i = 1; i <= 7; i++) {
 
-                if (data['daily'][i]['port_chg'], 0, data['fx'] >= 0) {
+                if (data['daily'][i]['port_chg'] >= 0) {
                     add_class = 'green';
                 } else {
                     add_class = 'red';

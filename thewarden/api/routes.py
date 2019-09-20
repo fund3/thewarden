@@ -1870,6 +1870,7 @@ def realtime_user():
     return json.dumps(fx_rate)
 
 
+@MWT(10)
 @api.route("/positions_json", methods=["GET"])
 def positions_json():
     # Get all transactions and cost details
