@@ -846,19 +846,19 @@ function heat_color(object) {
     n = 100; // Declare the number of groups
 
     // Define the ending colour, which is white
-    xr = 255; // Red value
-    xg = 255; // Green value
-    xb = 255; // Blue value
+    xr = 230; // Red value
+    xg = 233; // Green value
+    xb = 237; // Blue value
 
     // Define the starting colour for positives
-    yr = 0; // Red value 243
-    yg = 135; // Green value 32
-    yb = 50; // Blue value 117
+    yr = 97; // Red value 243
+    yg = 184; // Green value 32
+    yb = 115; // Blue value 117
 
     // Define the starting colour for negatives
-    nr = 213; // Red value 243
-    ng = 75; // Green value 32
-    nb = 34; // Blue value 117
+    nr = 226; // Red value 243
+    ng = 156; // Green value 32
+    nb = 131; // Blue value 117
 
     // Loop through each data point and calculate its % value
     $(object).each(function () {

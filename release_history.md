@@ -3,13 +3,13 @@
 ## v.16 alpha
 
     - Fixed issues when importing Dojo addresses
-    - Included option to force rescan of all Dojo addresses
-    - Included balance of Bitcoin Addresses being monitored on front page
-    - Implemented auto check of balances to detect changes
+    - Included button where user can force rescan of all Dojo addresses
+    - Included balance of Bitcoin Addresses being monitored on dashboard
+    - Implemented auto check of balances to detect changes and notify at dashboard
     - Fixed an issue where NAV was being calculated more often than needed
     - Redesign of layout
-    - Redesign of Dashboard
-    - Included last 7 days overview
+    - Redesign of dashboard
+    - Included last 7 days overview at dashboard
     - Fixed issues with CSS tables not responsive on dashboard
 
 ## v.15 alpha (09/04/2019)
