@@ -50,12 +50,12 @@ $(document).ready(function () {
             if (data.status) {
                 html_tor = "<i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor running"
             } else {
-                html_tor = "<i class='fas fa-lg fa-user-shield text-warning'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled"
+                html_tor = "<span class='text-warning'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled</span>"
             }
             $('#tor_span').html(html_tor);
         },
         error: function (xhr, status, error) {
-            html_tor = "<i class='fas fa-lg fa-user-shield text-warning'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled"
+            html_tor = "<span class='text-warning'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled</span>"
             $('#tor_span').html(html_tor);
         }
     });

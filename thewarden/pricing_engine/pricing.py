@@ -514,8 +514,9 @@ def price_data_fx(ticker):
 
 # Returns realtime price for a ticker using the provider list
 # Price is returned in USD
-@MWT(timeout=2)
 def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY):
+    if ticker == 'USD':
+        return None
     for provider in priority_list:
         price_data = PriceData(ticker, PROVIDER_LIST[provider])
         if price_data.realtime(PROVIDER_LIST[provider]) is not None:
