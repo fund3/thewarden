@@ -23,12 +23,12 @@ REALTIME_PROVIDER_PRIORITY = [
     'cc_realtime', 'aa_realtime_digital', 'aa_realtime_stock',
     'fp_realtime_stock'
 ]
-FX_RT_PROVIDER_PRIORITY = ['cc_realtime_full', 'aa_realtime_digital']
+FX_RT_PROVIDER_PRIORITY = ['aa_realtime_digital', 'cc_realtime']
 HISTORICAL_PROVIDER_PRIORITY = [
     'cc_digital', 'aa_digital', 'aa_stock', 'cc_fx', 'aa_fx', 'fmp_stock',
     'bitmex'
 ]
-FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
+FX_PROVIDER_PRIORITY = ['aa_fx', 'cc_fx']
 
 # How to include new API providers (historical prices):
 # Step 1:
@@ -59,8 +59,9 @@ FX_PROVIDER_PRIORITY = ['cc_fx', 'aa_fx']
 # _____________________________________________
 
 
+@MWT(timeout=60)
 def current_path():
-   # determine if application is a script file or frozen exe
+    # determine if application is a script file or frozen exe
     if getattr(sys, 'frozen', False):
         application_path = sys._MEIPASS
     elif __file__:
@@ -101,7 +102,7 @@ class PriceProvider:
             self.url_args = "&" + urllib.parse.urlencode(field_dict)
         self.errors = []
 
-    @MWT(timeout=1)
+    @MWT(timeout=5)
     def request_data(self, ticker):
         data = None
         if self.base_url is not None:
@@ -174,6 +175,7 @@ class PriceData():
             self.last_update = self.first_update = self.last_close = None
 
     @timing
+    @MWT(timeout=30)
     def update_history(self, force=False):
         # Check first if file exists and if fresh
         # The line below skips history for providers that have realtime in name
@@ -206,6 +208,7 @@ class PriceData():
         # Refresh the class - reinitialize
         return (df)
 
+    @MWT(timeout=10)
     def df_fx(self, currency, fx_provider):
         try:
             # First get the df from this currency
@@ -228,6 +231,7 @@ class PriceData():
             self.errors.append(e)
             return (None)
 
+    @MWT(timeout=120)
     def price_ondate(self, date_input):
         try:
             dt = pd.to_datetime(date_input)
@@ -399,6 +403,7 @@ class PriceData():
 
 
 @timing
+@MWT(timeout=10)
 class ApiKeys():
     # returns current stored keys in the api_keys.conf file
     # makesure file path exists
@@ -413,13 +418,12 @@ class ApiKeys():
                 with open(self.filename, 'r') as fp:
                     data = json.load(fp)
                     return (data)
-            except (FileNotFoundError, KeyError) as e:
-                print(e)
-                return ""
+            except (FileNotFoundError, KeyError):
+                pass
         else:
             # File not found, let's construct a new one
             empty_api = {
-                "alphavantage": {"api_key": "RAJSHDKCO"},
+                "alphavantage": {"api_key": "AA_TEMP_APIKEY"},
                 "bitmex": {"api_key": None, "api_secret": None},
                 "dojo": {"onion": None, "api_key": None, "token": "error"}
             }
@@ -511,6 +515,8 @@ def price_data_fx(ticker):
 # Returns realtime price for a ticker using the provider list
 # Price is returned in USD
 def price_data_rt(ticker, priority_list=REALTIME_PROVIDER_PRIORITY):
+    if ticker == 'USD':
+        return None
     for provider in priority_list:
         price_data = PriceData(ticker, PROVIDER_LIST[provider])
         if price_data.realtime(PROVIDER_LIST[provider]) is not None:
@@ -530,7 +536,7 @@ def GBTC_premium(price):
 
 # Returns full realtime price for a ticker using the provider list
 # Price is returned in USD
-def price_grabber_rt_full(ticker, priority_list=['cc','aa','fp']):
+def price_grabber_rt_full(ticker, priority_list=['cc', 'aa', 'fp']):
     for provider in priority_list:
         price_data = price_data_rt_full(ticker, provider)
         if price_data is not None:
@@ -539,7 +545,7 @@ def price_grabber_rt_full(ticker, priority_list=['cc','aa','fp']):
     return None
 
 
-@MWT(timeout=30)
+@MWT(timeout=10)
 def price_data_rt_full(ticker, provider):
     # Function to get a complete data set for realtime prices
     # Loop through the providers to get the following info:
@@ -645,12 +651,12 @@ def price_data_rt_full(ticker, provider):
 
 
 # Gets Currency data for current user
-# Setting a timeout to 120 as fx rates don't change so often
-@MWT(timeout=120)
+# Setting a timeout to 10 as fx rates don't change so often
 @timing
-def fx_rate(fx=None, base='USD'):
+def fx_rate():
     from thewarden.users.utils import fxsymbol
     # This grabs the realtime current currency conversion against USD
+    print(price_data_rt(current_user.fx(), FX_RT_PROVIDER_PRIORITY))
     try:
         # get fx rate
         rate = {}
@@ -671,6 +677,7 @@ def fx_rate(fx=None, base='USD'):
     return (rate)
 
 
+@MWT(timeout=30)
 @timing
 # For Tables that need multiple prices at the same time, it's quicker to get
 # a single price request
@@ -692,6 +699,17 @@ def multiple_price_grab(tickers, fx):
     return (data)
 
 
+@MWT(timeout=20)
+def get_price_ondate(ticker, date):
+    try:
+        price_class = price_data(ticker)
+        price_ondate = price_class.price_ondate(date)
+        return (price_ondate)
+    except Exception:
+        return (0)
+
+
+@MWT(timeout=20)
 def fx_price_ondate(base, cross, date):
     # Gets price conversion on date between 2 currencies
     # on a specific date
@@ -742,8 +760,7 @@ PROVIDER_LIST = {
     'fmp_stock':
     PriceProvider(
         name='financialmodelingprep',
-        base_url=
-        'https://financialmodelingprep.com/api/v3/historical-price-full',
+        base_url='https://financialmodelingprep.com/api/v3/historical-price-full',
         ticker_field='',
         field_dict={
             'from': '2001-01-01',
@@ -771,8 +788,7 @@ PROVIDER_LIST = {
             'tsym': 'USD',
             'allData': 'true'
         },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
     'cc_fx':
     PriceProvider(
@@ -783,8 +799,7 @@ PROVIDER_LIST = {
             'fsym': 'USD',
             'allData': 'true'
         },
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Historical&cat=dataHistoday'
     ),
     'bitmex':
     PriceProvider(name='bitmex',
@@ -808,8 +823,7 @@ PROVIDER_LIST = {
         base_url='https://min-api.cryptocompare.com/data/pricemultifull',
         ticker_field='fsyms',
         field_dict={'tsyms': 'USD'},
-        doc_link=
-        'https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
+        doc_link='https://min-api.cryptocompare.com/documentation?key=Price&cat=multipleSymbolsFullPriceEndpoint'
     ),
     'aa_realtime_digital':
     PriceProvider(name='aarealtime',
@@ -833,8 +847,7 @@ PROVIDER_LIST = {
     'fp_realtime_stock':
     PriceProvider(
         name='fprealtimestock',
-        base_url=
-        'https://financialmodelingprep.com/api/v3/stock/real-time-price',
+        base_url='https://financialmodelingprep.com/api/v3/stock/real-time-price',
         ticker_field='',
         field_dict='',
         doc_link='https://financialmodelingprep.com/developer/docs/#Stock-Price'

@@ -39,7 +39,7 @@ class LoginForm(FlaskForm):
 
 class UpdateAccountForm(FlaskForm):
     email = StringField("Email", [DataRequired(), Email()])
-    basefx = SelectField("Your selected base currency", [Optional()],
+    basefx = SelectField("Choose your base currency", [Optional()],
                          choices=fx_list())
     submit = SubmitField("Update")
 

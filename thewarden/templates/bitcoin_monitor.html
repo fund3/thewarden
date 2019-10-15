@@ -30,6 +30,11 @@
                 <button type="button" id="Add_new" class="btn btn-outline-secondary btn xbuttons">Add New
                     Address</button>
             </a>
+
+            <a>
+                <button type="button" data-toggle="modal" data-target="#rescan_modal_open"
+                    class="btn btn-outline-warning btn xbuttons">Force Rescan</button>
+            </a>
         </p>
         <p>
 
@@ -226,7 +231,7 @@
                             </td>
                             <td class="align-middle text-center balance_sum" id="balance"
                                 data-balance="{{address.last_balance}}">
-                                {{address.last_balance | jformat(2, 100000000)}}
+                                {{address.last_balance | jformat(4, 100000000)}}
                             </td>
                             <td class=" text-left" id='check'>
                                 {% if (address.last_check == None)%}
@@ -289,3 +294,63 @@
 
 
 {% endblock content %}
+
+{%block modals%}
+<!-- Modal for Rescan Confirmation -->
+<div class="modal fade" id="rescan_modal_open" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" style="min-width:65%;" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Confirm Rescan of all Addresses</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id='accounting_transactions'>
+                <p class='text-warning'><strong>Address rescan can take a long time. You should usually do this when you
+                        reinstalled a Dojo
+                        or did anything
+                        else that would have deleted the Dojo database of scanned addresses.
+                    </strong></p>
+
+                <div>
+                    <h5>After clicking RESCAN, don't close the window. <br><br></h5>
+                    May take a long time depending on the number of addresses being rescanned. Estimated time is 1 -
+                    10 seconds per address.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="rescan" class="btn btn-primary" data-dismiss="modal">Force
+                    Rescan</button>
+                <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Rescanning -->
+<div class="modal fade" id="rescanning_modal" tabindex="-2" role="dialog">
+    <div class="modal-dialog modal-lg" style="min-width:65%;" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">
+                    Rescanning all addresses. This can take a while.<br>
+                    You can check status by typing <code>./dojo.sh logs api</code> on your Dojo computer terminal to
+                    show import status.
+                </h5>
+            </div>
+            <div class="modal-body" id='accounting_transactions'>
+
+                <div>
+                    <h5>Please wait...&nbsp;</h5>
+                    <div class="spinner-border text-secondary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock modals %}

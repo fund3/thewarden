@@ -17,7 +17,7 @@ class NewTrade(FlaskForm):
                              choices=transtypes,
                              default="2")
     trade_date = DateField("Trade Date", [DataRequired()])
-    trade_asset_ticker = StringField("Crypto Asset", [Optional()])
+    trade_asset_ticker = StringField("Asset", [Optional()])
     trade_operation = SelectField(
         "Operation",
         [Optional()],
@@ -76,7 +76,7 @@ class EditTransaction(FlaskForm):
     )
 
     trade_date = DateField("Trade Date", [DataRequired()])
-    trade_asset_ticker = StringField("Crypto Asset", [Optional()])
+    trade_asset_ticker = StringField("Asset", [Optional()])
 
     trade_operation = SelectField(
         "Operation",

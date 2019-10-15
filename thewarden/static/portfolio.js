@@ -27,10 +27,24 @@ $(document).ready(function () {
 
     });
 
+    // Function to get the max value in an Array
+    Array.max = function (array) {
+        return Math.max.apply(Math, array);
+    };
+
+    // Function to get the min value in an Array
+    Array.min = function (array) {
+        return Math.min.apply(Math, array);
+    };
+
+    $('#button_nochange').on('click', checkBitcoinBalance())
+
     // set run_once to true so some functions at ajax are only executed once
     run_once = true;
     realtime_table();
     getblockheight();
+    getBitcoinAddresses();
+    checkDojo();
 
     // Popover management
     // Default popover enabler from Bootstrap
@@ -358,6 +372,29 @@ $(document).ready(function () {
             $('#return_SI').html((data.return_SI * 100).toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 2, minimumFractionDigits: 2 }) + "%");
             var stats_dates_txt = data.start_date + " to " + data.end_date
             $('#stats_dates_txt').html(stats_dates_txt);
+
+            // Data for the Current Week section
+            weekly_html = "<table class='table-responsive' style='border-collapse: separate; border-spacing: 5px;'><tr></tr></table>"
+            $('#weekly_map').html(weekly_html);
+
+            for (i = 1; i <= 7; i++) {
+
+                if (data['daily'][i]['port_chg'] >= 0) {
+                    add_class = 'green';
+                } else {
+                    add_class = 'red';
+                }
+                $('#weekly_map tr').append("<td style='height:120px; border: 2px solid #bebebe; border-radius: 10px; border-spacing: 5px;'><p style='font-size: 14px'>" +
+                    data['daily'][i]['date'] + "</p>" +
+                    "<p class='heatmap changebox' data-html='true' data-toggle='tooltip' data-placement='top'>" +
+                    formatNumber(data['daily'][i]['perc_chg'] * 100, 2, '', '%', 'False', true) + "</p><strong style='font-size: 16px'> " +
+                    formatNumber(data['daily'][i]['port'], 0, data['fx']) + "</strong></br><span style='font-size: 14px; color: " + add_class + "'> " +
+                    formatNumber(data['daily'][i]['port_chg'], 0, data['fx'], '', 'False', true) + "</span></td>")
+
+            };
+
+
+            heat_color('.heatmap');
             red_green();
         }
     });
@@ -380,12 +417,12 @@ $(document).ready(function () {
 // Runs the class to change pos numbers to green and neg to red
 function red_green() {
     // re-apply redgreen filter (otherwise it's all assumed positive since fields were empty before ajax)
-    $("td.redgreen").removeClass('red_negpos');
-    $("td.redgreen").addClass('green_negpos');
-    $("td.redgreen:contains('-')").removeClass('green_negpos');
-    $("td.redgreen:contains('-')").addClass('red_negpos');
+    $(".redgreen").removeClass('red_negpos');
+    $(".redgreen").addClass('green_negpos');
+    $(".redgreen:contains('-')").removeClass('green_negpos');
+    $(".redgreen:contains('-')").addClass('red_negpos');
     // Hide NaN
-    $("td.redgreen:contains('NaN%')").addClass('text-white');
+    $(".redgreen:contains('NaN%')").addClass('text-white');
 }
 
 //  HELPER FUNCTION
@@ -410,9 +447,9 @@ function formatNumber(amount, decimalCount = 2, prepend = '', postpend = '', sma
 
         if (up_down == true) {
             if (amount > 0) {
-                postpend = postpend + '&nbsp;<img src="static/images/btc_up.png" width="10" height="10"></img>'
+                postpend = postpend + '&nbsp;<i class="fas fa-angle-up"></i>'
             } else if (amount < 0) {
-                postpend = postpend + '&nbsp;<img src="static/images/btc_down.png" width="10" height="10"></img>'
+                postpend = postpend + '&nbsp;<i class="fas fa-angle-down"></i>'
             }
         }
         return (string + postpend)
@@ -498,8 +535,6 @@ function realtime_table() {
                     $('#' + key + '_source').html(value.source);
                     update = new Date(value.last_update)
                     if (update.getHours() == 0 && update.getMinutes() == 0 && update.getSeconds() == 0) {
-                        console.log(update)
-                        console.log(update.getDay())
                         update = (update.getMonth() + 1) + '-' + update.getDate() + '-' + update.getFullYear()
                     } else {
                         if (isNaN(update.getHours())) {
@@ -542,7 +577,51 @@ function realtime_table() {
 
 };
 
+function getBitcoinAddresses() {
+    $.ajax({
+        type: 'GET',
+        url: '/frontpage_btc',
+        dataType: 'json',
+        timeout: 5000,
+        success: function (data) {
+            if (data.count == 0) {
+                $('#bitcoin_addresses_section').hide()
+            } else {
+                $('#total_addresses').html(data.count);
+                $('#bitcoin_balance').html("&#8383 " + data.balance.toLocaleString('en-US', { style: 'decimal', maximumFractionDigits: 4, minimumFractionDigits: 4 }));
+                $('#bitcoin_last_check').html(data.last_update);
+            }
+        },
+        error: function () {
+            $('#total_addresses').html("---");
+            console.log("Error: failed to get Bitcoin Addresses data")
+        }
+    });
+}
 
+function checkBitcoinBalance() {
+    $.ajax({
+        type: "POST",
+        contentType: 'application/json',
+        dataType: "json",
+        url: "/frontpage_btc",
+        success: function (data_back) {
+            console.log("Done checking all balances with the Dojo");
+            console.log(data_back.changes)
+            console.log(data_back.changes.length)
+            if (data_back.errors == true) {
+                $('#bitcoin_check').html("<a id='change' class='btn btn-sm btn-outline-secondary btn-block' href='/bitcoin_monitor' role='button'><i class='fas fa-exclamation-triangle'></i>&nbsp; Error checking balances</a>");
+            } else {
+                if (data_back.changes.length > 0) {
+                    $('#bitcoin_check').html("<a id='change' class='btn btn-sm btn-warning btn-block' href='/bitcoin_monitor' role='button'><i class='fas fa-exclamation-triangle'></i>&nbsp; Changes detected since last check. New balance: " + data_back.total_balance + "</a>");
+                } else {
+                    $('#bitcoin_check').html("<a id='button_nochange' class='btn btn-sm btn-outline-success btn-block' href='/bitcoin_monitor' role='button'>No activity since last check &nbsp;<i class='fas fa-check'></i></a>");
+                }
+            }
+            console.log(data_back)
+        }
+    })
+}
 
 function getblockheight() {
     // GET latest Bitcoin Block Height
@@ -642,7 +721,7 @@ function navChart(data) {
             enabled: false
         },
         rangeSelector: {
-            selected: 5
+            selected: 1
         },
         chart: {
             zoomType: 'xy',
@@ -710,3 +789,96 @@ function navChart(data) {
     });
 
 };
+
+
+
+function checkDojo() {
+    $.ajax({
+        type: "GET",
+        dataType: 'json',
+        url: "/test_dojo",
+        success: function (data) {
+            html_dojo = "-"
+            if ('authorizations' in data.dojo_auth) {
+                html_dojo = "<a style='text-decoration: none' href='/dojo_setup'>" +
+                    "<span class='text-success'> " +
+                    "&nbsp;&nbsp;&nbsp;&nbsp;Dojo running </span></a>"
+
+            } else {
+                html_dojo = "<a style='text-decoration: none' href='/dojo_setup'>" +
+                    "<span class='text-warning'>" +
+                    "&nbsp;&nbsp;&nbsp;&nbsp;Node Unavailable </span> </a>"
+            }
+            $('#node_status').html(html_dojo);
+        },
+        error: function (xhr, status, error) {
+            html_dojo = "<a style='text-decoration: none' href='/dojo_setup'>" +
+                "<span class='text-warning'>" +
+                "&nbsp;&nbsp;&nbsp;&nbsp;Node Unavailable  </span></a>"
+        }
+    });
+}
+
+
+
+function heat_color(object) {
+    // Get all data values from our table cells making sure to ignore the first column of text
+    // Use the parseInt function to convert the text string to a number
+    var counts_positive = $(object).map(function () {
+        if (parseFloat($(this).text()) > 0) {
+            return parseFloat($(this).text());
+        };
+    }).get();
+
+    var counts_negative = $(object).map(function () {
+        if (parseFloat($(this).text()) < 0) {
+            return parseFloat($(this).text());
+        };
+    }).get();
+
+    console.log(counts_positive)
+    console.log(counts_negative)
+
+    // run max value function and store in variable
+    var max = Array.max(counts_positive);
+    var min = Array.min(counts_negative) * (-1);
+
+    n = 100; // Declare the number of groups
+
+    // Define the ending colour, which is white
+    xr = 230; // Red value
+    xg = 233; // Green value
+    xb = 237; // Blue value
+
+    // Define the starting colour for positives
+    yr = 97; // Red value 243
+    yg = 184; // Green value 32
+    yb = 115; // Blue value 117
+
+    // Define the starting colour for negatives
+    nr = 226; // Red value 243
+    ng = 156; // Green value 32
+    nb = 131; // Blue value 117
+
+    // Loop through each data point and calculate its % value
+    $(object).each(function () {
+        if (parseFloat($(this).text()) > 0) {
+            var val = parseFloat($(this).text());
+            var pos = parseFloat((Math.round((val / max) * 100)).toFixed(0));
+            red = parseInt((xr + ((pos * (yr - xr)) / (n - 1))).toFixed(0));
+            green = parseInt((xg + ((pos * (yg - xg)) / (n - 1))).toFixed(0));
+            blue = parseInt((xb + ((pos * (yb - xb)) / (n - 1))).toFixed(0));
+            clr = 'rgb(' + red + ',' + green + ',' + blue + ')';
+            $(this).css({ backgroundColor: clr });
+        }
+        else {
+            var val = parseFloat($(this).text()) * (-1);
+            var pos = parseFloat((Math.round((val / min) * 100)).toFixed(0));
+            red = parseInt((xr + ((pos * (nr - xr)) / (n - 1))).toFixed(0));
+            green = parseInt((xg + ((pos * (ng - xg)) / (n - 1))).toFixed(0));
+            blue = parseInt((xb + ((pos * (nb - xb)) / (n - 1))).toFixed(0));
+            clr = 'rgb(' + red + ',' + green + ',' + blue + ')';
+            $(this).css({ backgroundColor: clr });
+        }
+    });
+}

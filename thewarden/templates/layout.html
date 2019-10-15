@@ -36,70 +36,94 @@
     <script src="{{url_for('static', filename='dependencies/popper/tooltip.js')}}">
     </script>
     <!-- Bootstrap -->
-    <script src="{{url_for('static', filename='dependencies/bootstrap/js/bootstrap.js')}}"></script>
     <script src="{{url_for('static', filename='dependencies/jquery-ui/jquery-ui.js')}}"></script>
+    <script src="{{url_for('static', filename='dependencies/bootstrap/js/bootstrap.js')}}"></script>
+
     <!-- END JavaScript Loaders -->
 
 
-    <!-- MAIN PAGE WRAPPER -->
-    <div id="wrapper">
-        <header class="site-header">
 
-            <div class="row navbar navbar-expand-sm navbar-dark bg-steel fixed-top justify-content-end">
-                <div class="col-2">
-                    {% if current_user.is_authenticated %}
-                    <a href="#menu-toggle" id="menu-toggle">
-                        <div id="btn_tgl" class="fa fa-bars rotate text-white"></div>
-                    </a>
-                    {%endif%}
-                    <!-- <a href="#menu-toggle" class="btn btn-light" id="menu-toggle">
-                    <i class="fas fa-bars rotate"></i>
-                </a> -->
+    <header>
+        <nav class="navbar navbar-dark bg-steel navbar-expand-lg navbar-font justify-content-end">
 
-                    {% if current_user.is_authenticated %}
-                    {% else %}
-                    <button class="navbar-toggler navbar-brand" type="button" data-toggle="collapse"
-                        data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false"
-                        aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    {% endif %}
+            <a class="navbar-brand" href="/"> <img src="{{url_for('static', filename='images/logo_flat.png')}}"
+                    width="180" height="40" alt="Home">
+            </a>
 
-                </div>
-                <div class="col-7 text-left">
-                    <!-- Navbar Right Side -->
-                    {%if config.WARDEN_STATUS == "developer"%}
-                    <span class="text-white" style="font-size: 10px;">DEVELOPMENT ENVIRONMENT:
-                        {{config.SQLALCHEMY_DATABASE_URI}}<br>USER: {{current_user.username}}</span>
-                    {%endif%}
-                </div>
-                <div class="col-3 text-right small">
-                    {% if current_user.is_authenticated %}
-                    <!-- Search form -->
-                    <!-- <form class="form-inline md-form form-sm">
+
+
+            <div class="rightfloater">
+
+                <a class="statusbox" href="{{ url_for('node.tor_setup') }}">
+                    <span id="tor_span">
+                        <i class="text-white fas fa-lg fa-user-shield"></i>
+                        <span class="text-white text-right">&nbsp;&nbsp;&nbsp;&nbsp;Checking Tor
+                        </span>
+                    </span>
+                </a>
+
+
+                {% if current_user.is_authenticated %}
+
+                <!-- FX Rate and BTC price-->
+
+                {%if (current_user.fx() != 'USD')%}
+                <span class="statusbox text-white">
+                    FX Rate
+                    <span id="fx_rate">
+                        <span class="loadanim small">loading</span>
+                    </span>
+                    <span id="fx_cross">
+                    </span>
+
+                </span>
+
+                <span class="statusbox text-white">
+                    BTC {{current_user.fx() | fxsymbol}}
+                    <span id="btc_fx">
+                        <span class="loadanim small">loading</span>
+                    </span>
+                </span>
+                {%endif%}
+
+                <span class="statusbox text-white">
+                    BTC $
+                    <span id="btc_usd">
+                        <span class="loadanim small">loading</span>
+                    </span>
+
+                </span>
+
+
+                <a class="statusbox text-white" href="{{ url_for('users.account') }}">
+                    <strong>
+                        All prices in {{current_user.fx_rate_data()['name_plural']}}&nbsp;
+                    </strong>
+                    <i class="fas fa-exchange-alt fa-lg"></i>
+                </a>
+
+
+
+                <!-- Search form -->
+                <!-- <form class="form-inline md-form form-sm">
                         <input id="searchbox" class="form-control form-control-sm mr-3 w-75" type="text"
                             placeholder="Search" aria-label="Search">
                         <i class="fas fa-search text-white fa-lg" aria-hidden="true"></i>
                     </form> -->
-                    {% else %}
-                    <a class="nav-item text-white" href="{{ url_for('users.login') }}">Login</a>&nbsp;&nbsp;&nbsp;&nbsp;
-                    <a class="nav-item text-white" href="{{ url_for('users.register') }}">Register</a>
-                    {% endif %}
-                </div>
+                {% else %}
+                <a class="nav-item text-white" href="{{ url_for('users.login') }}">Login</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                <a class="nav-item text-white" href="{{ url_for('users.register') }}">Register</a>
+                {% endif %}
             </div>
-        </header>
+        </nav>
+    </header>
+
+    <body>
 
         <!-- Sidebar -->
         {% if current_user.is_authenticated %}
         <div id="sidebar-wrapper">
             <ul class="sidebar-nav small">
-
-                <li>
-                    <strong><a href="/" class="text-white">
-                            <i class="fas fa-home fa-2x"></i> &nbsp;&nbsp;&nbsp; Home
-                        </a></strong>
-                </li>
-
 
 
 
@@ -113,6 +137,8 @@
                 </li>
                 <div class="collapse show" id="collapse_transactions"">
                     <div class=" list-group bg-transparent text-white">
+                    <a class="sidebar-subitem" href="/"><i class="fas fa-table fa-lg"></i>&nbsp;&nbsp;Dashboard</a>
+
                     <a class="sidebar-subitem" href="{{ url_for('transactions.list_transactions') }}"><i
                             class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List Transactions</a>
                     <a class="sidebar-subitem" href="{{ url_for('transactions.newtrade') }}"><i
@@ -162,18 +188,21 @@
         <li>
             <a data-toggle="collapse" href="#collapse_bitcoin" role="button" aria-expanded="true"
                 aria-controls="collapse_bitcoin">
-                <i class="fas fa-user-ninja fa-lg"></i>
-                &nbsp;&nbsp;&nbsp;&nbsp;Step into the Dojo
+                <i class="fab fa-btc fa-lg"></i>
+                &nbsp;&nbsp;&nbsp;&nbsp;Bitcoin Node
                 <i class="fas fa-caret-down"></i></a>
         </li>
         <div class="collapse show" id="collapse_bitcoin">
             <div class="list-group bg-transparent text-white">
                 <a class="sidebar-subitem" href="{{ url_for('node.bitcoin_monitor') }}"><i
-                        class="fas fa-tachometer-alt fa-lg"></i>&nbsp;&nbsp;Dashboard</a>
-                <a class="sidebar-subitem" href="{{ url_for('node.bitcoin_addresses') }}"><i
-                        class="fas fa-list fa-lg"></i>&nbsp;&nbsp;List Addresses</a>
+                        class="fas fa-tachometer-alt fa-lg"></i>&nbsp;&nbsp;Address Dashboard</a>
                 <a class="sidebar-subitem" href="{{ url_for('node.import_addresses') }}">
                     <i class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;Import Addresses</a>
+                <a class="sidebar-subitem" href="{{ url_for('node.bitcoin_addresses') }}"><i
+                        class="fas fa-list fa-lg"></i>&nbsp;&nbsp;Address List</a>
+                <a class="sidebar-subitem" href="{{ url_for('node.dojo_setup') }}">
+                    <i class="fa fa-user-ninja fa-lg"></i>&nbsp;&nbsp;Samourai Dojo Config</a>
+
             </div>
         </div>
 
@@ -197,8 +226,10 @@
 
                 <a class="sidebar-subitem" href="{{ url_for('users.apikeys_management') }}"><i
                         class="fas fa-key fa-lg"></i>&nbsp;&nbsp;API Keys Management</a>
-                <br>
 
+                <a class="sidebar-subitem" href="{{ url_for('users.services') }}"><i
+                        class="fas fa-user-secret fa-lg"></i>&nbsp;&nbsp;Privacy Services</a>
+                <br>
                 <a class="sidebar-subitem fa-lg" href="{{ url_for('transactions.bitmex_transactions') }}"><i
                         class="fas fa-file-import fa-lg"></i>&nbsp;&nbsp;Bitmex Import</a>
 
@@ -218,93 +249,6 @@
         </div>
         <br>
 
-        <!-- FX Rate -->
-        <li class="border-top" style="padding-top: 20px;">
-        </li>
-        <div class="show" id="collapse_fx">
-
-            <div class="list-group bg-transparent text-white">
-                {%if (current_user.fx() != 'USD')%}
-                <span style="padding-left: 30px; color:lightgreen;">
-                    FX Cross
-                    <span id="fx_cross" style="float:right; padding-right: 35px;">
-                        <span class="loadanim small">loading</span>
-                    </span>
-                </span>
-                <span style="padding-left: 30px; color:lightgreen;">
-                    FX Rate
-                    <span id="fx_rate" style="float:right; padding-right: 35px;">
-                        <span class="loadanim small">loading</span>
-                    </span>
-                </span>
-                <span style="padding-left: 30px; color:lightgreen;">
-                    BTC ( {{current_user.fx() | fxsymbol}} )
-                    <span id="btc_fx" style="float:right; padding-right: 35px;">
-                        <span class="loadanim small">loading</span>
-                    </span>
-                </span>
-                {%endif%}
-                <span style="padding-left: 30px; color:lightgreen;">
-                    BTC (USD)
-                    <span id="btc_usd" style="float:right; padding-right: 35px;">
-                        <span class="loadanim small">loading</span>
-                    </span>
-                </span>
-            </div>
-
-            <div class="list-group bg-transparent text-white">
-                <a class="sidebar-subitem" href="{{ url_for('users.account') }}">
-                    <i class="fas fa-exchange-alt fa-lg"></i>
-                    <strong>
-                        {{current_user.fx_rate_data()['name_plural']}}
-                    </strong>
-                </a>
-            </div>
-
-        </div>
-
-
-        <br>
-
-        <div class="show" id="collapse_fx">
-            <div style="padding-left: 30px;" class="list-group bg-transparent text-white border-top">
-                <p> <span class="text-white">
-
-                    </span>
-                </p>
-
-
-                <div class="list-group bg-transparent text-white">
-                    <p>
-                        <span id="tor_span">
-                            <a style="text-decoration : none" href="{{ url_for('node.tor_setup') }}">
-                                <span class=" nav-item" style="color: rgb(179, 179, 179);">
-                                    <i class="fas fa-lg fa-user-shield"></i>
-                                </span>
-                                <span class="text-white text-right">&nbsp;&nbsp;&nbsp;&nbsp;Checking Tor
-                                </span>
-                            </a>
-                        </span>
-                    </p>
-                    <p>
-
-                        <span id="dojo_span">
-                            <a style="text-decoration : none" href="{{ url_for('node.dojo_setup') }}">
-                                <span class="nav-item" style="color: rgb(179, 179, 179);">
-                                    <i class="fas fa-lg fa-user-ninja"></i></span>
-                                <span class="text-white text-right">&nbsp;&nbsp;&nbsp;&nbsp;Checking DOJO
-                                </span>
-                            </a>
-                        </span>
-                    </p>
-                </div>
-            </div>
-            <div class="list-group bg-transparent text-white">
-                <a class="sidebar-subitem" href="{{ url_for('users.services') }}"><i
-                        class="fas fa-user-secret fa-lg"></i>&nbsp;&nbsp;Privacy Services</a>
-            </div>
-        </div>
-        <br>
 
         <li class="border-top">
             <a href="{{ url_for('main.about') }}" class="text-muted"><i
@@ -327,68 +271,77 @@
         <br><br><br><br><br><br><br>
         </ul>
 
-    </div>
-    {% endif %}
-    <!-- /#sidebar-wrapper -->
-
-
-
-    <!-- Main Content -->
-    <div id="page-content-wrapper">
-        <main role=" main">
-
-            <div style='padding-top: 30px;'>
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                {% for category, message in messages %}
-                <div id="messagealert" class="alert alert-{{ category }}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-                {% endif %}
-                {% endwith %}
-                {% block content %}
-                {% endblock %}
-            </div>
-            <br>
-        </main>
-    </div>
-    <!-- END MAIN CONTENT -->
-
-    <!-- Footer -->
-    <footer class="site-footer bg-steel small fixed-bottom">
-        <div class="container text-right text-light align-middle">
-
-            <div class="row" style="vertical-align: bottom;">
-                <div class="col-sm-6 text-left">
-                    <span class="text-white">
-                        <br>
-                        <i class="fab fa-github fa-2x" style="vertical-align: middle;"></i>
-                        &nbsp;&nbsp;<a style="text-decoration : none" href='https://github.com/pxsocs/thewarden'
-                            class='text-white'>
-                            Open Source code available at GitHub</a>
-                    </span>
-                </div>
-
-                <div class="col-sm-6 text-right">
-                    <a style="text-decoration : none" href="https://twitter.com/alphaazeta"> <i
-                            class="text-white fab fa-twitter fa-xlg"></i>
-                        <span class="text-white">@AlphaaZeta&nbsp;</span></a><br>
-                    <i class="fab fa-bitcoin fa-xlg"></i> #StackingSats
-                    #NotYourKeysNotYourCoins
-                    <br><br>
-                </div>
-            </div>
-
         </div>
-    </footer>
-    </div>
-    <!-- END OF WRAPPER -->
+        {% endif %}
+        <!-- /#sidebar-wrapper -->
 
-</body>
-{%block modals%}
 
-{%endblock%}
-<script src="/static/layout.js"></script>
+
+        <!-- Main Content -->
+        <div id="page-content-wrapper">
+            <main role=" main">
+
+                <div style='padding-top: 30px;'>
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                    {% for category, message in messages %}
+                    <div id="messagealert" class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                    {% endwith %}
+                    {% block content %}
+                    {% endblock %}
+                </div>
+                <br>
+            </main>
+        </div>
+        <!-- END MAIN CONTENT -->
+
+        <!-- Footer -->
+        <footer class="site-footer bg-steel small fixed-bottom">
+            <div class="container text-right text-light align-middle">
+                {%if config.WARDEN_STATUS == "developer"%}
+                <div class="row" style="vertical-align: bottom;">
+                    <div class="col-sm-12 text-left">
+                        <span class="text-white" style="font-size: 9px;">
+                            DEVELOPMENT MODE IS ON | Database location:
+                            {{config.SQLALCHEMY_DATABASE_URI}} | User: {{current_user.username}}</span>
+                    </div>
+                </div>
+                {%endif%}
+
+                <div class="row" style="vertical-align: bottom;">
+                    <div class="col-sm-6 text-left">
+                        <span class="text-white">
+                            <br>
+                            <i class="fab fa-github fa-2x" style="vertical-align: middle;"></i>
+                            &nbsp;&nbsp;<a style="text-decoration : none" href='https://github.com/pxsocs/thewarden'
+                                class='text-white'>
+                                Open Source code available at GitHub</a>
+                        </span>
+                    </div>
+
+                    <div class="col-sm-6 text-right">
+                        <a style="text-decoration : none" href="https://twitter.com/alphaazeta"> <i
+                                class="text-white fab fa-twitter fa-xlg"></i>
+                            <span class="text-white">@AlphaaZeta&nbsp;</span></a><br>
+                        <i class="fab fa-bitcoin fa-xlg"></i> #StackingSats
+                        #NotYourKeysNotYourCoins
+                        <br><br>
+                    </div>
+                </div>
+
+            </div>
+        </footer>
+
+        <!-- END OF WRAPPER -->
+
+    </body>
+    {%block modals%}
+
+    {%endblock%}
+    <script src="/static/layout.js"></script>
 
 </html>

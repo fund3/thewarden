@@ -12,6 +12,29 @@ $(document).ready(function () {
     response = check_address($linkID, this);
   });
 
+  // Clicked on rescan
+  $("#rescan").on("click", function () {
+    // Show the wait modal
+    $('#rescan_modal').modal('toggle')
+    $('#rescanning_modal').modal('toggle')
+    // Call the rescan function
+    $.ajax({
+      type: "GET",
+      dataType: 'json',
+      url: "/rescan_all",
+      success: function (data) {
+        console.log(data)
+        setTimeout(function () {
+          location.reload();
+        }, 1000);
+      },
+      error: function (xhr, status, error) {
+        console.log(status);
+      }
+    });
+
+  });
+
   // Select All and Select None
   $("#selectAllButton").on("click", function () {
     $('input[type="checkbox"]').prop("checked", true);

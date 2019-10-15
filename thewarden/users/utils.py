@@ -36,7 +36,7 @@ config.read('config.ini')
 try:
     RENEW_NAV = config['MAIN']['RENEW_NAV']
 except KeyError:
-    RENEW_NAV = 10
+    RENEW_NAV = 3600
     logging.error("Could not find RENEW_NAV at config.ini. Defaulting to 60.")
 try:
     PORTFOLIO_MIN_SIZE_NAV = config['MAIN']['PORTFOLIO_MIN_SIZE_NAV']
@@ -67,7 +67,7 @@ def current_path():
     return(application_path)
 
 
-@MWT(timeout=20)
+@MWT(timeout=60)
 @timing
 def cost_calculation(ticker, html_table=None):
     # This function calculates the cost basis assuming 3 different methods
@@ -158,8 +158,8 @@ def cost_calculation(ticker, html_table=None):
         fx = current_user.fx_rate_data()['symbol']
         # Include a link to edit this transaction
         html["trade_reference_id"] = "<a href='/edittransaction?reference_id=" +\
-                                        html['trade_reference_id'] +\
-                                        "'><i class='fas fa-edit'></i></a>"
+                                     html['trade_reference_id'] +\
+                                     "'><i class='fas fa-edit'></i></a>"
 
         html.index = pd.to_datetime(html.index).strftime('%Y-%m-%d')
         # Include TOTAL row
@@ -184,15 +184,15 @@ def cost_calculation(ticker, html_table=None):
         html.loc['TOTAL', 'trade_price_fx'] = ''
         html.loc['TOTAL', 'trade_reference_id'] = ''
         html = html.rename(
-                    columns={
-                        'trade_operation': 'B/S',
-                        'acum_Q': 'Q (acum)',
-                        'trade_price_fx': 'Price (' + fx + ')',
-                        'trade_fees_fx': 'Fees (' + fx + ')',
-                        'cash_value_fx': 'Cash Flow (' + fx + ')',
-                        'adjusted_cv': 'Adj CF (' + fx + ')',
-                        'trade_reference_id': ' '
-                    })
+            columns={
+                'trade_operation': 'B/S',
+                'acum_Q': 'Q (acum)',
+                'trade_price_fx': 'Price (' + fx + ')',
+                'trade_fees_fx': 'Fees (' + fx + ')',
+                'cash_value_fx': 'Cash Flow (' + fx + ')',
+                'adjusted_cv': 'Adj CF (' + fx + ')',
+                'trade_reference_id': ' '
+            })
 
         cost_matrix = html.to_html(
             classes='table table-condensed table-striped small-text text-right',
@@ -214,6 +214,7 @@ def find_fx(row, fx=None):
 
 
 @timing
+@MWT(timeout=30)
 def transactions_fx():
     # Gets the transaction table and fills with fx information
     # Note that it uses the currency exchange for the date of transaction
@@ -302,9 +303,9 @@ def positions():
     # Get all transactions & group by ticker name and operation
     df = transactions_fx()
     summary_table = df.groupby(['trade_asset_ticker', 'trade_operation'])[
-                               ["trade_quantity",
-                                "cash_value_fx",
-                                "trade_fees_fx"]].sum()
+                                ["trade_quantity",
+                                 "cash_value_fx",
+                                 "trade_fees_fx"]].sum()
     # Now let's create our main dataframe with information for each ticker
     list_of_tickers = list_tickers()
     main_df = pd.DataFrame({'trade_asset_ticker': list_of_tickers})
@@ -332,7 +333,7 @@ def single_price(ticker):
     return (price_data_rt(ticker), datetime.now())
 
 
-@MWT(timeout=1)
+@MWT(timeout=2)
 def positions_dynamic():
     # This method is the realtime updater for the front page. It gets the
     # position information from positions above and returns a dataframe
@@ -637,8 +638,6 @@ def generatenav(user, force=False, filter=None):
                 f"Success: imported prices for id:{id}")
         except (FileNotFoundError, KeyError, ValueError) as e:
             logging.error(f"{id}: Error: {e}")
-            flash(f"Ticker {id} generated an error. " +
-                  f"NAV calculations will be off. Error: {e}", "danger")
     # Another loop to sum the portfolio values - maybe there is a way to
     # include this on the loop above. But this is not a huge time drag unless
     # there are too many tickers in a portfolio
@@ -717,28 +716,42 @@ def generatenav(user, force=False, filter=None):
     return dailynav
 
 
+def clear_memory():
+    for name in dir():
+        if not name.startswith('_'):
+            del globals()[name]
+
+    for name in dir():
+        if not name.startswith('_'):
+            del locals()[name]
+
+
 @timing
 def regenerate_nav():
     # re-generates the NAV on the background - delete First
     # the local NAV file so it's not used.
     # Check if there any trades in the database. If not, skip.
-    transactions = Trades.query.filter_by(user_id=current_user.username)
-    if transactions.count() == 0:
+    try:
+        if not current_user.is_authenticated:
+            return
+        print("Regenerating NAV. Please wait...")
+        # Delete all pricing history
+        filename = os.path.join(current_path(), 'thewarden/pricing_engine/pricing_data/*.*')
+        aa_files = glob.glob(filename)
+        [os.remove(x) for x in aa_files]
+        filename = os.path.join(current_path(), 'thewarden/nav_data/*.*')
+        nav_files = glob.glob(filename)
+        [os.remove(x) for x in nav_files]
+        # Clear memory, cache
+        clear_memory()
+        MWT()._caches = {}
+        MWT()._timeouts = {}
+        generatenav(current_user.username, force=True)
+        logging.info("Change to database - generated new NAV")
+    except Exception as e:
+        print("Error regenerating NAV")
+        print(e)
         return
-    print("Regenerating NAV. Please wait...")
-    # Delete all pricing history
-    filename = os.path.join(current_path(), 'thewarden/pricing_engine/pricing_data/*.*')
-    aa_files = glob.glob(filename)
-    [os.remove(x) for x in aa_files]
-    filename = os.path.join(current_path(), 'thewarden/nav_data/*.*')
-    nav_files = glob.glob(filename)
-    [os.remove(x) for x in nav_files]
-    # Clear cache
-    MWT()._caches = {}
-    MWT()._timeouts = {}
-
-    generatenav(current_user.username, force=True)
-    logging.info("Change to database - generated new NAV")
 
 
 def send_reset_email(user):
@@ -925,3 +938,50 @@ def bitmex_orders(api_key, api_secret, testnet=True):
     except Exception:
         resp = "Invalid Credential or Connection Error"
     return(resp)
+
+
+def time_ago(time=False):
+    if type(time) is str:
+        try:
+            time = int(time)
+        except TypeError:
+            return ""
+    now = datetime.now()
+    if type(time) is int:
+        diff = now - datetime.fromtimestamp(time)
+    elif isinstance(time, datetime):
+        diff = now - time
+    elif not time:
+        diff = now - now
+    else:
+        return ("")
+    second_diff = diff.seconds
+    day_diff = diff.days
+
+    if day_diff < 0:
+        return ""
+
+    if day_diff == 0:
+        if second_diff < 10:
+            return "Just Now"
+        if second_diff < 60:
+            return str(int(second_diff)) + " seconds ago"
+        if second_diff < 120:
+            return "a minute ago"
+        if second_diff < 3600:
+            return str(int(second_diff / 60)) + " minutes ago"
+        if second_diff < 7200:
+            return "an hour ago"
+        if second_diff < 86400:
+            return str(int(second_diff / 3600)) + " hours ago"
+    if day_diff == 1:
+        return "Yesterday"
+    if day_diff < 7:
+        return str(int(day_diff)) + " days ago"
+    if day_diff < 31:
+        return str(int(day_diff / 7)) + " weeks ago"
+    if day_diff < 365:
+        return str(int(day_diff / 30)) + " months ago"
+    return str(int(day_diff / 365)) + " years ago"
+
+

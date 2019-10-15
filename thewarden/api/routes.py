@@ -15,6 +15,7 @@ from dateutil import parser
 from dateutil.relativedelta import relativedelta
 from flask import Blueprint, flash, jsonify, render_template, request
 from flask_login import current_user, login_required
+from sqlalchemy.sql import func
 
 from thewarden import db
 from thewarden import mhp as mrh
@@ -26,12 +27,13 @@ from thewarden.node.utils import (dojo_auth, dojo_get_hd, dojo_get_settings,
                                   oxt_get_address, tor_request)
 from thewarden.pricing_engine.pricing import (PROVIDER_LIST, PriceData,
                                               api_keys_class, price_data_fx,
-                                              price_data_rt, search_engine)
+                                              price_data_rt, search_engine,
+                                              get_price_ondate)
 from thewarden.users.decorators import MWT
 from thewarden.users.utils import (cost_calculation, current_path, fxsymbol,
                                    generatenav, heatmap_generator,
                                    positions_dynamic, regenerate_nav,
-                                   transactions_fx)
+                                   transactions_fx, time_ago)
 
 api = Blueprint("api", __name__)
 
@@ -269,6 +271,22 @@ def portstats():
         meta["return_1yr"] = meta["end_nav"] / yr_ago_NAV - 1
     except IndexError:
         meta["return_1yr"] = "-"
+
+    # Create data for summa"age
+    meta["fx"] = current_user.fx_rate_data()['symbol']
+    meta["daily"] = {}
+    for days in range(1, 8):
+        meta["daily"][days] = {}
+        meta["daily"][days]["date"] = data.index[days * -1].date().strftime("%A <br> %m/%d")
+        meta["daily"][days]["nav"] = data["NAV_fx"][days * -1]
+        meta["daily"][days]["nav_prev"] = data["NAV_fx"][(days + 1) * -1]
+        meta["daily"][days]["perc_chg"] = (
+            meta["daily"][days]["nav"] / meta["daily"][days]["nav_prev"]) - 1
+        meta["daily"][days]["port"] = data["PORT_fx_pos"][days * -1]
+        meta["daily"][days]["port_prev"] = data["PORT_fx_pos"][(days + 1) * -1]
+        meta["daily"][days]["port_chg"] = (
+            meta["daily"][days]["port"] - meta["daily"][days]["port_prev"])
+
 
     # create chart data for a small NAV chart
     return simplejson.dumps(meta, ignore_nan=True)
@@ -1369,7 +1387,7 @@ def test_tor_api():
 # Test for DOJO and makes some tests
 def test_dojo():
     logging.info("[API] Testing Dojo")
-    auto = dojo_auth(True)
+    auto = dojo_auth()
     try:
         api_keys_json = api_keys_class.loader()
         onion = api_keys_json['dojo']['onion']
@@ -1441,7 +1459,6 @@ def get_address():
         else:
             dojo = dojo_get_txs(address, at)
         method = "Dojo"
-
         # Store current check into previous fields to detect changes
         ad = {}
         ad["previous_check"] = address_data.previous_check = address_data.last_check
@@ -1463,7 +1480,12 @@ def get_address():
                     logging.error("Error when passing Dojo data as json")
 
             else:
-                dojo_balance = s_to_f(dojo["balance"])
+                try:
+                    dojo_balance = s_to_f(dojo["balance"])
+                except Exception:
+                    # If a single transaction is found, some times Dojo returns
+                    # a different format. Try to find in this alternative format.
+                    dojo_balance = s_to_f(dojo['txs'][0]['result'])
         except (KeyError, TypeError):
             if address_data.check_method == "3":
                 address_data.check_method = "2"
@@ -1478,7 +1500,6 @@ def get_address():
             else:
                 change = False
             db.session.commit()
-            regenerate_nav()
             success = True
             return jsonify(
                 {
@@ -1496,7 +1517,6 @@ def get_address():
         if "message" in oxt:
             if oxt["message"] == "Nothing found for this address. Please try later.":
                 return "error"
-
         if "status" in oxt:
             return "error"
         # Store current check into previous fields to detect changes
@@ -1515,7 +1535,6 @@ def get_address():
         else:
             change = False
         db.session.commit()
-        regenerate_nav()
         success = True
 
         return jsonify(
@@ -1541,8 +1560,12 @@ def getprice_ondate():
             return 0
         ticker = ticker.upper()
         get_date = datetime.strptime(date_input, "%Y-%m-%d")
-
-        return price_ondate(ticker, get_date)
+        # Create price object
+        try:
+            price = str(get_price_ondate(ticker, get_date).close)
+        except Exception:
+            price = "Not Found"
+        return price
 
 
 @api.route("/import_transaction", methods=["POST"])
@@ -1847,6 +1870,7 @@ def realtime_user():
     return json.dumps(fx_rate)
 
 
+@MWT(10)
 @api.route("/positions_json", methods=["GET"])
 def positions_json():
     # Get all transactions and cost details
@@ -1910,3 +1934,84 @@ def test_price():
 def search():
     ticker = request.args.get("ticker")
     return (search_engine(ticker))
+
+
+# Returns data for the front page - and monitors bitcoin addresses for changes
+@api.route("/frontpage_btc", methods=["GET", "POST"])
+def frontpage_btc():
+    try:
+        # First get the data from database
+        address_data = (
+            BitcoinAddresses.query.filter_by(user_id=current_user.username)
+        )
+        if address_data.count() == 0:
+            return ({
+                "count": 0,
+                "balance": 0,
+                "last_update": "N/A"
+            })
+        total = BitcoinAddresses.query.with_entities(
+            func.sum(BitcoinAddresses.last_balance).label("mySum")).filter_by(
+            user_id=current_user.username).first()
+        try:
+            # Sats to Bitcoins convertion
+            total = total.mySum / 100000000
+        except Exception:
+            total = "-"
+        data = {
+            "count": address_data.count(),
+            "last_update": time_ago(
+                address_data.order_by('last_check').limit(1)[0].last_check),
+            "balance": total
+        }
+        if request.method == "GET":
+            return json.dumps(data)
+
+        # Start to check addresses to compare with total
+        total_balance = 0
+        changes = []
+        errors = False
+        for address in address_data:
+            # Check Balance for this hash
+            at = dojo_get_settings()["token"]
+            dojo = dojo_get_txs(address.address_hash, at)
+            try:
+                dojo_balance = (dojo["balance"])
+                if dojo_balance == "":
+                    dojo_balance = 0
+            except Exception:
+                # If a single transaction is found, some times Dojo returns
+                # a different format. Try to find in this alternative format.
+                try:
+                    dojo_balance = float(dojo['txs'][0]['result'])
+                except Exception:
+                    errors = True
+                    dojo_balance = 0
+                    break
+            if dojo_balance != address.last_balance:
+                changes += [{
+                    "address": address.address_hash,
+                    "balance": dojo_balance,
+                    "balance_before": address.last_balance
+                }]
+            try:
+                total_balance += float(dojo_balance) / 100000000
+            except Exception:
+                pass
+
+        return json.dumps(
+            {
+                "changes": changes,
+                "total_balance": str(round(total_balance, 4)),
+                "errors": errors
+            }
+        )
+
+    except Exception as e:
+        error_message = {
+            "error": str(e)
+        }
+        if request.method == "GET":
+            return (json.dumps(error_message))
+
+

@@ -108,7 +108,7 @@
     <div class="col-sm-8">
 
         <!-- START Portfolio Snapshot section  -->
-        <div class="content-section">
+        <div class="content-section table-responsive">
             <div class="row">
                 <div class="col-sm-6">
                     <div class="lead">Portfolio Snapshot</div>
@@ -212,7 +212,7 @@
 
 
         <!-- START Cost Analysis section -->
-        <div class="content-section">
+        <div class="content-section table-responsive">
             <div class="row">
                 <div class="col-sm-6">
                     <div id="cost_title" class="lead">Cost Analysis</div>
@@ -582,7 +582,7 @@
         <!-- END Cost Analysis Section -->
 
         <!-- START Market Data Section -->
-        <div class="content-section">
+        <div class="content-section table-responsive">
             <div class="lead">Market Data</div>
             <table id="marketdatatable" class="table table-sm small-text">
                 <thead class="thead-light">
@@ -695,15 +695,44 @@
         </div>
         <!-- END Market Data Section -->
         <!-- START charts -->
-        <div>
-            <!-- NAV Chart -->
-            <div id="navchart" style="height: 350px; margin: 0 auto">
-                <span class="loadanim">&nbsp;Loading NAV Chart</span>
+        <div class="row">
+            <div class='col-sm-8'>
+                <div>
+                    <!-- NAV Chart -->
+                    <div id="navchart" style="height: 350px; margin: 0 auto">
+                        <span class="loadanim">&nbsp;Loading NAV Chart</span>
+                    </div>
+                </div>
             </div>
+            <div class='col-sm-4'>
+                <div>
+                    <!-- Asset Allocation Chart -->
+                    <div id="piechart" style="height: 350px">
+                        <span class="loadanim">&nbsp;Loading Allocation Chart</span>
+                    </div>
+                </div>
+            </div>
+
         </div>
         <!-- END Charts -->
+
         </br>
-        </br>
+
+        <!-- Start Returns Heatmap + Details -->
+        <div class="row">
+            <div class='col-sm-12'>
+                <div class="table-responsive">
+                    <div class="lead" style="margin-bottom: 20px;">Portfolio Progress (last 7 days)</div>
+                    <div class="text-center " id="weekly_map">
+
+                        <img style='margin-left:30px;' src='static/images/loading_small.gif' width="30"
+                            height="30"></img>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 
@@ -809,12 +838,57 @@
 
         <!-- END Portfolio Statistics section -->
 
-        <div>
-            <!-- Asset Allocation Chart -->
-            <div id="piechart" style="height: 250px">
-                <span class="loadanim">&nbsp;Loading Allocation Chart</span>
-            </div>
+        <!-- START Bitcoin Address Summary -->
+
+        <div class="content-section" id="bitcoin_addresses_section">
+
+            <span class="lead">Bitcoin Monitor</span>
+            <span class="float-right">
+                <a href="/bitcoin_monitor" style="text-decoration: none; color:gray;">
+                    <i class="fas fa-external-link-square-alt fa-lg"></i>
+                </a>
+            </span>
+            </br>
+
+            <table id="btctable" class="table table-sm small-text">
+                <tbody>
+                    <tr>
+                        <td>Node Status</td>
+                        <td class="text-right">
+                            <span id='node_status'> <img src='static/images/loading_small.gif' width="30"
+                                    height="30"></img> </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Addresses Monitored</td>
+                        <td id='total_addresses' class="text-right"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
+                    </tr>
+                    <tr>
+                        <td>Total Balance of addresses</td>
+                        <td id='bitcoin_balance' class="text-right"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
+                    </tr>
+
+                    <tr>
+                        <td>Last Check</td>
+                        <td id='bitcoin_last_check' class="text-right"> <img src='static/images/loading_small.gif'
+                                width="30" height="30"></img> </td>
+                    </tr>
+                </tbody>
+            </table>
+            <span id='bitcoin_check'>
+
+            </span>
+
+
         </div>
+
+
+
+        <!-- END Bitcoin Address Summary -->
+
+
 
         <!-- START setting section -->
         <div class="content-section">
@@ -858,20 +932,27 @@
             </div>
         </div>
         <!-- END Settings Section -->
+
+        <div class='row'>
+            <div class="container-fluid small">
+                <i>
+                    <sup>1</sup> All returns in this page are in {{current_user.fx_rate_data()['name_plural']}}.
+                    <br>
+                    {%if current_user.fx_rate_data()['name'] != 'US Dollar'%}
+                    This means that the returns include the asset returns plus the currency return in the period.
+                    <br>For example, if Bitcoin in USD is up 5% and the {{current_user.fx_rate_data()['name']}} is
+                    up
+                    1%, the
+                    return will be 6.05% in {{current_user.fx_rate_data()['name_plural']}}.
+                    {%endif%}
+                </i>
+            </div>
+        </div>
+
+
     </div>
 </div>
 
-<div class='row'>
-    <div class="container-fluid">
-        <sup>1</sup> All returns in this page are in {{current_user.fx_rate_data()['name_plural']}}.
-        <br>
-        {%if current_user.fx_rate_data()['name'] != 'US Dollar'%}
-        This means that the returns include the asset returns plus the currency return in the period.
-        <br>For example, if Bitcoin in USD is up 5% and the {{current_user.fx_rate_data()['name']}} is up 1%, the
-        return will be 6.05% in {{current_user.fx_rate_data()['name_plural']}}.
-        {%endif%}
-    </div>
-</div>
 </br>
 
 
@@ -901,7 +982,8 @@
 
                 <div>
                     <h5 class='border-bottom'>Calculation of unrealized PnL</h5>
-                    <p>The <strong>Unrealized Breakeven price</strong> is calculated as a weighted average of all the
+                    <p>The <strong>Unrealized Breakeven price</strong> is calculated as a weighted average of all
+                        the
                         transactions above.
                     </p>
                     <p>These transactions are the ones associated with your current open position. The

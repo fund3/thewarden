@@ -6,6 +6,10 @@ $(document).ready(function () {
     }, 30000);
 
     $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+
+    $(function () {
         $("#searchbox").autocomplete({
             source: function (request, response) {
                 $.ajax({
@@ -44,62 +48,20 @@ $(document).ready(function () {
         success: function (data) {
             console.log("[Check Tor] ajax request: OK");
             if (data.status) {
-                html_tor = "<a style='text-decoration : none' href='/tor_setup'>" +
-                    "<span class=' nav-item' style='color: rgb(139, 195, 113);'>" +
-                    "<i class='fas fa-lg fa-user-shield'></i></span>" +
-                    "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Tor running" +
-                    "</span ></a> "
+                html_tor = "<i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor running"
             } else {
-                html_tor = "<a style='text-decoration : none' href='/tor_setup'>" +
-                    "<span class=' nav-item' style='color: rgb(255, 217, 0);'>" +
-                    "<i class='fas fa-lg fa-user-shield'></i></span>" +
-                    "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled" +
-                    "</span ></a> "
+                html_tor = "<span class='text-warning'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled</span>"
             }
             $('#tor_span').html(html_tor);
         },
         error: function (xhr, status, error) {
-            html_tor = "<a style='text-decoration : none' href='/tor_setup'>" +
-                "<span class=' nav-item' style='color: rgb(255, 217, 0);'>" +
-                "<i class='fas fa-lg fa-user-shield'></i></span>" +
-                "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled" +
-                "</span ></a> "
+            html_tor = "<span class='text-warning'><i class='fas fa-lg fa-user-shield'></i>&nbsp;&nbsp;&nbsp;&nbsp;Tor Disabled</span>"
             $('#tor_span').html(html_tor);
         }
     });
 
 
-    $.ajax({
-        type: "GET",
-        dataType: 'json',
-        url: "/test_dojo",
-        success: function (data) {
-            console.log("[Check Dojo] ajax request: OK");
-            if ('authorizations' in data.dojo_auth) {
-                html_dojo = "<a style='text-decoration : none' href='/dojo_setup'>" +
-                    "<span class='nav-item' style='color: rgb(139, 195, 113);'>" +
-                    "<i class='fas fa-lg fa-user-ninja'></i></span>" +
-                    "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Dojo running" +
-                    "</span ></a> "
-            } else {
-                html_dojo = "<a style='text-decoration : none' href='/dojo_setup'>" +
-                    "<span class=' nav-item' style='color: rgb(255, 217, 0);'>" +
-                    "<i class='fas fa-lg fa-user-ninja'></i></span>" +
-                    "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Dojo Unavailable" +
-                    "</span ></a> "
-            }
-            $('#dojo_span').html(html_dojo);
-        },
-        error: function (xhr, status, error) {
-            html_dojo = "<a style='text-decoration : none' href='/dojo_setup'>" +
-                "<span class='nav-item' style='color: rgb(255, 217, 0);'>" +
-                "<i class='fas fa-lg fa-user-ninja'></i></span>" +
-                "<span class='text-white'>&nbsp;&nbsp;&nbsp;&nbsp;Dojo Unavailable" +
-                "</span ></a> "
 
-            $('#dojo_span').html(html_dojo);
-        }
-    });
 });
 
 

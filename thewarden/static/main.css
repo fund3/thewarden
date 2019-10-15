@@ -3,7 +3,6 @@
 body {
   background: #fafafa;
   color: #333333;
-  margin-top: 2rem;
 }
 
 h1,
@@ -21,7 +20,7 @@ h6 {
 }
 
 .bg-steel {
-  background-color: #515151;
+  background-color: #252525;
 }
 
 .bg-lightyellow {
@@ -548,4 +547,45 @@ a {
     rgb(250, 250, 250) 10px,
     rgb(250, 250, 250) 20px
   );
+}
+
+.statusbox {
+  z-index: 0;
+  background: #404040;
+  border: 1px solid #dddddd;
+  border-radius: 5px;
+  padding: 15px;
+  margin-left: 20px;
+  color: lightgreen;
+  text-decoration: none !important;
+}
+
+.rightfloater {
+  margin-left: auto;
+  float: right;
+  height: 100%;
+}
+
+.changebox {
+  font-family: sans-serif;
+  font-size: 16px;
+  background: #ffffff;
+  border: 2px solid #bebebe;
+  border-radius: 10px;
+  padding: 20px;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-left: 5px;
+  margin-right: 5px;
+  color: black;
+}
+
+.grid-container {
+  display: grid;
+}
+
+.grid-container--fill {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-rows: repeat(auto-fill, minmax(30px, 80px));
+  margin-inline-start: -10px;
 }

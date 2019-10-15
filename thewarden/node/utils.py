@@ -2,14 +2,13 @@ import logging
 
 import pandas as pd
 import requests
-from flask import Markup, current_app, flash
-from flask_login import current_user
+from flask import Markup, flash
 
-from thewarden.models import User
-from thewarden.users.decorators import MWT, memoized
+from thewarden.users.decorators import MWT, memoized, timing
 
 
 @MWT(1)
+@timing
 # Requests within 30sec of each other will return the same result
 # This is an optimization variable, too short and the app will run
 # slow, too high and the data refresh will suffer.
@@ -60,14 +59,13 @@ def tor_request(url, tor_only=False, method="get"):
 
 
 @MWT(10)
-def dojo_get_settings(force=False):
+@timing
+def dojo_get_settings():
     # Get and test settings. If not working get a new at
     logging.info("Getting Dojo settings")
     # check if dojo_settings are already stored
     from thewarden.pricing_engine.pricing import api_keys_class
     api_keys_json = api_keys_class.loader()
-    onion_address = api_keys_json['dojo']['onion']
-    api_key = api_keys_json['dojo']['api_key']
     at = dojo_auth()
     try:
         logging.info("Trying to get token")
@@ -88,8 +86,9 @@ def dojo_get_settings(force=False):
     return (api_keys_json['dojo'])
 
 
-@memoized
-def dojo_auth(force=False):
+@MWT(timeout=20)
+@timing
+def dojo_auth():
     # Receives authentication token back from Dojo
     # https://github.com/Samourai-Wallet/samourai-dojo/blob/develop/doc/POST_auth_login.md
     # POST /v2/auth/login
@@ -153,6 +152,7 @@ def dojo_auth(force=False):
 
 
 @MWT(20)
+@timing
 def dojo_get_address(addr, at):
     # Request details about a collection of HD accounts and/or loose addresses and/or public keys.
     # Takes arguments:
@@ -176,6 +176,7 @@ def dojo_get_address(addr, at):
 
 
 @MWT(20)
+@timing
 def dojo_multiaddr(addr, type, at):
     # Request details about a collection of HD accounts and/or loose addresses and/or public keys.
     # Takes arguments:
@@ -216,6 +217,7 @@ def dojo_multiaddr(addr, type, at):
 
 
 @memoized
+@timing
 def dojo_add_hd(xpub, type, at):
     # Notify the server of the new HD account for tracking.
     # https://github.com/Samourai-Wallet/samourai-dojo/blob/master/doc/POST_xpub.md
@@ -235,6 +237,7 @@ def dojo_add_hd(xpub, type, at):
 
 
 @MWT(20)
+@timing
 def dojo_get_hd(xpub, at):
     # Request details about an HD account. If account does not exist, it must be created.
     # https://github.com/Samourai-Wallet/samourai-dojo/blob/master/doc/GET_xpub.md
@@ -254,6 +257,7 @@ def dojo_get_hd(xpub, at):
 
 
 @MWT(20)
+@timing
 def dojo_get_txs(addr, at):
     # Request transactions of an active address and return a dataframe + metadata
     onion_address = dojo_get_settings()["onion"]
@@ -298,11 +302,12 @@ def dojo_get_txs(addr, at):
         if "error" in auth_response:
             # If Token error, force a new token
             if auth_response["error"] == "Invalid JSON Web Token":
-                at = dojo_auth(True)
+                at = dojo_auth()
         return auth_response
 
 
 @MWT(20)
+@timing
 def oxt_get_address(addr):
     # Requests via TOR address details from OXT
     url = "https://api.oxt.me/addresses/"
@@ -320,6 +325,7 @@ def oxt_get_address(addr):
 
 
 @MWT(10)
+@timing
 def dojo_status(token_test=None):
     logging.info("Getting Current Dojo Status")
     settings = dojo_get_settings()

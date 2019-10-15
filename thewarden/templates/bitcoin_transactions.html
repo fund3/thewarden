@@ -139,8 +139,8 @@
                     {% set max = transactions['n_tx'] %}
                     {%endif%}
 
+                    {%if transactions['transactions']['time'][0] %}
                     {%for n in range(0, max)%}
-
                     <tr>
 
                         <td id={{transactions['transactions']['time'][n]}} class="align-middle text-center" scope="row">
@@ -167,6 +167,36 @@
 
                     </tr>
                     {%endfor%}
+                    {%else%}
+                    {%for n in range(0, max)%}
+                    <tr>
+
+                        <td id={{transactions['transactions']['time']}} class="align-middle text-center" scope="row">
+                            {{transactions['transactions']['time'] | epoch}}
+                        </td>
+
+                        <td id={{transactions['transactions']['result']}} class="align-middle text-center redgreen"
+                            scope="row">
+                            &#8383 {{transactions['transactions']['result'] | jformat(4, 100000000)}}
+                        </td>
+                        <td class='btc_price' id='{{transactions['transactions']['time']}}'>
+                            <div class="spinner-grow spinner-grow-sm" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </td>
+                        <td id={{transactions['transactions']['hash']}} class="align-middle text-center small"
+                            scope="row">
+                            {{transactions['transactions']['hash'][0:4]}}...{{transactions['transactions']['hash'][-4:-1]}}
+                        </td>
+                        <td class="align-middle text-center" scope="row">
+                            <input type="checkbox" class="form-check-input import_check text-center checkbox"
+                                id="check_{{transactions['transactions']['hash']}}">
+                        </td>
+
+                    </tr>
+                    {%endfor%}
+                    {%endif%}
+
 
                 </tbody>
             </table>

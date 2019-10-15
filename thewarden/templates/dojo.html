@@ -11,7 +11,7 @@
                 <dl class="row">
                     <dt class="col-sm-4">Dojo Onion Address set</dt>
 
-                    {%if user_info.dojo_onion%}
+                    {%if form.dojo_onion.data != ''%}
                     <dd id="tor_txt" class="col-sm-8">Found
 
                         <div id="tor_spin" class="float-right text-success" role="status">
@@ -33,7 +33,7 @@
 
                 <dl class="row">
                     <dt class="col-sm-4">Dojo API Key set</dt>
-                    {%if user_info.dojo_apikey%}
+                    {%if form.dojo_apikey.data != ''%}
                     <dd id="tor_txt" class="col-sm-8">Found
 
                         <div id="tor_spin" class="float-right text-success" role="status">
@@ -87,7 +87,7 @@
     </div>
 
 
-    {%if status['uptime']%}
+    {%if status['uptime'] %}
 
     <div id="addresses" class="content-section">
 

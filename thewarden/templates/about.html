@@ -1,36 +1,70 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="row">
-    <div class="col-sm-10 col-md-10">
-        <div class="thumbnail">
-            <h1>
-                The WARden v.1
-                &nbsp;
-                <i class="fab fa-bitcoin "></i>
+<style>
+    body {
+        background-color: rgb(37, 37, 37);
+    }
+</style>
+
+
+<div class='row'>
+    <div class="col-sm-6">
+        <div class="text-white">
+            <h1 class="text-white">
+                The WARden
             </h1>
-            <hr>
-            <div class="caption">
+
+            <h5 class="text-white">
                 <strong>
                     <p>Please note that this ALPHA version is still under development and test.</p>
                     <p>Use at your own risk. We cannot guarantee the accuracy of the data.</p>
                 </strong>
+            </h5>
+            <p>
+                If you have suggestions or feedback please
+                report them at our <a <a style="text-decoration: none" target='new_page'
+                    href='https://github.com/pxsocs/thewarden'>GitHub Repository</a>.
 
-                <p>
-                    If you have suggestions or feedback please
-                    report them at the link below.
-                </p>
-                <br><br>
-                <h4 class="align-middle">
-                    <a href='https://github.com/pxsocs/thewarden'>GitHub Repository</a>&nbsp;
-                    <i class="fab fa-github-square fa-lg"></i>
-                </h4>
+            </p>
 
 
-
-            </div>
         </div>
     </div>
 </div>
+
+<div class='row'>
+
+    <div class='col-sm-3 text-white statusbox'>
+        <p><strong style="font-size:  20px;">This is an Open Source
+                project.</strong></p>
+
+        <p>We believe Open Source is the future of development for bitcoin. There is no other
+            way when transparency and privacy are critical. </p>
+        <p>If you want to support a future where software is built with these ideals and if you like
+            the WARden, consider supporting it. All proceeds will be used to improve the app.</p>
+        <p><strong>We suggest a one time payment of 1,000,000 sats</strong>. But it's completely up to
+            you the amount and if you want to contribute.</p>
+        <p>We are also working on white-labeling the app for institutions. Contact us through twitter
+            for more info. <a style="text-decoration: none" target='new_page' href="https://twitter.com/alphaazeta"> <i
+                    class="text-white fab fa-twitter fa-xlg"></i>
+                <span class="text-white">@AlphaaZeta&nbsp;</span></a></p>
+    </div>
+    <div class='col-sm-3 text-white statusbox'>
+        <p><strong style="font-size:  22px;">Contribute to this software</strong>
+        </p>
+        <p>Bitcoin public address</p>
+        <p><code>bc1qlwelaz6jsupjrfpuk0327uazxrregvupse99rz</code></p>
+        <img src="static/images/qr_code_btc.png" height=200 width=200>
+        <br><br><br>
+        <p>Or through the lightning network</p>
+        <!-- Beginning of tippin.me Button -->
+        <div id="tippin-button" class="text-center" data-dest="alphaazeta"></div>
+        <script src="https://tippin.me/buttons/tip.js" type="text/javascript"></script>
+        <!-- End of tippin.me Button -->
+
+    </div>
+</div>
+
 
 {% endblock content %}

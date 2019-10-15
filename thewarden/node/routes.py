@@ -90,6 +90,35 @@ def dojo_setup():
     )
 
 
+@node.route("/rescan_all", methods=['GET'])
+@login_required
+def rescan_all():
+    logging.info("Starting a rescan of all addresses in database...")
+    bitcoin_addresses = BitcoinAddresses.query.filter_by(
+        user_id=current_user.username)
+    logging.info("Found a total of " + str(bitcoin_addresses.count()) +
+                 " addresses to rescan")
+    # Get token
+    at = dojo_get_settings()["token"]
+    address_string = ""
+    # send a pipe separated list to Dojo
+    for address in bitcoin_addresses:
+        address_string += address.address_hash + "|"
+    address_string = address_string[:-1]
+    reg = dojo_multiaddr(address_string, "active", at)
+    if "error" in reg.json():
+        flash(
+            f"Something went wrong while rescanning addresses." +
+            "Error: {reg.json()['error']}",
+            "danger",
+        )
+    else:
+        flash(
+            "Address rescan finished for a total of " +
+            str(bitcoin_addresses.count()) + " addresses", "success")
+    return (json.dumps("OK"))
+
+
 @node.route("/bitcoin_address", methods=["GET", "POST"])
 @login_required
 # Takes argument id to edit an address
@@ -297,7 +326,7 @@ def bitcoin_transactions(address):
                 derivation = bitcoin_address.xpub_derivation
                 if not derivation:
                     derivation = "pubkey"
-            balance = dojo_multiaddr(address, derivation, at).json()
+            balance = dojo_multiaddr(address, "pubkey", at).json()
         except AttributeError:
             logging.warn("Did not receive a json back from multi_add")
 
@@ -326,7 +355,7 @@ def bitcoin_transactions(address):
             # the [0] here is needed since we're using multiaddr but only returning the 1st (and only) address
             if balance["addresses"][0]["n_tx"] > 0:
                 meta["n_txs"] = balance["addresses"][0]["n_tx"]
-        except (KeyError, IndexError):
+        except Exception:
             logging.info("No txs found for this address")
             transactions["error"] += "Could not retrieve any transactions."
             meta["n_txs"] = 0
@@ -335,6 +364,10 @@ def bitcoin_transactions(address):
         if "n_txs" in meta:
             meta["check_method"] = "Dojo"
             transactions = dojo_get_txs(address, at)
+            # Some times dojo returns the transactions header as 'txs' - copying
+            # so it can be found:
+            if 'txs' in transactions:
+                transactions['transactions'] = transactions['txs'][0]
             if ("balance" in meta) and (meta["balance"] >= 0):
                 meta["success"] = True
                 logging.info("Success: Address data gathered")
