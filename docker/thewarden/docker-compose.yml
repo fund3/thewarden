@@ -1,0 +1,8 @@
+version: '3'
+services:
+    thewarden:
+        build:
+            context: ../../
+            dockerfile: docker/thewarden/Dockerfile
+        ports:
+            - "5000:5000"

@@ -1,3 +1,5 @@
+import logging
+
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from thewarden.models import User
@@ -13,7 +15,8 @@ class ImportCSV(FlaskForm):
 
     def validate_csvfile(sef, csvfile):
         if csvfile.data is None:
-            raise ValidationError("Please select a file")
+            print("Please select a file")
+            logging.info("Please select a file")
 
 
 class ContactForm(FlaskForm):
